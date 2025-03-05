@@ -12,12 +12,12 @@ const getAuthHeaders = () => {
 };
 
 // Nouvelle méthode d'authentification qui redirige vers l'endpoint backend
-export const authenticateSpotify = () => {
-  const roomCode = new URLSearchParams(window.location.search).get('roomCode');
+export const authenticateSpotify = (roomCode) => {
+  const roomCodeToUse = roomCode || new URLSearchParams(window.location.search).get('roomCode');
   localStorage.setItem('spotify_redirect', window.location.pathname + window.location.search);
   
   // Récupérer l'URL d'authentification du backend
-  fetch(`${BASE_URL}/api/spotify/auth-url/${roomCode}`, {
+  fetch(`${BASE_URL}/api/spotify/auth-url/${roomCodeToUse}`, {
     headers: getAuthHeaders()
   })
     .then(response => response.json())

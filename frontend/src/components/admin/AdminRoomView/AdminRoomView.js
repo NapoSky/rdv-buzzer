@@ -244,7 +244,7 @@ function AdminRoomView() {
   // Fonctions de gestion de Spotify
   const handleConnectSpotify = () => {
     localStorage.setItem('spotify_redirect', window.location.pathname + window.location.search);
-    authenticateSpotify();
+    authenticateSpotify(roomCode);
   };
 
   const handleDisconnectSpotify = async () => {
