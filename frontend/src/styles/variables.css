@@ -1,0 +1,48 @@
+/* Variables globales pour l'application */
+:root {
+  /* Couleurs thème clair (défaut) */
+  --background-light: #ffffff;
+  --text-light: #333333;
+  --border-light: #ced4da;
+  
+  /* Couleurs thème sombre */
+  --background-dark: #121212;
+  --text-dark: #e0e0e0;
+  --border-dark: #404040;
+  
+  /* Couleurs fonctionnelles */
+  --primary: #007bff;
+  --secondary: #6c757d;
+  --success: #28a745;
+  --danger: #dc3545;
+  --warning: #ffc107;
+  --info: #17a2b8;
+  
+  /* Boutons */
+  --btn-success-bg: #28a745;
+  --btn-success-border: #218838;
+  --btn-success-hover-bg: #218838;
+  --btn-success-hover-border: #1e7e34;
+  
+  --btn-danger-bg: #dc3545;
+  --btn-danger-border: #c82333;
+  --btn-danger-hover-bg: #c82333;
+  --btn-danger-hover-border: #bd2130;
+  --btn-danger-dark-bg: #c82333;
+  --btn-danger-dark-hover-bg: #bd2130;
+  
+  --btn-warning-bg: #ffc107;
+  --btn-warning-border: #e0a800;
+  --btn-warning-text: #212529;
+  --btn-warning-hover-bg: #e0a800;
+  --btn-warning-hover-border: #d39e00;
+  
+  --btn-grey-bg: #6c757d;
+  --btn-grey-border: #5a6268;
+  --btn-grey-hover-bg: #5a6268;
+  --btn-grey-hover-border: #545b62;
+  
+  /* Transitions et espacements */
+  --transition-speed: 0.3s;
+  --border-radius: 0.25rem;
+}

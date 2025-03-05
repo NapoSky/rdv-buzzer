@@ -1,0 +1,38 @@
+/* Styles pour SpotifyCallback */
+.spotify-callback-container {
+ margin: 0 auto;
+ max-width: 600px;
+ padding: 40px 20px;
+ text-align: center;
+}
+
+.callback-status {
+ font-size: 1.2rem;
+ margin-bottom: 20px;
+}
+
+.success-message {
+ color: var(--success);
+}
+
+.error-message {
+ color: var(--danger);
+}
+
+.loading-spinner {
+ display: inline-block;
+
+ animation: spin 1s ease-in-out infinite;
+ border: 4px solid rgba(0,0,0,.1);
+ border-radius: 50%;
+ border-top-color: var(--primary);
+ height: 40px;
+ margin: 0 auto 20px;
+ width: 40px;
+}
+
+@keyframes spin {
+ to {
+  transform: rotate(360deg);
+ }
+}

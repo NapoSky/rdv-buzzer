@@ -1,0 +1,56 @@
+# Dépendances
+node_modules
+npm-debug.log
+
+# Environnement
+.env
+.env.local
+.env.development
+.env.test
+.env.production
+
+# Système
+.DS_Store
+Thumbs.db
+
+# Éditeurs
+.idea/
+.vscode/
+*.swp
+*.swo
+
+# Tests et couverture
+coverage/
+.nyc_output/
+
+# Tests
+__tests__/
+*.test.js
+*.spec.js
+
+# Logs
+logs/
+*.log
+
+# Build
+dist/
+build/
+
+# Documentation
+README.md
+docs/
+*.md
+
+# Git
+.git
+.gitignore
+
+# Docker
+Dockerfile
+docker-compose.yml
+.dockerignore
+
+# Autres fichiers non nécessaires
+.eslintrc
+.prettierrc
+jest.config.js

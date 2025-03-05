@@ -1,0 +1,33 @@
+services:
+  backend:
+    container_name: rdv-backend
+    build: ./backend
+    ports:
+      - "3001:3001"
+    depends_on:
+      - redis
+    environment:
+      - APP_SECRET=a1b2c3d4e5f67890123456789abcdef0123456789abcdef0123456789abcdef
+      - FRONTEND_URL=http://localhost
+      # Optionnel
+      #- SPOTIFY_CLIENT_ID=
+      #- SPOTIFY_CLIENT_SECRET=
+      #- SPOTIFY_REDIRECT_URI=http://localhost:3001/api/spotify/callback
+
+  frontend:
+    container_name: rdv-frontend
+    build:
+      context: ./frontend
+      args:
+        - REACT_APP_BACKEND_URL=http://localhost:3001
+        - REACT_APP_ADMIN_PASSWORD=secret
+        - REACT_APP_APP_SECRET=a1b2c3d4e5f67890123456789abcdef0123456789abcdef0123456789abcdef
+        # Optionnel
+        # - REACT_APP_SPOTIFY_CLIENT_ID=1913b438f5034f918481be9b9f3d319e
+    ports:
+      - "80:80"
+
+  redis:
+    image: redis:latest
+    container_name: rdv-redis
+

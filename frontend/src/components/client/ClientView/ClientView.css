@@ -1,0 +1,222 @@
+/* 🌍 Conteneur principal */
+.client-container {
+    height: 85vh;
+    margin-top: -15px;
+    display: flex;
+    flex-direction: column;
+    padding-bottom: 5px;
+    box-sizing: border-box;
+}
+
+/* 📌 En-tête */
+.header-zone {
+    flex: 0 0 auto;
+    padding: 10px;
+    background-color: rgba(255, 255, 255, 0.95);
+    box-shadow: 0 1px 2px rgba(0,0,0,0.1);
+}
+
+.header-zone h2, .header-zone h3 {
+    margin: 5px 0;
+    font-size: 1.2rem;
+}
+
+/* 🎯 Zone contenant le bouton BUZZ */
+.buzz-zone {
+    flex: 0 1 auto;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    min-height: 35vh;
+}
+
+/* 🔘 Bouton BUZZ */
+.buzz-button {
+    width: min(40vh, 40vw);
+    height: min(40vh, 40vw);
+    max-width: 240px;
+    max-height: 240px;
+    border-radius: 50%;
+    font-size: clamp(2rem, 5vw, 3rem);
+    font-weight: bold;
+    text-align: center;
+    box-shadow: 0 4px 8px rgba(0,0,0,0.2);
+    transition: all 0.2s ease;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+/* 📋 Zone du classement */
+.footer-zone {
+    flex: 1 1 auto;
+    overflow: auto;
+    padding: 10px;
+    background-color: rgba(255, 255, 255, 0.95);
+    box-shadow: 0 -2px 4px rgba(0,0,0,0.1);
+    display: flex;
+    flex-direction: column;
+    min-height: 0;
+}
+
+/* 📜 Liste des joueurs */
+.player-list {
+    flex: 1;
+    overflow-y: auto;
+    margin: 0;
+    padding: 0;
+    list-style: none;
+}
+
+/* 🎭 Style des joueurs */
+.player-list li {
+    padding: 8px;
+    margin: 4px 0;
+    background: var(--background-light);
+    border-radius: 4px;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+}
+
+/* Adaptation pour petits écrans */
+@media (max-width: 400px) {
+    .buzz-button {
+        width: 55vw;
+        height: 55vw;
+        font-size: 2.5rem;
+    }
+    .buzz-zone {
+        min-height: 30vh;
+    }
+    .footer-zone {
+        flex: 1 1 auto;
+    }
+}
+
+/* Pour le dark mode, on s'appuie sur DarkMode.css et global.css */
+.dark-mode .header-zone {
+    background-color: rgba(33, 33, 33, 0.95);
+    box-shadow: 0 2px 4px rgba(0,0,0,0.3);
+}
+
+.dark-mode .buzz-button {
+    background-color: #28a745;
+    color: white;
+    box-shadow: 0 4px 8px rgba(0,255,0,0.1);
+}
+
+.dark-mode .buzz-button:disabled {
+    background-color: #1e7e34;
+    opacity: 0.7;
+}
+
+.dark-mode .footer-zone {
+    background-color: rgba(33, 33, 33, 0.95);
+    box-shadow: 0 -2px 4px rgba(0,0,0,0.3);
+}
+
+.dark-mode .player-list li {
+    background-color: #2d2d2d;
+    color: var(--text-dark);
+    box-shadow: 0 1px 3px rgba(0,0,0,0.3);
+}
+
+/* Bouton toggle dans le header */
+.theme-toggle {
+    position: absolute;
+    top: 10px;
+    right: 10px;
+    padding: 8px;
+    border-radius: 50%;
+    border: none;
+    background: transparent;
+    cursor: pointer;
+    color: inherit;
+    font-size: 1.2rem;
+}
+
+.dark-mode .theme-toggle {
+    color: var(--text-dark);
+}
+
+
+/* Styles pour les indicateurs de connexion */
+.connection-status {
+    padding: 6px 10px;
+    border-radius: 4px;
+    margin: 5px 0;
+    font-size: 0.85rem;
+    font-weight: 500;
+    display: inline-block;
+  }
+  
+  .connection-actions {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    margin-bottom: 8px;
+  }
+  
+  .connection-status.disconnected {
+    background-color: #ffcc00;
+    color: #333;
+  }
+  
+  .connection-status.error {
+    background-color: #ff3333;
+    color: white;
+  }
+  
+  /* Dark Mode pour les indicateurs de connexion */
+  .dark-mode .connection-status.disconnected {
+    background-color: #8B6000;  /* Une teinte plus foncée de jaune */
+    color: #f0f0f0;
+    border: 1px solid #ffcc00;
+  }
+  
+  .dark-mode .connection-status.error {
+    background-color: #8B0000;  /* Une teinte plus foncée de rouge */
+    color: #f0f0f0;
+    border: 1px solid #ff3333;
+  }
+  
+  /* Style du bouton de reconnexion */
+  .btn-sm {
+    padding: 0.25rem 0.5rem;
+    font-size: 0.875rem;
+    border-radius: 0.2rem;
+    margin-top: 5px;
+  }
+  
+  /* Version dark mode du bouton de reconnexion */
+  .dark-mode .btn-warning {
+    background-color: #8B6000;
+    border-color: #ffcc00;
+    color: #fff;
+  }
+  
+  .dark-mode .btn-warning:hover {
+    background-color: #6B4A00;
+    border-color: #E6B800;
+    color: #fff;
+  }
+  
+  /* Animation subtile pour attirer l'attention sur la déconnexion */
+  @keyframes pulse {
+    0% { opacity: 1; }
+    50% { opacity: 0.7; }
+    100% { opacity: 1; }
+  }
+  
+  .connection-status.disconnected {
+    animation: pulse 2s infinite;
+  }
+
+  .final-ranking {
+    max-height: 60vh;
+    overflow-y: auto;
+  }
+  
+  .final-ranking .current-player {
+    font-weight: bold;
+    background-color: rgba(108, 117, 125, 0.15);
+  }

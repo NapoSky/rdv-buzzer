@@ -1,0 +1,125 @@
+/* Styles spécifiques pour AdminPanel */
+
+/* Styles pour les tableaux en dark mode */
+.dark-mode .table {
+    color: var(--text-dark);
+    background-color: var(--background-dark);
+}
+
+.dark-mode .table thead th {
+    background-color: #2c3034;
+    color: var(--text-dark);
+    border-color: #404040;
+}
+
+.dark-mode .table-striped tbody tr:nth-of-type(odd) {
+    background-color: #2c3034;
+}
+
+.dark-mode .table-striped tbody tr:nth-of-type(even) {
+    background-color: #212529;
+}
+
+.dark-mode .table-hover tbody tr:hover {
+    background-color: #343a40;
+    color: var(--text-dark);
+}
+
+/* Styles pour les éléments de la liste en dark mode */
+.dark-mode .list-group-item {
+    background-color: var(--background-dark);
+    border-color: #404040;
+    color: var(--text-dark);
+}
+
+/* Cible l'icône native du sélecteur de date sous WebKit */
+input[type="date"]::-webkit-calendar-picker-indicator {
+    cursor: pointer;
+}
+
+/* En mode light, pas de modification (on affiche l’icône par défaut) */
+body:not(.dark-mode) input[type="date"]::-webkit-calendar-picker-indicator {
+    filter: none;
+}
+
+/* En mode dark, on inverse les couleurs de l’icône */
+body.dark-mode input[type="date"]::-webkit-calendar-picker-indicator {
+    filter: invert(1);
+}
+
+/* ===== MODAL DE CONFIRMATION ===== */
+
+/* Overlay de la modal */
+.modal-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background-color: rgba(0, 0, 0, 0.5); /* Overlay semi-transparent */
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 2000;
+}
+
+/* Contenu spécifique de la modal de confirmation */
+.modal-content.confirmation {
+    background-color: var(--background-light);
+    color: var(--text-light);
+    border: none;
+    border-radius: 8px;
+    padding: 20px;
+    max-width: 400px;
+    width: 90%;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
+    text-align: center;
+}
+
+/* Adaptation dark mode pour la modale */
+body.dark-mode .modal-content.confirmation {
+    background-color: var(--background-dark);
+    color: var(--text-dark);
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.5);
+}
+
+/* Conteneur des boutons dans la modal */
+.modal-buttons {
+    margin-top: 20px;
+    display: flex;
+    justify-content: center;
+}
+
+/* Styles des boutons de la modal */
+.modal-buttons button {
+    margin: 0 10px;
+    padding: 8px 16px;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+    transition: background-color var(--transition-speed) ease;
+}
+
+/* Bouton de confirmation */
+.modal-buttons .btn-success {
+    background-color: var(--btn-success-bg);
+    border-color: var(--btn-success-border);
+    color: #fff;
+}
+
+.modal-buttons .btn-success:hover {
+    background-color: var(--btn-success-hover-bg);
+    border-color: var(--btn-success-hover-border);
+}
+
+/* Bouton d'annulation */
+.modal-buttons .btn-secondary {
+    background-color: var(--btn-grey-bg);
+    border-color: var(--btn-grey-border);
+    color: #fff;
+}
+
+.modal-buttons .btn-secondary:hover {
+    background-color: var(--btn-grey-hover-bg);
+    border-color: var(--btn-grey-hover-border);
+}

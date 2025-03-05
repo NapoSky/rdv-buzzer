@@ -1,0 +1,74 @@
+/* Styles spécifiques pour PublicRanking */
+.ranking-container {
+ margin: 0 auto;
+ max-width: 900px;
+ padding: 20px;
+}
+
+.ranking-title {
+ margin-bottom: 30px;
+ text-align: center;
+}
+
+.ranking-card {
+ background-color: var(--background-light);
+ border-radius: var(--border-radius);
+ box-shadow: 0 4px 8px rgba(0,0,0,.1);
+ margin-bottom: 20px;
+ padding: 20px;
+}
+
+.ranking-filters {
+ display: flex;
+
+ flex-wrap: wrap;
+ gap: 10px;
+ margin-bottom: 20px;
+}
+
+.filter-button {
+ flex: 1;
+
+ min-width: 100px;
+}
+
+.ranking-table {
+ border-collapse: collapse;
+ width: 100%;
+}
+
+.ranking-header {
+ background-color: rgba(0,0,0,.04);
+ font-weight: bold;
+}
+
+.ranking-row-even {
+ background-color: rgba(0,0,0,.02);
+}
+
+.ranking-footer {
+ margin-top: 20px;
+ text-align: center;
+}
+
+.back-button {
+ display: inline-block;
+
+ margin-top: 10px;
+}
+
+/* Styles spécifiques pour PublicRanking */
+body.dark-mode .ranking-container {
+  background-color: var(--background-dark) !important;
+  color: var(--text-dark) !important;
+}
+
+body.dark-mode .ranking-scroll {
+  background-color: var(--background-dark) !important;
+  color: var(--text-dark) !important;
+}
+
+/* Survol des lignes dans le ranking comme dans old/global.css */
+body.dark-mode .ranking-scroll .table-hover tbody tr:hover {
+  background-color: rgba(255, 255, 255, 0.15) !important;
+}

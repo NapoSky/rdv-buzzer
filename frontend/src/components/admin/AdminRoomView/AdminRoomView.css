@@ -1,0 +1,391 @@
+.admin-container {
+ display: flex;
+ flex-direction: column;
+ color: var(--text-light);
+ background: var(--background-light);
+
+ box-sizing: border-box;
+ height: 85vh;
+ margin-top: -15px;
+ overflow: hidden; /* le scroll sera géré par le conteneur interne */
+ padding-bottom: 5px;
+}
+
+/* Si vous souhaitez forcer le thème dark sur certains composants : */
+body.dark-mode .admin-container {
+ color: var(--text-dark);
+ background: var(--background-dark);
+}
+
+.player-list-container {
+ display: flex;
+ flex: 1;
+ flex-direction: column;
+
+ min-height: 0;
+ overflow: hidden;
+}
+
+.kick-list-container,
+.update-score-list-container {
+ flex: 1 1 auto;
+ background: var(--background-light);
+
+ min-height: 0; /* permet le scroll dans flexbox */
+ overflow-y: auto;
+ padding: 5px;
+}
+
+.ranking-scroll {
+ flex: 1 1 auto;      /* occupe l'espace restant dans son container flex */
+
+ min-height: 0;       /* nécessaire pour que le scroll fonctionne en flexbox */
+ overflow-y: auto;    /* active le scroll vertical */
+}
+
+body.dark-mode .player-list-container,
+body.dark-mode .kick-list-container,
+body.dark-mode .update-score-list-container {
+ background: #222;
+}
+
+.fixed-bottom {
+ position: fixed;
+ bottom: 0;
+ left: 0;
+ z-index: 10;
+ display: flex;
+
+ background-color: #e9ecef;
+ gap: 10px;
+ justify-content: center;
+ padding: 10px;
+ width: 100%;
+}
+
+body.dark-mode .fixed-bottom {
+ background-color: #1e1e1e;
+}
+
+.fixed-width-button {
+ display: flex;
+ color: white;
+ background: var(--btn-danger-bg);
+
+ align-items: center;
+ border: none;
+ border-radius: 5px;
+ cursor: pointer;
+ height: 100px;
+ justify-content: center;
+ overflow: hidden;
+ text-align: center;
+ transition: background var(--transition-speed) ease;
+ white-space: normal;
+ width: 150px;
+}
+
+body.dark-mode .fixed-width-button {
+ background: var(--btn-danger-dark-hover-bg);
+}
+
+.fixed-width-button:hover {
+ background: var(--btn-danger-hover-bg);
+}
+
+body.dark-mode .fixed-width-button:hover {
+ background: var(--btn-danger-dark-hover-bg);
+}
+
+/* Styles pour l'overlay */
+.overlay-container {
+ position: absolute;
+ top: 0;
+ left: 0;
+ z-index: 1000;
+ display: flex;
+
+ align-items: center;
+ background-color: rgba(0, 0, 0, .8);  /* Pensez à définir une variable si besoin */
+ height: 100%;
+ justify-content: center;
+ width: 100%;
+}
+
+body.dark-mode .overlay-container {
+ background-color: rgba(0, 0, 0, .9);
+}
+
+.overlay-content {
+ color: var(--text-light);
+
+ background-color: var(--background-light);
+ border-radius: 8px;
+ max-height: 80vh;
+ max-width: 500px;
+ overflow-y: auto;
+ padding: 20px;
+ width: 100%;
+}
+
+body.dark-mode .overlay-content {
+ color: var(--text-dark);
+
+ background-color: #222;
+}
+
+.overlay-content h3 {
+ top: 0;
+ z-index: 1;
+
+ background-color: var(--background-light);
+ padding-bottom: 10px;
+ padding-top: 10px;
+}
+
+body.dark-mode .overlay-content h3 {
+ background-color: #222;
+}
+
+.overlay-content .list-group {
+ padding-top: 10px;
+}
+
+/* Insertion d'un style pour le tableau en reprenant l'esprit de ClientView */
+.table-responsive {
+ overflow-x: auto;
+}
+
+.table {
+ color: var(--text-light);
+
+ background-color: var(--background-light);
+ margin-bottom: 1rem;
+ width: 100%;
+}
+
+/* Application du style DarkMode via .admin-container.dark-mode et !important */
+.admin-container.dark-mode .table {
+ color: var(--text-dark) !important;
+
+ background-color: #222 !important;
+}
+
+.table th,
+.table td {
+ border-top: 1px solid #dee2e6;
+ padding: .75rem;
+ vertical-align: middle;
+}
+
+.table-striped tbody tr:nth-of-type(odd) {
+ background-color: rgba(0, 0, 0, .05);
+}
+
+body.dark-mode .table-striped tbody tr:nth-of-type(odd) {
+ background-color: rgba(255, 255, 255, .05);
+}
+
+.admin-container.dark-mode .table-striped tbody tr:nth-of-type(odd) {
+ background-color: rgba(255, 255, 255, .05) !important;
+}
+
+.table-hover tbody tr:hover {
+ background-color: rgba(0, 0, 0, .075);
+}
+
+body.dark-mode .table-hover tbody tr:hover {
+ background-color: rgba(255, 255, 255, .075);
+}
+
+.admin-container.dark-mode .table-hover tbody tr:hover {
+ background-color: rgba(255, 255, 255, .075) !important;
+}
+
+/* ------------------------------------------------------- */
+/* Réintégration du fond gris pour l'en-tête               */
+/* ------------------------------------------------------- */
+.admin-header {
+ background-color: #e9ecef;
+ margin-bottom: -20px;
+ padding: 10px;
+}
+
+body.dark-mode .admin-header {
+ color: var(--text-dark);
+
+ background-color: #1e1e1e;
+}
+
+/* ------------------------------------------------------- */
+/* Style pour le tableau en s'inspirant de ClientView       */
+/* ------------------------------------------------------- */
+.table-responsive {
+ overflow-x: auto;
+}
+
+.table {
+ color: var(--text-light);
+
+ background-color: var(--background-light);
+ margin-bottom: 1rem;
+ width: 100%;
+}
+
+/* Application du style DarkMode en ciblant body.dark-mode .admin-container */
+body.dark-mode .admin-container .table {
+ color: var(--text-dark) !important;
+
+ background-color: #222 !important;
+}
+
+.table th,
+.table td {
+ border-top: 1px solid #dee2e6;
+ padding: .75rem;
+ vertical-align: middle;
+}
+
+.table-striped tbody tr:nth-of-type(odd) {
+ background-color: rgba(0, 0, 0, .05);
+}
+
+/* Override pour DarkMode */
+body.dark-mode .admin-container .table-striped tbody tr:nth-of-type(odd) {
+ background-color: rgba(255, 255, 255, .05) !important;
+}
+
+.table-hover tbody tr:hover {
+ background-color: rgba(0, 0, 0, .075);
+}
+
+body.dark-mode .admin-container .table-hover tbody tr:hover {
+ background-color: rgba(255, 255, 255, .075) !important;
+}
+
+/* Le conteneur des boutons est en sticky pour rester collé en bas du viewport */
+.button-container {
+ position: sticky;
+ bottom: 0;
+ z-index: 10;
+ display: flex;
+ background: var(--background-light);
+
+ flex-shrink: 0; /* Empêche la contraction */
+ gap: 1rem; /* équivalent de gap-3 */
+ justify-content: center;
+ padding: 1rem; /* équivalent de p-3 */
+ width: 100%;
+}
+
+body.dark-mode .button-container {
+ background: var(--background-dark);
+}
+
+/* La colonne de pseudo est limitée en largeur et affiche les points de suspension en cas de dépassement */
+.pseudo-column {
+ max-width: 150px;
+ overflow: hidden;
+ text-overflow: ellipsis;
+ white-space: nowrap;
+}
+
+
+.btn-closeroom {
+ display: flex;
+ flex: 1;
+ color: white;
+ background: var(--btn-danger-bg);
+
+ align-items: center;
+ border: none;
+ border-radius: 5px;
+ cursor: pointer;
+ justify-content: center;
+ margin: -25px 0 auto 0;
+ overflow: hidden;
+ padding: 15px; /* Contrôle de la hauteur verticale */
+ text-align: center;
+ transition: background var(--transition-speed) ease;
+ white-space: normal;
+ width: 100%;
+}
+
+body.dark-mode .btn-closeroom {
+ background: var(--btn-danger-dark-hover-bg);
+}
+
+.btn-closeroom:hover {
+ background: var(--btn-danger-hover-bg);
+}
+
+body.dark-mode .btn-closeroom:hover {
+ background: var(--btn-danger-dark-hover-bg);
+}
+
+/* --- Personnalisation de la modal en dark mode --- */
+
+/* Harmonisation des couleurs dans le header et le footer de la modal */
+body.dark-mode .modal-header,
+body.dark-mode .modal-footer {
+ color: var(--text-dark);
+
+ background-color: var(--background-dark);
+ border-color: rgba(255, 255, 255, .2);
+}
+
+/* Amélioration de l'encadrement et de la lisibilité du contenu de la modal */
+body.dark-mode .modal-content {
+ color: var(--text-dark);
+
+ background-color: var(--background-dark);
+ border: 1px solid rgba(255, 255, 255, .2);
+}
+
+/* Pour s'assurer que le titre reste lisible */
+body.dark-mode .modal-title {
+ color: var(--text-dark);
+}
+
+/* Si besoin, ajuster l'overlay de la modal en dark mode */
+body.dark-mode .modal {
+ background-color: rgba(0, 0, 0, .6); /* Légèrement moins opaque pour le dark mode */
+}
+
+/* Correction du fond et des textes des modales en Dark Mode */
+body.dark-mode .modal-content {
+ color: var(--text-dark) !important;
+
+ background-color: var(--background-dark) !important;
+ border: 1px solid rgba(255, 255, 255, .2);
+}
+
+body.dark-mode .modal-header,
+body.dark-mode .modal-footer {
+ color: var(--text-dark) !important;
+
+ background-color: var(--background-dark) !important;
+ border-color: rgba(255, 255, 255, .2);
+}
+
+body.dark-mode .modal-title {
+ color: var(--text-dark) !important;
+}
+
+body.dark-mode .modal-body {
+ color: var(--text-dark) !important;
+}
+
+/* Optionnel : ajuster les alertes dans les modales */
+body.dark-mode .modal .alert {
+ color: var(--text-dark) !important;
+
+ background-color: rgba(255, 255, 255, .1);
+ border-color: rgba(255, 255, 255, .2);
+}
+
+/* Correction pour le texte text-muted dans les modales en dark mode */
+body.dark-mode .modal-body .text-muted,
+body.dark-mode .modal-body p.text-muted {
+ color: #ccc !important;  /* Ajustez cette valeur si nécessaire */
+}

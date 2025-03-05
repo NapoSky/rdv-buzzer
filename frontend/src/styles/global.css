@@ -1,0 +1,223 @@
+/* Imports fondamentaux */
+@import './variables.css';
+/* Déclaration des variables CSS */
+.no-scroll {
+    overflow: hidden;
+}
+
+/* Styles communs pour les boutons Danger */
+.btn-danger {
+    padding-left: 15px;
+    padding-right: 15px;
+    background-color: var(--btn-danger-bg);
+    color: #fff;
+    border-color: var(--btn-danger-border);
+}
+
+.btn-danger:hover {
+    background-color: var(--btn-danger-hover-bg);
+    border-color: var(--btn-danger-hover-border);
+    color: #fff;
+}
+
+.btn-danger:focus {
+    box-shadow: 0 0 0 0.2rem rgba(220, 53, 69, 0.5);
+}
+
+/* Styles pour le thème */
+span.theme-text {
+    transition: color var(--transition-speed) ease;
+}
+
+.theme-text {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.theme-emoji {
+    font-size: 0.9em;
+    margin-left: 4px;
+}
+
+/* Styles de base pour le body */
+body {
+  background-color: var(--background-light);
+  color: var(--text-light);
+  transition: background-color var(--transition-speed), color var(--transition-speed);
+}
+
+/* Utilisation des variables pour le bouton grey */
+.btn-grey {
+    background-color: var(--btn-grey-bg);
+    border-color: var(--btn-grey-border);
+    color: #fff;
+    transition: background-color var(--transition-speed) ease;
+}
+
+.btn-grey:hover {
+    background-color: var(--btn-grey-hover-bg);
+    border-color: var(--btn-grey-hover-border);
+    color: #fff;
+}
+
+
+/* Bouton warning */
+.btn-warning {
+    background-color: var(--btn-warning-bg);
+    border-color: var(--btn-warning-border);
+    color: var(--btn-warning-text);
+    transition: background-color var(--transition-speed) ease;
+}
+
+.btn-warning:hover {
+  background-color: #e0a800; /* version plus foncée du jaune */
+  border-color: #d39e00;
+  color: var(--btn-warning-text);
+}
+
+/* Bouton success (utilisé pour le bouton "Reprendre/En Pause") */
+.btn-success {
+    background-color: var(--btn-success-bg);
+    border-color: var(--btn-success-border);
+    color: #fff;
+    transition: background-color var(--transition-speed) ease;
+}
+
+.btn-success:hover {
+    background-color: var(--btn-success-hover-bg);
+    border-color: var(--btn-success-hover-border);
+    color: #fff;
+}
+
+/* Style de base pour la modal */
+.modal {
+  display: none; /* La modal est cachée par défaut */
+  position: fixed;
+  z-index: 1050;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  overflow: auto;
+  background-color: rgba(0, 0, 0, 0.5); /* Overlay semi-transparent */
+}
+
+/* Affichage de la modal lorsqu'elle doit être visible */
+.modal.show {
+  display: block;
+}
+
+/* Conteneur de la modal centré */
+.modal-dialog {
+  position: relative;
+  margin: 1.75rem auto;
+  max-width: 500px;
+}
+
+/* Contenu de la modal */
+.modal-content {
+  position: relative;
+  background-color: var(--background-light);
+  color: var(--text-light);
+  border: 1px solid rgba(0, 0, 0, 0.2);
+  border-radius: 0.3rem;
+  box-shadow: 0 5px 15px rgba(0, 0, 0, 0.5);
+  padding: 1rem;
+}
+
+/* Titres et zones de pied de modal */
+.modal-header,
+.modal-footer {
+  display: flex;
+  align-items: center;
+  padding: 0.75rem 1rem;
+}
+
+/* Modal header */
+.modal-header {
+  border-bottom: 1px solid #e9ecef;
+  justify-content: space-between;
+}
+
+/* Modal footer */
+.modal-footer {
+  border-top: 1px solid #e9ecef;
+  justify-content: flex-end;
+}
+
+/* Conteneur du classement scrollable */
+.ranking-scroll {
+  flex: 1;
+  /*max-height: 300px;*/
+  overflow-y: auto;
+  background-color: var(--background-light);
+  color: var(--text-light);
+}
+
+
+/* ======= STYLISATION DES CELLULES ======= */
+/* Light mode : Contraste amélioré */
+.ranking-scroll table td,
+.ranking-scroll table th {
+  background-color: var(--background-light);
+  color: var(--text-light);
+}
+
+/* ======= SURVOL DES LIGNES ======= */
+/* Light mode : survol plus marqué */
+.ranking-scroll .table-hover tbody tr:hover {
+  background-color: rgba(0, 0, 0, 0.1);
+}
+
+/* ======= DÉMARQUAGE DES LIGNES ======= */
+/* Light mode : Alternance plus visible */
+.ranking-scroll .table-striped tbody tr:nth-of-type(odd) {
+  background-color: rgba(0, 0, 0, 0.05); /* Gris léger */
+}
+
+.ranking-scroll .table-striped tbody tr:nth-of-type(even) {
+  background-color: rgba(255, 255, 255, 0.7); /* Blanc légèrement teinté */
+}
+
+/* ======= MISE EN AVANT DU JOUEUR COURANT ======= */
+/* Pour le mode light */
+.ranking-scroll .table-striped tbody tr.current-player td {
+  background-color: rgba(40, 167, 70, 0.3) !important;
+}
+/* ======= STYLES DE SIGNATURE ======= */
+.text-light-muted {
+  color: rgba(255, 255, 255, 0.6) !important;
+}
+
+.link-light {
+  color: rgba(255, 255, 255, 0.8) !important;
+  text-decoration: none;
+}
+
+.link-light:hover {
+  color: rgba(255, 255, 255, 1) !important;
+  text-decoration: underline;
+}
+
+.link-dark {
+  color: rgba(0, 0, 0, 0.8) !important;
+  text-decoration: none;
+}
+
+.link-dark:hover {
+  color: rgba(0, 0, 0, 1) !important;
+  text-decoration: underline;
+}
+
+/* ======= STYLES DE SIGNATURE ======= */
+.sticky-footer {
+  position: fixed;
+  bottom: 0;
+  left: 0;
+  width: 100%;
+  background: inherit;
+  padding: 0.5rem 0;  /* Réduit aussi le padding */
+  z-index: 1000;
+  font-size: 0.8rem;  /* Ajout de cette ligne */
+}

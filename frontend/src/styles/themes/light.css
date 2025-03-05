@@ -1,0 +1,11 @@
+/* Thème clair (par défaut) */
+/*:root {
+    /* Toutes les variables sont déjà définies dans variables.css */
+/*  }
+  
+/* En mode light, pas de modification (on affiche l’icône par défaut) */
+body:not(.dark-mode) input[type="date"]::-webkit-calendar-picker-indicator {
+ filter: none;
+}
+/* Ce fichier peut rester vide ou contenir des styles spécifiques au thème clair
+     qui ne seraient pas déjà dans global.css */

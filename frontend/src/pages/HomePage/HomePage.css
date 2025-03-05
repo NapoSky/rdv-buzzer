@@ -1,0 +1,61 @@
+/* Styles spécifiques pour la page d'accueil */
+.home-container {
+ padding: 20px;
+}
+
+.card {
+ background-color: var(--background-light);
+ border: 1px solid rgba(0,0,0,.125);
+ border-radius: var(--border-radius);
+ box-shadow: 0 4px 6px rgba(0,0,0,.1);
+ margin-bottom: 20px;
+ padding: 15px;
+}
+
+.admin-card {
+ border-top: 1px solid #eee;
+ margin-top: 20px;
+ padding-top: 20px;
+}
+
+.home-title {
+ margin-bottom: 20px;
+ text-align: center;
+}
+
+.form-group {
+ margin-bottom: 15px;
+}
+
+.form-label {
+ display: block;
+
+ font-weight: 500;
+ margin-bottom: 5px;
+}
+
+.form-control {
+ border: 1px solid #ced4da;
+ border-radius: var(--border-radius);
+ padding: 10px;
+ width: 100%;
+}
+
+.form-error {
+ color: var(--danger);
+
+ font-size: .875rem;
+ margin-top: 5px;
+}
+
+.action-buttons {
+ display: flex;
+
+ justify-content: space-between;
+ margin-top: 15px;
+}
+
+.rejoin-btn {
+ margin-top: 10px;
+ width: 100%;
+}
