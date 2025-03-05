@@ -55,8 +55,6 @@ cp docker-compose.example.yml docker-compose.yml
 docker-compose up -d --build
 ```
 
-...existing code...
-
 ## Architecture Globale
 1. **Frontend** gère l’interface utilisateur et communique avec le **Backend** via HTTP et WebSockets.  
 2. **Backend** assure la logique métier (buzzer, sessions de quiz, scores) et expose des routes API ainsi qu’un serveur WebSocket.
