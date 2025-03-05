@@ -243,10 +243,27 @@ function AdminRoomView() {
 
   // Fonctions de gestion de Spotify
   const handleConnectSpotify = () => {
-    localStorage.setItem('spotify_redirect', window.location.pathname + window.location.search);
+    // Extraire le domaine de base à partir de l'URL frontend
+    const frontendUrl = window.location.origin;
+    const url = new URL(frontendUrl);
+    
+    // Extraire le domaine de base (ex: example.com)
+    // Cette méthode fonctionne pour example.com, sub.example.com, etc.
+    const domainParts = url.hostname.split('.');
+    const baseDomain = domainParts.length >= 2 ?
+      domainParts.slice(-(domainParts.length === 2 || domainParts[domainParts.length - 2].length <= 2 ? 2 : 3)).join('.') :
+      url.hostname;
+    
+    // Stocker le chemin de redirection dans un cookie avec le domaine extrait
+    // Ne pas ajouter le préfixe "." si on est sur localhost
+    const cookieDomain = url.hostname === 'localhost' ? '' : `.${baseDomain}`;
+    const cookieOptions = `path=/` + (cookieDomain ? `; domain=${cookieDomain}` : '');
+    
+    document.cookie = `spotify_redirect=${encodeURIComponent(window.location.pathname + window.location.search)}; ${cookieOptions}`;
+    
+    // Authentification Spotify avec le roomCode
     authenticateSpotify(roomCode);
   };
-
   const handleDisconnectSpotify = async () => {
     try {
       const result = await disconnectSpotify(roomCode);
