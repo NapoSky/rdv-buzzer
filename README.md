@@ -49,8 +49,9 @@ Ce dépôt contient deux applications principales qui forment un système comple
 
 ## Utilisation "out-of-the-box"
 ### Déploiement via Docker Compose
-Vous disposez d’un fichier `docker-compose.yml` à la racine du dépôt. Pour lancer l’application grâce à Docker Compose, placez-vous dans le répertoire racine, puis exécutez :
+Vous disposez d’un fichier `docker-compose.example.yml` à la racine du dépôt. Pour lancer l’application grâce à Docker Compose, placez-vous dans le répertoire racine, puis exécutez :
 ```bash
+cp docker-compose.example.yml docker-compose.yml
 docker-compose up -d --build
 ```
 
