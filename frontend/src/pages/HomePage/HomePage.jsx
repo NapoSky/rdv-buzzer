@@ -4,17 +4,55 @@ import { useNavigate } from 'react-router-dom';
 import { AdminAuthContext } from '../../contexts/AdminAuthContext';
 import { ThemeContext } from '../../contexts/ThemeContext';
 import './HomePage.css';  // Import du CSS local
+import { useNotification } from '../../contexts/NotificationContext';
 
-const ADMIN_PASSWORD = process.env.REACT_APP_ADMIN_PASSWORD;
+const ADMIN_PASSWORD = import.meta.env.VITE_ADMIN_PASSWORD;
+
+// Modifier cette fonction en dehors du composant HomePage
+const checkRoomExists = async (roomCode, error, setRoomCodeFn = null) => {
+  try {
+    const BACKEND_URL = import.meta.env.VITE_BACKEND_URL;
+    const APP_SECRET = import.meta.env.VITE_APP_SECRET;
+    
+    const response = await fetch(`${BACKEND_URL}/api/rooms/list`, {
+      headers: {
+        'Authorization': `Bearer ${APP_SECRET}`
+      }
+    });
+    
+    if (!response.ok) {
+      error('Erreur lors de la vérification de la salle');
+      return false;
+    }
+    
+    const rooms = await response.json();
+    
+    // Vérifier si la salle existe dans la liste
+    if (!rooms[roomCode]) {
+      error('La salle n\'existe pas');
+      localStorage.removeItem('roomCode');
+      // Si une fonction setRoomCode est fournie, effacer l'input
+      if (setRoomCodeFn) {
+        setRoomCodeFn('');
+      }
+      return false;
+    }
+    
+    return true;
+  } catch (err) {
+    error('Erreur de connexion au serveur');
+    return false;
+  }
+};
 
 function HomePage({ setActiveRoomCode }) {
   const navigate = useNavigate();
   const [roomCode, setRoomCode] = useState('');
   const [pseudo, setPseudo] = useState('');
   const [adminPassword, setAdminPassword] = useState('');
-  const [error, setError] = useState('');
   const { isAdminAuthenticated, setIsAdminAuthenticated } = useContext(AdminAuthContext);
   const { isDarkMode } = useContext(ThemeContext);
+  const { info, warn, error, success } = useNotification();
 
   // Récupérer les valeurs de roomCode et pseudo depuis le localStorage si le client s'est déjà connecté auparavant
   useEffect(() => {
@@ -27,50 +65,85 @@ function HomePage({ setActiveRoomCode }) {
   }, []);
 
   // Rejoindre en tant que client
-  const handleJoinRoom = () => {
-    if (roomCode && pseudo) {
-      // Vérifier si le joueur a été kické de cette salle auparavant
-      const wasKicked = localStorage.getItem('kicked_from_' + roomCode) === 'true';
-      
-      if (wasKicked) {
-        setError('Vous avez été expulsé de cette salle par l\'admin et ne pouvez pas la rejoindre à nouveau.');
-        return;
-      }
-      
-      // Le reste du code reste inchangé...
-      localStorage.setItem('roomCode', roomCode);
-      localStorage.setItem('pseudo', pseudo);
-      
-      // Si l'on rejoint une salle, on n'est plus admin
-      localStorage.removeItem('localAdminAuthenticated');
-      
-      // Mettre à jour l'état global de la salle active
-      setActiveRoomCode(roomCode);
-      
-      // Rediriger vers la page client
-      navigate(`/client?roomCode=${roomCode}&pseudo=${pseudo}`);
-    } else {
-      setError('Le code de la salle et votre pseudo doivent être renseignés.');
+  const handleJoinRoom = async () => {
+    // Vérifier les champs séparément
+    if (!roomCode && !pseudo) {
+      info('Le code de la salle et votre pseudo doivent être renseignés.');
+      return;
     }
+    
+    if (!roomCode) {
+      info('Veuillez saisir un code de salle.');
+      return;
+    }
+    
+    if (!pseudo) {
+      info('Veuillez saisir un pseudo.');
+      return;
+    }
+    
+    // Vérifier si le joueur a été kické de cette salle auparavant
+    const wasKicked = localStorage.getItem('kicked_from_' + roomCode) === 'true';
+    
+    if (wasKicked) {
+      warn('Vous avez été expulsé de cette salle par l\'admin et ne pouvez pas la rejoindre à nouveau.');
+      return;
+    }
+
+    // Vérifier l'existence de la salle
+    const roomExists = await checkRoomExists(roomCode, error, setRoomCode);
+    
+    if (!roomExists) {
+      return;
+    }
+    
+    // La salle existe, on peut continuer
+    localStorage.setItem('roomCode', roomCode);
+    localStorage.setItem('pseudo', pseudo);
+    
+    // Si l'on rejoint une salle, on n'est plus admin
+    localStorage.removeItem('localAdminAuthenticated');
+    
+    // Mettre à jour l'état global de la salle active
+    setActiveRoomCode(roomCode);
+    
+    // Rediriger vers la page client
+    navigate(`/client?roomCode=${roomCode}&pseudo=${pseudo}`);
   };
   
   // Permettre de revenir dans une salle si les informations sont déjà enregistrées
-  const handleRejoinRoom = () => {
+  const handleRejoinRoom = async () => {
     const savedRoomCode = localStorage.getItem('roomCode');
     const savedPseudo = localStorage.getItem('pseudo');
     
     // Vérifier si l'utilisateur a été kické de cette salle
     const wasKicked = localStorage.getItem('kicked_from_' + savedRoomCode) === 'true';
     
-    if (savedRoomCode && savedPseudo && !wasKicked) {
-      setActiveRoomCode(savedRoomCode);
-      navigate(`/client?roomCode=${savedRoomCode}&pseudo=${savedPseudo}`);
-    } else if (wasKicked) {
-      setError('Vous avez été expulsé de cette salle par l\'admin.');
+    if (!savedRoomCode || !savedPseudo) {
+      error('Pas d\'informations de connexion sauvegardées');
+      return;
+    }
+    
+    if (wasKicked) {
+      error('Vous avez été expulsé de cette salle par l\'admin.');
       // Nettoyer pour éviter de futurs problèmes
       localStorage.removeItem('roomCode');
       localStorage.removeItem('pseudo');
+      return;
     }
+
+    // Vérifier si la salle existe toujours
+    const roomExists = await checkRoomExists(savedRoomCode, error, setRoomCode);
+    
+    if (!roomExists) {
+      localStorage.removeItem('roomCode');
+      localStorage.removeItem('pseudo');
+      return;
+    }
+    
+    // La salle existe, on peut continuer
+    setActiveRoomCode(savedRoomCode);
+    navigate(`/client?roomCode=${savedRoomCode}&pseudo=${savedPseudo}`);
   };
 
   // Connexion admin
@@ -79,12 +152,12 @@ function HomePage({ setActiveRoomCode }) {
       localStorage.setItem('localAdminAuthenticated', 'true');
       setIsAdminAuthenticated(true);
       setAdminPassword('');
-      setError('');
+      success('Connexion admin réussie!');
       // Si on est admin, on n'est plus client
       localStorage.removeItem('roomCode');
       localStorage.removeItem('pseudo');
     } else {
-      setError('Mot de passe incorrect');
+      error('Mot de passe incorrect');
     }
   };
 
@@ -96,22 +169,23 @@ function HomePage({ setActiveRoomCode }) {
   };
 
   return (
-    <div className={`container ${isDarkMode ? 'dark-mode' : ''}`}>
-      <h1 className="mt-3 text-center fst-italic">Prêt(e) pour un blindtest ? 😏</h1>
+    <div className={`home-container ${isDarkMode ? 'dark-mode' : ''}`}>
+      <h1 className="home-title">Prêt(e) pour un blindtest ? 😏</h1>
       
-      <div className="card my-3 p-3">
+      <div className="card">
         <h2>Rejoindre une salle</h2>
-        <div className="mb-3">
-          <label>Code de la salle :</label>
+        <div className="form-group">
+          <label className="form-label">Code de la salle :</label>
           <input
             type="text"
             className="form-control"
+            maxLength={5}  
             value={roomCode}
             onChange={(e) => setRoomCode(e.target.value.toUpperCase())}
           />
         </div>
-        <div className="mb-3">
-          <label>Pseudo :</label>
+        <div className="form-group">
+          <label className="form-label">Pseudo :</label>
           <input
             type="text"
             placeholder="30 caractères max"  
@@ -130,21 +204,15 @@ function HomePage({ setActiveRoomCode }) {
         
         {localStorage.getItem('roomCode') && localStorage.getItem('pseudo') && (
           <button 
-            className="btn btn-secondary mt-2" 
+            className="btn btn-secondary rejoin-btn" 
             onClick={handleRejoinRoom}
           >
             Revenir dans la salle où j'étais connecté
           </button>
         )}
-        
-        {/* Affichage de l'erreur */}
-        {error && <p className="text-danger mt-2">{error}</p>}
       </div>
 
-      <hr />
-
-      {/* Zone Admin */}
-      <div className="card my-3 p-3">
+      <div className="card admin-card">
         <h2>La cave du patron</h2>
         {!isAdminAuthenticated ? (
           <div>
@@ -174,7 +242,6 @@ function HomePage({ setActiveRoomCode }) {
                 Se connecter en tant qu'admin
               </button>
             </form>
-            {error && <p className="text-danger mt-2">{error}</p>}
           </div>
         ) : (
           <div>
@@ -186,9 +253,8 @@ function HomePage({ setActiveRoomCode }) {
         )}
       </div>
 
-      {/* Signature */}
-      <footer className="text-center">
-          {/* Lien Instagram ajouté */}
+      <footer className="page-footer">
+        {/* Lien Instagram ajouté */}
         <p className={`mb-0 fst-italic ${isDarkMode ? 'text-light-muted' : 'text-muted'}`}>
           Suivez le RDV sur{' '}
           <a

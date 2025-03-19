@@ -1,0 +1,83 @@
+/* Thème clair (par défaut) - Complémentaire au dark.css */
+
+/* Container avec fond adapté au mode clair */
+body:not(.dark-mode) {
+  background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
+  color: var(--text-light);
+}
+
+/* Mode clair - fond et navbar */
+body:not(.dark-mode) .navbar {
+  background: transparent;
+  border: none;
+}
+
+body:not(.dark-mode) .navbar::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  backdrop-filter: blur(10px);
+  background: rgba(255, 255, 255, 0.1);
+  z-index: -1;
+}
+
+/* Style spécifique pour les cartes en mode clair */
+body:not(.dark-mode) .modern-card,
+body:not(.dark-mode) .card {
+  background: rgba(255, 255, 255, 0.7);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+  box-shadow: 
+    0 10px 30px rgba(0, 0, 0, 0.04),
+    0 1px 1px rgba(0, 0, 0, 0.02);
+}
+
+/* Boutons adaptés au mode clair */
+body:not(.dark-mode) .btn-primary {
+  background: linear-gradient(135deg, var(--primary), rgba(var(--primary-rgb), 0.8));
+  box-shadow: 0 4px 12px rgba(var(--primary-rgb), 0.2);
+}
+
+body:not(.dark-mode) .btn-primary:hover {
+  box-shadow: 0 8px 20px rgba(var(--primary-rgb), 0.3);
+}
+
+body:not(.dark-mode) .btn-secondary {
+  background: linear-gradient(135deg, var(--secondary), rgba(var(--secondary-rgb), 0.9));
+  box-shadow: 0 4px 12px rgba(var(--secondary-rgb), 0.15);
+}
+
+body:not(.dark-mode) .btn-secondary:hover {
+  box-shadow: 0 8px 20px rgba(var(--secondary-rgb), 0.25);
+}
+
+/* Style spécifique pour les inputs en mode clair */
+body:not(.dark-mode) .form-control {
+  background: rgba(255, 255, 255, 0.9);
+  border: 1px solid rgba(0, 0, 0, 0.06);
+  color: var(--text-light);
+}
+
+body:not(.dark-mode) .form-control:focus {
+  border-color: var(--primary);
+  box-shadow: 0 0 0 3px rgba(var(--primary-rgb), 0.15);
+  background: white;
+}
+
+/* Ajustement pour les textes et labels en mode clair */
+body:not(.dark-mode) .form-label {
+  color: var(--text-light);
+}
+
+/* En mode light, pas de modification (on affiche l'icône par défaut) */
+body:not(.dark-mode) input[type="date"]::-webkit-calendar-picker-indicator {
+  filter: none;
+}
+
+/* Style pour le fond de la page d'accueil */
+body:not(.dark-mode) .home-container::before {
+  background: radial-gradient(circle at top center, rgba(var(--primary-rgb), 0.07), transparent 70%);
+}

@@ -21,7 +21,7 @@
 /* Version dark mode */
 body.dark-mode .admin-container {
   color: var(--text-dark);
-  background: rgba(30, 30, 40, 0.75);
+  background: rgba(30, 30, 35, 0.75);
   
   box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2), 0 1px 2px rgba(255, 255, 255, 0.03);
 }
@@ -44,16 +44,12 @@ body.dark-mode .admin-container {
   left: 0;
   height: 4px;
   width: 100%;
-  background: linear-gradient(90deg, #007bff, rgba(0, 123, 255, 0.4));
+  background: linear-gradient(90deg, var(--primary), rgba(var(--primary-rgb), 0.4));
   border-radius: 4px 4px 0 0;
 }
 
 body.dark-mode .admin-header {
-  background: rgba(30, 30, 40, 0.7);
-}
-
-body.dark-mode .admin-header::before {
-  background: linear-gradient(90deg, #40c9ff, rgba(64, 201, 255, 0.4));
+  background: rgba(20, 20, 25, 0.7);
 }
 
 /* Container de liste des joueurs avec style moderne */
@@ -71,7 +67,7 @@ body.dark-mode .admin-header::before {
 }
 
 body.dark-mode .player-list-container {
-  background: rgba(30, 30, 40, 0.5);
+  background: rgba(20, 20, 25, 0.5);
 }
 
 /* Tableau stylisé */
@@ -87,7 +83,7 @@ body.dark-mode .player-list-container {
 }
 
 body.dark-mode .ranking-scroll {
-  background: rgba(30, 30, 40, 0.7);
+  background: rgba(30, 30, 35, 0.7);
 }
 
 /* Personnalisation de la scrollbar */
@@ -101,17 +97,12 @@ body.dark-mode .ranking-scroll {
 }
 
 .ranking-scroll::-webkit-scrollbar-thumb {
-  background: rgba(0, 123, 255, 0.3);
+  background: rgba(var(--primary-rgb), 0.3);
   border-radius: 10px;
 }
 
 body.dark-mode .ranking-scroll::-webkit-scrollbar-thumb {
-  background: rgba(64, 201, 255, 0.5);
-  background: rgba(64, 201, 255, 0.5);
-}
-
-body.dark-mode .ranking-scroll::-webkit-scrollbar-track {
-  background: rgba(30, 30, 40, 0.5);
+  background: rgba(var(--primary-rgb), 0.5);
 }
 
 /* Tableau moderne */
@@ -124,14 +115,13 @@ body.dark-mode .ranking-scroll::-webkit-scrollbar-track {
 }
 
 body.dark-mode .table {
-  color: #e0e0e0 !important;
-  background-color: rgba(30, 30, 40, 0.5) !important;
+  color: var(--text-dark);
 }
 
 .table th {
-  background: rgba(0, 123, 255, 0.05);
+  background: rgba(var(--primary-rgb), 0.05);
   
-  border-bottom: 2px solid rgba(0, 123, 255, 0.1);
+  border-bottom: 2px solid rgba(var(--primary-rgb), 0.1);
   font-weight: 600;
   padding: 1rem;
   position: sticky;
@@ -141,9 +131,8 @@ body.dark-mode .table {
 }
 
 body.dark-mode .table th {
-  background: rgba(64, 201, 255, 0.15);
-  border-bottom: 2px solid rgba(64, 201, 255, 0.2);
-  color: #e0e0e0;
+  background: rgba(var(--primary-rgb), 0.15);
+  border-bottom: 2px solid rgba(var(--primary-rgb), 0.2);
 }
 
 .table td {
@@ -162,18 +151,18 @@ body.dark-mode .table td {
 }
 
 body.dark-mode .table-striped tbody tr:nth-of-type(odd) {
-  background-color: rgba(64, 201, 255, 0.03) !important;
+  background-color: rgba(255, 255, 255, 0.03);
 }
 
 /* Effet de survol amélioré */
 .table-hover tbody tr:hover {
-  background-color: rgba(0, 123, 255, 0.05);
+  background-color: rgba(var(--primary-rgb), 0.05);
   transform: translateY(-1px);
   transition: all 0.2s ease;
 }
 
 body.dark-mode .table-hover tbody tr:hover {
-  background-color: rgba(64, 201, 255, 0.1) !important;
+  background-color: rgba(var(--primary-rgb), 0.1);
 }
 
 /* Zone des boutons stylisée */
@@ -197,8 +186,8 @@ body.dark-mode .table-hover tbody tr:hover {
 }
 
 body.dark-mode .button-container {
-  background: rgba(30, 30, 40, 0.8);
-  border-top: 1px solid rgba(64, 201, 255, 0.1);
+  background: rgba(20, 20, 25, 0.8);
+  border-top: 1px solid rgba(255, 255, 255, 0.05);
 }
 
 /* Si vous souhaitez forcer le thème dark sur certains composants : */
@@ -248,32 +237,27 @@ body.dark-mode .fixed-bottom {
   
   align-items: center;
   border: none;
-  border-radius: 8px;
+  border-radius: 5px;
   cursor: pointer;
   height: 100px;
   justify-content: center;
   overflow: hidden;
   text-align: center;
-  transition: all 0.2s ease;
+  transition: background var(--transition-speed) ease;
   white-space: normal;
   width: 150px;
-  box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
 }
 
 body.dark-mode .fixed-width-button {
   background: var(--btn-danger-dark-hover-bg);
-  box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2);
 }
 
 .fixed-width-button:hover {
   background: var(--btn-danger-hover-bg);
-  transform: translateY(-2px);
-  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.15);
 }
 
 body.dark-mode .fixed-width-button:hover {
   background: var(--btn-danger-dark-hover-bg);
-  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.3);
 }
 
 /* Styles pour l'overlay */
@@ -465,7 +449,7 @@ body.dark-mode .button-container {
   display: flex;
   flex: 1;
   color: white;
-  background: linear-gradient(135deg, #dc3545, #c82333);
+  background: var(--btn-danger-bg);
   
   align-items: center;
   border: none;
@@ -479,23 +463,18 @@ body.dark-mode .button-container {
   transition: background var(--transition-speed) ease;
   white-space: normal;
   width: 100%;
-  box-shadow: 0 4px 12px rgba(220, 53, 69, 0.3);
 }
 
 body.dark-mode .btn-closeroom {
-  background: linear-gradient(135deg, #e74c3c, #c0392b);
-  box-shadow: 0 4px 12px rgba(231, 76, 60, 0.3);
+  background: var(--btn-danger-dark-hover-bg);
 }
 
 .btn-closeroom:hover {
-  background: linear-gradient(135deg, #c82333, #bd2130);
-  transform: translateY(-2px);
-  box-shadow: 0 6px 16px rgba(220, 53, 69, 0.4);
+  background: var(--btn-danger-hover-bg);
 }
 
 body.dark-mode .btn-closeroom:hover {
-  background: linear-gradient(135deg, #c0392b, #a93226);
-  box-shadow: 0 6px 16px rgba(231, 76, 60, 0.4);
+  background: var(--btn-danger-dark-hover-bg);
 }
 
 /* --- Personnalisation de la modal en dark mode --- */
@@ -513,8 +492,8 @@ body.dark-mode .modal-footer {
 body.dark-mode .modal-content {
   color: var(--text-dark);
   
-  background-color: #2a2a35 !important;
-  border: 1px solid rgba(64, 201, 255, 0.2);
+  background-color: var(--background-dark);
+  border: 1px solid rgba(255, 255, 255, .2);
 }
 
 /* Pour s'assurer que le titre reste lisible */
@@ -531,16 +510,16 @@ body.dark-mode .modal {
 body.dark-mode .modal-content {
   color: var(--text-dark) !important;
   
-  background-color: #2a2a35 !important;
-  border: 1px solid rgba(64, 201, 255, 0.2);
+  background-color: var(--background-dark) !important;
+  border: 1px solid rgba(255, 255, 255, .2);
 }
 
 body.dark-mode .modal-header,
 body.dark-mode .modal-footer {
   color: var(--text-dark) !important;
   
-  background-color: #2a2a35 !important;
-  border-color: rgba(64, 201, 255, 0.2);
+  background-color: var(--background-dark) !important;
+  border-color: rgba(255, 255, 255, .2);
 }
 
 body.dark-mode .modal-title {
@@ -555,14 +534,14 @@ body.dark-mode .modal-body {
 body.dark-mode .modal .alert {
   color: var(--text-dark) !important;
   
-  background-color: rgba(64, 201, 255, 0.1);
-  border-color: rgba(64, 201, 255, 0.2);
+  background-color: rgba(255, 255, 255, .1);
+  border-color: rgba(255, 255, 255, .2);
 }
 
 /* Correction pour le texte text-muted dans les modales en dark mode */
 body.dark-mode .modal-body .text-muted,
 body.dark-mode .modal-body p.text-muted {
-  color: #aaa !important;  /* Ajustez cette valeur si nécessaire */
+  color: #ccc !important;  /* Ajustez cette valeur si nécessaire */
 }
 
 .spotify-button {
@@ -611,184 +590,5 @@ body.dark-mode .modal-body p.text-muted {
 /* Effet de pression sur appareils tactiles */
 .spotify-button:active {
   transform: scale(0.95);
-  background-color: rgba(0, 123, 255, 0.15);
-}
-
-body.dark-mode .spotify-button:hover {
-  background: rgba(64, 201, 255, 0.2);
-}
-
-body.dark-mode .spotify-button:active {
-  background-color: rgba(64, 201, 255, 0.3);
-}
-
-/* Harmonisation des couleurs avec PublicRanking - accent sur les bleus en mode sombre */
-
-/* Arrière-plans et conteneurs */
-body.dark-mode .admin-container {
-  background: rgba(30, 30, 40, 0.75);
-  color: var(--text-dark);
-}
-
-body.dark-mode .admin-header {
-  background: rgba(30, 30, 40, 0.7);
-}
-
-body.dark-mode .player-list-container {
-  background: rgba(30, 30, 40, 0.5);
-}
-
-body.dark-mode .ranking-scroll {
-  background: rgba(30, 30, 40, 0.7);
-}
-
-/* Tableau */
-body.dark-mode .table {
-  color: #e0e0e0 !important;
-  background-color: rgba(30, 30, 40, 0.5) !important;
-}
-
-body.dark-mode .table th {
-  background: rgba(64, 201, 255, 0.15);
-  border-bottom: 2px solid rgba(64, 201, 255, 0.2);
-  color: #e0e0e0;
-}
-
-body.dark-mode .table td {
-  border-bottom: 1px solid rgba(255, 255, 255, 0.05);
-}
-
-body.dark-mode .table-striped tbody tr:nth-of-type(odd) {
-  background-color: rgba(64, 201, 255, 0.03) !important;
-}
-
-body.dark-mode .table-hover tbody tr:hover {
-  background-color: rgba(64, 201, 255, 0.1) !important;
-}
-
-/* Actions et boutons */
-body.dark-mode .btn-success {
-  background-color: rgba(64, 201, 255, 0.8);
-  border-color: rgba(64, 201, 255, 0.9);
-}
-
-body.dark-mode .btn-success:hover {
-  background-color: rgba(64, 201, 255, 0.9);
-  border-color: rgba(64, 201, 255, 1);
-}
-
-body.dark-mode .btn-danger {
-  background-color: #e74c3c;
-  border-color: #c0392b;
-}
-
-body.dark-mode .btn-outline-secondary {
-  color: #40c9ff;
-  border-color: rgba(64, 201, 255, 0.5);
-}
-
-body.dark-mode .btn-outline-secondary:hover {
-  background-color: rgba(64, 201, 255, 0.1);
-  border-color: rgba(64, 201, 255, 0.8);
-  color: #40c9ff;
-}
-
-/* Zone des boutons */
-body.dark-mode .button-container {
-  background: rgba(30, 30, 40, 0.8);
-  border-top: 1px solid rgba(64, 201, 255, 0.1);
-}
-
-/* Scrollbar */
-body.dark-mode .ranking-scroll::-webkit-scrollbar-thumb {
-  background: rgba(64, 201, 255, 0.5);
-}
-
-body.dark-mode .ranking-scroll::-webkit-scrollbar-track {
-  background: rgba(30, 30, 40, 0.5);
-}
-
-/* Bouton Spotify */
-body.dark-mode .spotify-button:hover {
-  background: rgba(64, 201, 255, 0.2);
-}
-
-body.dark-mode .spotify-button:active {
-  background-color: rgba(64, 201, 255, 0.3);
-}
-
-/* Modales */
-body.dark-mode .modal-content {
-  background-color: #2a2a35 !important;
-  border: 1px solid rgba(64, 201, 255, 0.2);
-}
-
-body.dark-mode .modal-header,
-body.dark-mode .modal-footer {
-  background-color: #2a2a35 !important;
-  border-color: rgba(64, 201, 255, 0.2);
-}
-
-/* Bouton de fermeture de salle */
-body.dark-mode .btn-closeroom {
-  background: linear-gradient(135deg, #e74c3c, #c0392b);
-  box-shadow: 0 4px 12px rgba(231, 76, 60, 0.3);
-}
-
-body.dark-mode .btn-closeroom:hover {
-  background: linear-gradient(135deg, #c0392b, #a93226);
-  box-shadow: 0 6px 16px rgba(231, 76, 60, 0.4);
-}
-
-/* Statuts des joueurs */
-body.dark-mode td .badge-connected {
-  background-color: rgba(64, 201, 255, 0.2);
-  color: #40c9ff;
-}
-
-/* Remplacer Bootstrap avec notre palette de couleurs */
-body.dark-mode .btn-warning {
-  background-color: #f39c12;
-  border-color: #e67e22;
-}
-
-body.dark-mode .btn-warning:hover {
-  background-color: #e67e22;
-  border-color: #d35400;
-}
-
-body.dark-mode .btn-grey {
-  background-color: #34495e;
-  border-color: #2c3e50;
-  color: #ecf0f1;
-}
-
-body.dark-mode .btn-grey:hover {
-  background-color: #2c3e50;
-  border-color: #1a252f;
-  color: #ffffff;
-}
-
-/* Ligne d'accent sur l'en-tête */
-body.dark-mode .admin-header::before {
-  background: linear-gradient(90deg, #40c9ff, rgba(64, 201, 255, 0.4));
-}
-
-/* Statut de pause */
-body.dark-mode .fixed-width-button.btn-success {
-  background: linear-gradient(135deg, #40c9ff, #2b86c5);
-  border: none;
-}
-
-body.dark-mode .fixed-width-button.btn-success:hover {
-  background: linear-gradient(135deg, #2b86c5, #1a5a88);
-}
-
-body.dark-mode .fixed-width-button.btn-danger {
-  background: linear-gradient(135deg, #e74c3c, #c0392b);
-  border: none;
-}
-
-body.dark-mode .fixed-width-button.btn-danger:hover {
-  background: linear-gradient(135deg, #c0392b, #a93226);
+  background-color: rgba(var(--primary-rgb), 0.15);
 }

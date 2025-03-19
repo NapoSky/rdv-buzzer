@@ -1,7 +1,7 @@
 // src/services/socket/socketService.js
 import { io } from 'socket.io-client';
 
-const SOCKET_SERVER_URL = process.env.REACT_APP_BACKEND_URL;
+const SOCKET_SERVER_URL = import.meta.env.VITE_BACKEND_URL;
 let socket = null;
 let reconnectTimer = null;
 let isInitializing = false;  // Verrou d'initialisation

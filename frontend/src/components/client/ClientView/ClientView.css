@@ -1,222 +1,1863 @@
-/* 🌍 Conteneur principal */
+/* CSS corrigé pour ClientView 2025 */
+
+
+/* Variables de couleur - utilisant une approche plus compatible */
+.client-view {
+  /* Couleurs de base */
+  --primary: #007bff;
+  --primary-hover: #0069d9;
+  --primary-active: #0062cc;
+  --success: #28a745;
+  --warning: #ffc107;
+  --danger: #dc3545;
+  --info: #17a2b8;
+
+  /* Couleurs spécifiques du buzzer */
+  --buzz-red: #ff3a4c;
+  --buzz-red-hover: #e8323f;
+  --buzz-red-disabled: #a3a3a3;
+  --buzz-red-paused: #a8a8a8;
+
+  /* Thème clair */
+  --bg-light: #ffffff;
+  --bg-light-secondary: #f8f9fa;
+  --text-light: #212529;
+  --border-light: #e9ecef;
+
+  /* Thème sombre */
+  --bg-dark: #121212;
+  --bg-dark-secondary: #1e1e1e;
+  --text-dark: #e0e0e0;
+  --border-dark: #2c2c2c;
+
+  /* Autres valeurs */
+  --animation-speed: 300ms;
+  --shadow-sm: 0 2px 4px rgba(0, 0, 0, 0.05);
+  --shadow-md: 0 4px 8px rgba(0, 0, 0, 0.1);
+  --shadow-lg: 0 8px 16px rgba(0, 0, 0, 0.15);
+
+  --border-radius-sm: 4px;
+  --border-radius-md: 8px;
+  --border-radius-lg: 12px;
+}
+
+/* Base styles */
+.client-view {
+  height: 91.5vh;
+  max-height: 91.5vh;
+  /* Important: limiter la hauteur au viewport */
+  width: 100%;
+  overflow: hidden;
+  /* Empêcher le scroll de page */
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  transition: color 0.3s ease;
+  padding-bottom: 10px;
+  /* Créer l'espace en bas */
+  box-sizing: border-box;
+  /* S'assurer que le padding est inclus dans la hauteur */
+}
+
+.client-view.dark-mode {
+  color: var(--text-dark);
+}
+
 .client-container {
-    height: 85vh;
-    margin-top: -15px;
-    display: flex;
-    flex-direction: column;
-    padding-bottom: 5px;
-    box-sizing: border-box;
+  max-width: 800px;
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  /* Hauteur fixe avec marge en bas */
+  max-height: 100%;
+  padding: 1rem;
+  padding-bottom: 1;
+  /* Ajouter un espace en bas */
+  ;
+  gap: 0;
+  /* Supprimer les espaces entre les flex items */
+  overflow: hidden;
+  /* Important: désactiver le scroll global */
 }
 
-/* 📌 En-tête */
-.header-zone {
-    flex: 0 0 auto;
-    padding: 10px;
-    background-color: rgba(255, 255, 255, 0.95);
-    box-shadow: 0 1px 2px rgba(0,0,0,0.1);
-}
 
-.header-zone h2, .header-zone h3 {
-    margin: 5px 0;
-    font-size: 1.2rem;
-}
-
-/* 🎯 Zone contenant le bouton BUZZ */
+/* Le buzz-zone prend tout l'espace disponible entre header et footer */
 .buzz-zone {
-    flex: 0 1 auto;
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    min-height: 35vh;
+  flex: 0.5;
+  /* Réduire de 50% l'importance dans la disposition flex */
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  padding: 0;
+  /* Supprimer complètement le padding */
+  min-height: auto;
+  /* Laisser la zone s'adapter à son contenu */
+  margin: 0.5rem 0;
+  /* Ajout d'une petite marge verticale contrôlée */
 }
 
-/* 🔘 Bouton BUZZ */
+/* Header Zone */
+.header-zone {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 1rem 0;
+  width: 100%;
+  padding-bottom: 0.5rem;
+  /* Réduit l'espace sous le header */
+  margin-bottom: 0;
+}
+
+.room-info {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+  width: 100%;
+}
+
+.room-code {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.room-code h2 {
+  font-size: 1.5rem;
+  font-weight: 600;
+  margin: 0;
+  padding: 0.75rem 1.5rem;
+  background: linear-gradient(135deg, var(--primary), #40c9ff);
+  color: white;
+  border-radius: var(--border-radius-md);
+  letter-spacing: 1px;
+  box-shadow: var(--shadow-sm);
+}
+
+.room-exit {
+  background: transparent;
+  border: none;
+  color: var(--text-light);
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0.5rem;
+  border-radius: 50%;
+  transition: all 0.2s ease;
+  width: 36px;
+  height: 36px;
+}
+
+.dark-mode .room-exit {
+  color: var(--text-dark);
+}
+
+.room-exit:hover {
+  background-color: rgba(0, 0, 0, 0.05);
+  transform: scale(1.1);
+}
+
+.dark-mode .room-exit:hover {
+  background-color: rgba(255, 255, 255, 0.1);
+}
+
+.player-info {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 0.75rem 1rem;
+  background-color: rgba(248, 249, 250, 0.7);
+  border-radius: var(--border-radius-md);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+  transition: background-color 0.3s ease;
+  box-shadow: var(--shadow-sm);
+}
+
+.dark-mode .player-info {
+  background-color: rgba(30, 30, 30, 0.7);
+}
+
+.player-pseudo {
+  font-weight: 500;
+  font-size: 1rem;
+}
+
+.connection-status {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-size: 0.85rem;
+}
+
+.status-indicator {
+  display: inline-block;
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+}
+
+.connection-status.connected .status-indicator {
+  background-color: var(--success);
+}
+
+.connection-status.disconnected .status-indicator {
+  background-color: var(--danger);
+}
+
+.connection-status.connected .status-text {
+  color: var(--success);
+}
+
+.connection-status.disconnected .status-text {
+  color: var(--danger);
+}
+
+/* Buzz Zone */
+.buzz-zone {
+  flex: 0.5;
+  /* Réduire de 50% l'importance dans la disposition flex */
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  padding: 0;
+  /* Supprimer complètement le padding */
+  min-height: auto;
+  /* Laisser la zone s'adapter à son contenu */
+  margin: 0.5rem 0;
+  /* Ajout d'une petite marge verticale contrôlée */
+}
+
 .buzz-button {
-    width: min(40vh, 40vw);
-    height: min(40vh, 40vw);
-    max-width: 240px;
-    max-height: 240px;
-    border-radius: 50%;
-    font-size: clamp(2rem, 5vw, 3rem);
-    font-weight: bold;
-    text-align: center;
-    box-shadow: 0 4px 8px rgba(0,0,0,0.2);
-    transition: all 0.2s ease;
-    display: flex;
-    align-items: center;
-    justify-content: center;
+  width: 200px;
+  height: 200px;
+  border-radius: 50%;
+  border: none;
+  background: linear-gradient(145deg, var(--buzz-red), #ff5a69);
+  color: white;
+  font-size: 2.5rem;
+  font-weight: 700;
+  cursor: pointer;
+  position: relative;
+  box-shadow: 0 8px 16px rgba(255, 58, 76, 0.3), 0 -2px 6px rgba(255, 255, 255, 0.2) inset;
+  transition: all 0.3s ease;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  overflow: hidden;
 }
 
-/* 📋 Zone du classement */
+.buzz-button:hover:not(:disabled) {
+  transform: scale(1.05) translateY(-5px);
+  box-shadow: 0 12px 24px rgba(255, 58, 76, 0.4), 0 -2px 8px rgba(255, 255, 255, 0.3) inset;
+}
+
+.buzz-button:active:not(:disabled) {
+  transform: scale(0.98);
+  box-shadow: 0 4px 12px rgba(255, 58, 76, 0.3), 0 -2px 6px rgba(255, 255, 255, 0.1) inset;
+}
+
+.buzz-button.disabled {
+  background: linear-gradient(145deg, var(--buzz-red-disabled), #b0b0b0);
+  cursor: not-allowed;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+}
+
+.buzz-button.paused {
+  background: linear-gradient(145deg, var(--buzz-red-paused), #b8b8b8);
+  cursor: not-allowed;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+}
+
+.buzz-button-content {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 0.75rem;
+  text-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+}
+
+.buzz-icon {
+  width: 48px;
+  height: 48px;
+  color: white !important;
+  /* Couleur blanche par défaut pour contraster avec le fond rouge */
+  filter: drop-shadow(0 1px 2px rgba(0, 0, 0, 0.3));
+  /* Ajout d'une ombre pour améliorer la visibilité */
+}
+
+/* Si le bouton est désactivé, ajuster la couleur de l'icône */
+.buzz-button.disabled .buzz-icon,
+.buzz-button.paused .buzz-icon {
+  color: #f0f0f0;
+  /* Un blanc légèrement atténué pour les états désactivés */
+  opacity: 0.8;
+}
+
+
+
+.buzz-text {
+  font-size: 2.5rem;
+}
+
+.button-status {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  padding: 8px 0;
+  font-size: 0.9rem;
+  font-weight: 500;
+  background-color: rgba(0, 0, 0, 0.2);
+  text-align: center;
+}
+
+/* Footer Zone - Classement */
 .footer-zone {
-    flex: 1 1 auto;
-    overflow: auto;
-    padding: 10px;
-    background-color: rgba(255, 255, 255, 0.95);
-    box-shadow: 0 -2px 4px rgba(0,0,0,0.1);
-    display: flex;
-    flex-direction: column;
-    min-height: 0;
-}
-
-/* 📜 Liste des joueurs */
-.player-list {
-    flex: 1;
-    overflow-y: auto;
-    margin: 0;
-    padding: 0;
-    list-style: none;
-}
-
-/* 🎭 Style des joueurs */
-.player-list li {
-    padding: 8px;
-    margin: 4px 0;
-    background: var(--background-light);
-    border-radius: 4px;
-    box-shadow: 0 1px 3px rgba(0,0,0,0.1);
-}
-
-/* Adaptation pour petits écrans */
-@media (max-width: 400px) {
-    .buzz-button {
-        width: 55vw;
-        height: 55vw;
-        font-size: 2.5rem;
-    }
-    .buzz-zone {
-        min-height: 30vh;
-    }
-    .footer-zone {
-        flex: 1 1 auto;
-    }
-}
-
-/* Pour le dark mode, on s'appuie sur DarkMode.css et global.css */
-.dark-mode .header-zone {
-    background-color: rgba(33, 33, 33, 0.95);
-    box-shadow: 0 2px 4px rgba(0,0,0,0.3);
-}
-
-.dark-mode .buzz-button {
-    background-color: #28a745;
-    color: white;
-    box-shadow: 0 4px 8px rgba(0,255,0,0.1);
-}
-
-.dark-mode .buzz-button:disabled {
-    background-color: #1e7e34;
-    opacity: 0.7;
+  margin-top: 0.3rem;
+  /* Réduire la marge entre le buzzer et le tableau */
+  margin-bottom: 0.3rem;
+  /* Marge en bas pour éviter de toucher le bord */
+  border-radius: var(--border-radius-lg);
+  background-color: rgba(248, 249, 250, 0.8);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+  box-shadow: var(--shadow-md);
+  overflow: hidden;
+  /* Pas de scroll sur le footer lui-même */
+  transition: background-color 0.3s ease;
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+  /* Prend l'espace restant disponible */
+  min-height: 0;
+  /* Important pour que flex-grow fonctionne correctement */
+  max-height: calc(100% - 10px);
+  margin-bottom: 10px;
 }
 
 .dark-mode .footer-zone {
-    background-color: rgba(33, 33, 33, 0.95);
-    box-shadow: 0 -2px 4px rgba(0,0,0,0.3);
+  background-color: rgba(30, 30, 30, 0.8);
 }
 
-.dark-mode .player-list li {
-    background-color: #2d2d2d;
-    color: var(--text-dark);
-    box-shadow: 0 1px 3px rgba(0,0,0,0.3);
+.ranking-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 1rem 1.25rem;
+  border-bottom: 1px solid rgba(233, 236, 239, 0.6);
+  position: sticky;
+  top: 0;
+  z-index: 10;
+  background-color: rgba(248, 249, 250, 0.95);
+  backdrop-filter: blur(5px);
+  -webkit-backdrop-filter: blur(5px);
+  border-bottom: 1px solid rgba(233, 236, 239, 0.8);
+  flex-shrink: 0;
+  /* Ne pas réduire l'en-tête */
 }
 
-/* Bouton toggle dans le header */
-.theme-toggle {
-    position: absolute;
-    top: 10px;
-    right: 10px;
-    padding: 8px;
-    border-radius: 50%;
-    border: none;
-    background: transparent;
-    cursor: pointer;
-    color: inherit;
-    font-size: 1.2rem;
+.dark-mode .ranking-header {
+  border-bottom-color: rgba(44, 44, 44, 0.6);
+  background-color: rgba(30, 30, 30, 0.95);
+  border-bottom-color: rgba(44, 44, 44, 0.8);
 }
 
-.dark-mode .theme-toggle {
-    color: var(--text-dark);
+.ranking-header h3 {
+  margin: 0;
+  font-size: 1.25rem;
+  font-weight: 600;
 }
 
+.game-status {
+  font-size: 0.85rem;
+  padding: 0.25rem 0.75rem;
+  border-radius: 20px;
+  white-space: nowrap;
+}
 
-/* Styles pour les indicateurs de connexion */
-.connection-status {
-    padding: 6px 10px;
-    border-radius: 4px;
-    margin: 5px 0;
-    font-size: 0.85rem;
-    font-weight: 500;
-    display: inline-block;
+.game-status.active {
+  background-color: rgba(40, 167, 69, 0.1);
+  color: var(--success);
+}
+
+.game-status.paused {
+  background-color: rgba(255, 193, 7, 0.1);
+  color: var(--warning);
+}
+
+.dark-mode .game-status.active {
+  background-color: rgba(40, 167, 69, 0.15);
+}
+
+.dark-mode .game-status.paused {
+  background-color: rgba(255, 193, 7, 0.15);
+}
+
+.ranking-table-container {
+  overflow-x: auto;
+  padding: 0.5rem;
+  flex: 1;
+  /* Prend tout l'espace disponible */
+  overflow-y: auto;
+  /* Active le scroll vertical uniquement ici */
+  overflow-x: hidden;
+  /* Évite le scroll horizontal */
+  min-height: 0;
+  /* Important pour que flex child puisse être scrollable */
+}
+
+.ranking-table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+.ranking-table th,
+.ranking-table td {
+  padding: 0.75rem 1rem;
+  text-align: left;
+}
+
+.ranking-table th {
+  font-weight: 600;
+  font-size: 0.9rem;
+  color: #6c757d;
+  border-bottom: 1px solid rgba(233, 236, 239, 0.6);
+}
+
+.dark-mode .ranking-table th {
+  color: #adb5bd;
+  border-bottom-color: rgba(44, 44, 44, 0.6);
+}
+
+.ranking-table tr {
+  border-bottom: 1px solid rgba(233, 236, 239, 0.4);
+  transition: background-color 0.2s ease;
+}
+
+.dark-mode .ranking-table tr {
+  border-bottom-color: rgba(44, 44, 44, 0.4);
+}
+
+.ranking-table tr:last-child {
+  border-bottom: none;
+}
+
+.ranking-table tr:hover {
+  background-color: rgba(0, 0, 0, 0.02);
+}
+
+.dark-mode .ranking-table tr:hover {
+  background-color: rgba(255, 255, 255, 0.03);
+}
+
+/* Styles pour les positions dans le classement */
+.position-cell {
+  width: 60px;
+  text-align: center;
+}
+
+.position-medal {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 30px;
+  height: 30px;
+  border-radius: 50%;
+  font-weight: 600;
+}
+
+.position-medal.gold {
+  background: linear-gradient(145deg, #ffd700, #ffb700);
+  color: #7d5700;
+  box-shadow: 0 2px 4px rgba(255, 215, 0, 0.3);
+}
+
+.position-medal.silver {
+  background: linear-gradient(145deg, #c0c0c0, #a0a0a0);
+  color: #505050;
+  box-shadow: 0 2px 4px rgba(192, 192, 192, 0.3);
+}
+
+.position-medal.bronze {
+  background: linear-gradient(145deg, #cd7f32, #a05a20);
+  color: #fff;
+  box-shadow: 0 2px 4px rgba(205, 127, 50, 0.3);
+}
+
+.position-number {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 24px;
+  height: 24px;
+  border-radius: 50%;
+  background-color: #f0f0f0;
+  font-size: 0.8rem;
+  font-weight: 500;
+}
+
+.dark-mode .position-number {
+  background-color: rgba(255, 255, 255, 0.1);
+  color: #e0e0e0;
+}
+
+/* Styles pour les joueurs */
+.pseudo-cell {
+  max-width: 150px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.score-cell {
+  font-weight: 600;
+  color: var(--primary);
+}
+
+.dark-mode .score-cell {
+  color: #40c9ff;
+}
+
+.status-cell {
+  width: 60px;
+  text-align: center;
+}
+
+.player-status {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 24px;
+  height: 24px;
+  border-radius: 50%;
+}
+
+.player-status.connected {
+  background-color: rgba(40, 167, 69, 0.1);
+  color: var(--success);
+}
+
+.player-status.disconnected {
+  background-color: rgba(220, 53, 69, 0.1);
+  color: var(--danger);
+}
+
+.dark-mode .player-status.connected {
+  background-color: rgba(40, 167, 69, 0.2);
+}
+
+.dark-mode .player-status.disconnected {
+  background-color: rgba(220, 53, 69, 0.2);
+}
+
+tr.current-player {
+  background-color: rgba(0, 123, 255, 0.05);
+}
+
+.dark-mode tr.current-player {
+  background-color: rgba(64, 201, 255, 0.1);
+}
+
+tr.buzzed-player {
+  animation: highlight-pulse 1.5s infinite;
+}
+
+@keyframes highlight-pulse {
+
+  0%,
+  100% {
+    background-color: rgba(255, 58, 76, 0.05);
   }
-  
-  .connection-actions {
-    display: flex;
+
+  50% {
+    background-color: rgba(255, 58, 76, 0.2);
+  }
+}
+
+.dark-mode tr.buzzed-player {
+  animation: highlight-pulse-dark 1.5s infinite;
+}
+
+@keyframes highlight-pulse-dark {
+
+  0%,
+  100% {
+    background-color: rgba(255, 58, 76, 0.1);
+  }
+
+  50% {
+    background-color: rgba(255, 58, 76, 0.25);
+  }
+}
+
+/* Dialogs */
+.dialog-overlay {
+  position: fixed;
+  inset: 0;
+  background-color: rgba(0, 0, 0, 0.5);
+  animation: fadeIn 0.3s ease;
+  z-index: 50;
+  backdrop-filter: blur(4px);
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+  }
+
+  to {
+    opacity: 1;
+  }
+}
+
+.dialog-content {
+  position: fixed;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  background-color: var(--bg-light);
+  border-radius: var(--border-radius-lg);
+  padding: 1.5rem;
+  box-shadow: var(--shadow-lg);
+  width: 90%;
+  max-width: 500px;
+  z-index: 51;
+  animation: slideUp 0.3s ease;
+  max-height: 90vh;
+  overflow-y: auto;
+}
+
+.dark-mode .dialog-content {
+  background-color: var(--bg-dark-secondary);
+}
+
+@keyframes slideUp {
+  from {
+    opacity: 0;
+    transform: translate(-50%, -40%);
+  }
+
+  to {
+    opacity: 1;
+    transform: translate(-50%, -50%);
+  }
+}
+
+.dialog-title {
+  font-size: 1.5rem;
+  font-weight: 600;
+  margin-bottom: 1rem;
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+}
+
+.dialog-icon {
+  width: 24px;
+  height: 24px;
+}
+
+.error-icon {
+  color: var(--danger);
+}
+
+.warning-icon {
+  color: var(--warning);
+}
+
+.buzz-icon {
+  color: var(--buzz-red);
+}
+
+.dialog-description {
+  margin-bottom: 1.5rem;
+  line-height: 1.5;
+}
+
+.dialog-footer {
+  display: flex;
+  justify-content: flex-end;
+  margin-top: 1.5rem;
+}
+
+/* Dialog spécifiques */
+.buzzed-dialog {
+  max-width: 400px;
+  text-align: center;
+}
+
+.buzzed-dialog.self-buzzed {
+  border: 2px solid var(--success);
+}
+
+.buzzed-message {
+  font-size: 1.25rem;
+  font-weight: 500;
+}
+
+.buzzed-message.self {
+  color: var(--success);
+}
+
+.buzzed-message.other {
+  color: var(--buzz-red);
+}
+
+.admin-missing-dialog {
+  border-left: 5px solid var(--warning);
+}
+
+/* Final Ranking Dialog */
+.final-ranking-dialog {
+  max-width: 600px;
+}
+
+.final-title-container {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+}
+
+.trophy-icon {
+  font-size: 1.5rem;
+}
+
+.final-ranking-message {
+  margin-bottom: 1.5rem;
+}
+
+.final-ranking-table-container {
+  max-height: 50vh;
+  overflow-y: auto;
+  border-radius: var(--border-radius-md);
+  border: 1px solid var(--border-light);
+}
+
+.dark-mode .final-ranking-table-container {
+  border-color: var(--border-dark);
+}
+
+.final-ranking-table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+.final-ranking-table th,
+.final-ranking-table td {
+  padding: 0.75rem;
+  text-align: left;
+  border-bottom: 1px solid var(--border-light);
+}
+
+.dark-mode .final-ranking-table th,
+.dark-mode .final-ranking-table td {
+  border-bottom-color: var(--border-dark);
+}
+
+.final-ranking-table th {
+  font-weight: 600;
+  position: sticky;
+  top: 0;
+  background-color: var(--bg-light);
+  z-index: 1;
+}
+
+.dark-mode .final-ranking-table th {
+  background-color: var(--bg-dark-secondary);
+}
+
+/* Amélioration du bouton dans la boîte de dialogue du classement final pour être cohérent avec les autres boutons */
+.final-ranking-dialog .dialog-footer .btn-primary {
+  background-color: var(--primary);
+  /* Utiliser la couleur primaire exacte comme les autres boutons */
+  color: white;
+  border: none;
+  border-radius: var(--border-radius-md);
+  padding: 0.75rem 1.5rem;
+  font-size: 1rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: background-color 0.2s ease, transform 0.2s ease;
+  text-align: center;
+}
+
+.final-ranking-dialog .dialog-footer .btn-primary:hover {
+  background-color: var(--primary-hover);
+  transform: translateY(-2px);
+}
+
+.final-ranking-dialog .dialog-footer .btn-primary:active {
+  background-color: var(--primary-active);
+  transform: translateY(0);
+}
+
+/* Supprimer l'icône de maison qui n'est pas présente sur les autres boutons */
+.final-ranking-dialog .dialog-footer .btn-primary::before {
+  content: none;
+}
+
+/* Adaptation pour le mode sombre */
+.dark-mode .final-ranking-dialog .dialog-footer .btn-primary {
+  box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2), 0 -1px 2px rgba(255, 255, 255, 0.1) inset;
+}
+
+/* Adaptation pour mobile */
+@media (max-width: 480px) {
+  .final-ranking-dialog .dialog-footer .btn-primary {
+    padding: 0.6rem 1.25rem;
+    font-size: 0.95rem;
+  }
+}
+
+/* Pour les très petits écrans */
+@media (max-width: 350px) {
+  .final-ranking-dialog .dialog-footer .btn-primary {
+    padding: 0.5rem 1rem;
+    font-size: 0.9rem;
+  }
+}
+
+/* États d'erreur et de chargement */
+.client-error-container,
+.client-connecting-container {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  min-height: 100vh;
+  text-align: center;
+  padding: 2rem;
+}
+
+.client-error-content {
+  max-width: 400px;
+  padding: 2rem;
+  background-color: rgba(248, 249, 250, 0.85);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+  border-radius: var(--border-radius-lg);
+  box-shadow: var(--shadow-md);
+}
+
+.dark-mode .client-error-content {
+  background-color: rgba(30, 30, 30, 0.85);
+}
+
+.error-icon {
+  width: 36px;
+  height: 36px;
+  color: var(--danger);
+  margin-bottom: 1rem;
+}
+
+.client-error-container h2,
+.client-connecting-container h2 {
+  margin-bottom: 1rem;
+  font-weight: 600;
+}
+
+.client-error-container p,
+.client-connecting-container p {
+  margin-bottom: 1.5rem;
+  line-height: 1.5;
+}
+
+/* Animation de chargement */
+.connecting-animation {
+  margin-bottom: 2rem;
+}
+
+.spinner {
+  width: 50px;
+  height: 50px;
+  border: 4px solid rgba(0, 0, 0, 0.1);
+  border-left-color: var(--primary);
+  border-radius: 50%;
+  animation: spin 1s linear infinite;
+}
+
+.dark-mode .spinner {
+  border-color: rgba(255, 255, 255, 0.1);
+  border-left-color: var(--primary);
+}
+
+@keyframes spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+.connecting-details {
+  margin: 1.5rem 0;
+  background-color: rgba(248, 249, 250, 0.7);
+  backdrop-filter: blur(5px);
+  -webkit-backdrop-filter: blur(5px);
+  padding: 1rem;
+  border-radius: var(--border-radius-md);
+}
+
+.dark-mode .connecting-details {
+  background-color: rgba(30, 30, 30, 0.7);
+}
+
+.connecting-label {
+  font-weight: 600;
+  margin-right: 0.5rem;
+}
+
+.connecting-status {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  margin-top: 1rem;
+  padding: 0.75rem 1.25rem;
+  border-radius: var(--border-radius-md);
+}
+
+.connecting-status.warning {
+  background-color: rgba(255, 193, 7, 0.1);
+  color: var(--warning);
+}
+
+.connecting-status.error {
+  background-color: rgba(220, 53, 69, 0.1);
+  color: var(--danger);
+}
+
+.dark-mode .connecting-status.warning {
+  background-color: rgba(255, 193, 7, 0.15);
+}
+
+.dark-mode .connecting-status.error {
+  background-color: rgba(220, 53, 69, 0.15);
+}
+
+.status-icon {
+  width: 20px;
+  height: 20px;
+}
+
+/* Tooltips */
+.tooltip-content {
+  background-color: rgba(0, 0, 0, 0.8);
+  color: white;
+  border-radius: var(--border-radius-sm);
+  padding: 0.5rem 0.75rem;
+  font-size: 0.85rem;
+  box-shadow: var(--shadow-sm);
+  animation: tooltipFadeIn 0.2s ease;
+  z-index: 100;
+}
+
+@keyframes tooltipFadeIn {
+  from {
+    opacity: 0;
+  }
+
+  to {
+    opacity: 1;
+  }
+}
+
+.tooltip-arrow {
+  fill: rgba(0, 0, 0, 0.8);
+}
+
+/* Boutons */
+.client-view .btn-primary {
+  background-color: var(--primary);
+  color: white;
+  border: none;
+  border-radius: var(--border-radius-md);
+  padding: 0.75rem 1.5rem;
+  font-size: 1rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: background-color 0.2s ease, transform 0.2s ease;
+  text-align: center;
+}
+
+.client-view .btn-primary:hover {
+  background-color: var(--primary-hover);
+  transform: translateY(-2px);
+}
+
+.client-view .btn-primary:active {
+  background-color: var(--primary-active);
+  transform: translateY(0);
+}
+
+.client-view .btn-icon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background-color: transparent;
+  border: none;
+  padding: 0.5rem;
+  font-size: 1.25rem;
+  border-radius: 50%;
+  cursor: pointer;
+  transition: background-color 0.2s ease, transform 0.2s ease;
+  width: 40px;
+  height: 40px;
+}
+
+/* Correction pour les icônes Radix */
+.client-view svg {
+  display: inline-block;
+  vertical-align: middle;
+}
+
+/* Media queries *//* Media queries *//* Media queries *//* Media queries *//* Media queries *//* Media queries *//* Media queries *//* Media queries *//* Media queries *//* Media queries *//* Media queries */
+@media (max-width: 768px) {
+
+  .client-view {
+    height: 93vh;
+    max-height: 93vh;
+    padding-bottom: 8px;
+  }
+
+  /* Header plus compact */
+  .header-zone {
+    padding: 0.5rem 0;
+    margin-bottom: 0;
+    padding-bottom: 0.25rem;
+  }
+
+  /* Buzz zone prend la majeure partie de l'écran */
+  .buzz-zone {
+    flex: 1;
+    min-height: 50vh;
+    /* Force une hauteur minimum */
+    flex: 0.4;
+    /* Encore plus compact sur tablette */
+    min-height: auto;
+    /* Désactiver la hauteur minimale */
+    margin: 0.5rem 0;
+  }
+
+  /* Bouton beaucoup plus grand */
+  .buzz-button {
+    width: 220px;
+    height: 220px;
+    font-size: 2.5rem;
+    box-shadow: 0 12px 24px rgba(255, 58, 76, 0.4), 0 -2px 8px rgba(255, 255, 255, 0.3) inset;
+  }
+
+  .buzz-icon {
+    width: 48px;
+    height: 48px;
+  }
+
+  .footer-zone {
+    flex: 1;
+    min-height: 0;
+    max-height: calc(100% - 8px);
+    margin-bottom: 8px;
+    border-radius: var(--border-radius-lg);
+  }
+
+  .buzz-button {
+    width: 180px;
+    height: 180px;
+    font-size: 2.25rem;
+  }
+
+  .buzz-icon {
+    width: 40px;
+    height: 40px;
+    filter: drop-shadow(0 1px 2px rgba(0, 0, 0, 0.4));
+  }
+
+  .ranking-header {
     flex-direction: column;
     align-items: flex-start;
-    margin-bottom: 8px;
-  }
-  
-  .connection-status.disconnected {
-    background-color: #ffcc00;
-    color: #333;
-  }
-  
-  .connection-status.error {
-    background-color: #ff3333;
-    color: white;
-  }
-  
-  /* Dark Mode pour les indicateurs de connexion */
-  .dark-mode .connection-status.disconnected {
-    background-color: #8B6000;  /* Une teinte plus foncée de jaune */
-    color: #f0f0f0;
-    border: 1px solid #ffcc00;
-  }
-  
-  .dark-mode .connection-status.error {
-    background-color: #8B0000;  /* Une teinte plus foncée de rouge */
-    color: #f0f0f0;
-    border: 1px solid #ff3333;
-  }
-  
-  /* Style du bouton de reconnexion */
-  .btn-sm {
-    padding: 0.25rem 0.5rem;
-    font-size: 0.875rem;
-    border-radius: 0.2rem;
-    margin-top: 5px;
-  }
-  
-  /* Version dark mode du bouton de reconnexion */
-  .dark-mode .btn-warning {
-    background-color: #8B6000;
-    border-color: #ffcc00;
-    color: #fff;
-  }
-  
-  .dark-mode .btn-warning:hover {
-    background-color: #6B4A00;
-    border-color: #E6B800;
-    color: #fff;
-  }
-  
-  /* Animation subtile pour attirer l'attention sur la déconnexion */
-  @keyframes pulse {
-    0% { opacity: 1; }
-    50% { opacity: 0.7; }
-    100% { opacity: 1; }
-  }
-  
-  .connection-status.disconnected {
-    animation: pulse 2s infinite;
+    gap: 0.75rem;
   }
 
-  .final-ranking {
-    max-height: 60vh;
+  .game-status {
+    align-self: flex-start;
+  }
+
+  /* Augmenter l'espace vertical dédié au buzzer */
+  .buzz-zone {
+    padding: 2.5rem 0;
+    flex: 1.5;
+    /* Donner plus d'importance à cette section */
+    flex: 0.4;
+    /* Encore plus compact sur tablette */
+    min-height: auto;
+    /* Désactiver la hauteur minimale */
+    margin: 0.5rem 0;
+  }
+
+  /* Réduire l'en-tête du classement */
+  .ranking-header {
+    padding: 0.75rem 1rem;
+  }
+
+  .ranking-header h3 {
+    font-size: 1.1rem;
+  }
+
+  .header-zone {
+    padding-bottom: 0.25rem;
+  }
+
+  /* Optimisation du ranking-header pour mobile */
+  /* Maintenir la disposition horizontale plutôt que verticale */
+  .ranking-header {
+    position: sticky;
+    flex-direction: row;
+    /* Garder sur une ligne */
+    justify-content: space-between;
+    /* Espacer les éléments */
+    align-items: center;
+    padding: 0.75rem 1rem;
+    flex-wrap: nowrap;
+    /* Empêcher le retour à la ligne */
+    top: 0;
+    z-index: 10;
+    flex-shrink: 0;
+    gap: 0.5rem;
+    /* Réduire l'espace entre les éléments */
+  }
+
+  /* Réduire la taille du titre pour économiser de l'espace */
+  .ranking-header h3 {
+    font-size: 1rem;
+    margin: 0;
+    white-space: nowrap;
+  }
+
+  /* Adapter le statut du jeu */
+  .game-status {
+    font-size: 0.8rem;
+    /* Texte plus petit */
+    padding: 0.2rem 0.5rem;
+    /* Padding réduit */
+    border-radius: 12px;
+    white-space: nowrap;
+    flex-shrink: 0;
+    /* Éviter que l'élément ne se compresse */
+  }
+
+  /* Garantir que le conteneur ne dépassera pas le viewport moins 10px */
+  .client-container {
+    max-height: 92vh;
+    padding: 0.75rem;
+  }
+
+  /* Header du classement fixe */
+  .ranking-header {
+    position: sticky;
+    top: 0;
+    background-color: rgba(248, 249, 250, 0.95);
+    /* Fond légèrement opaque */
+    z-index: 10;
+    /* S'assurer qu'il reste au-dessus du contenu scrollable */
+    backdrop-filter: blur(5px);
+    -webkit-backdrop-filter: blur(5px);
+    border-bottom: 1px solid rgba(233, 236, 239, 0.8);
+    /* Bordure plus visible */
+  }
+
+  .dark-mode .ranking-header {
+    background-color: rgba(30, 30, 30, 0.95);
+    border-bottom-color: rgba(44, 44, 44, 0.8);
+  }
+
+  /* Table de classement avec scroll */
+  .ranking-table-container {
+    flex: 1;
     overflow-y: auto;
+    overflow-x: hidden;
+    min-height: 0;
+    border-bottom-left-radius: var(--border-radius-lg);
+    border-bottom-right-radius: var(--border-radius-lg);
   }
-  
-  .final-ranking .current-player {
-    font-weight: bold;
-    background-color: rgba(108, 117, 125, 0.15);
+}
+
+/* Media queries *//* Media queries *//* Media queries *//* Media queries *//* Media queries *//* Media queries *//* Media queries *//* Media queries *//* Media queries */
+/* Adaptations pour mobile - grand bouton */
+@media (max-width: 480px) {
+  .buzz-button {
+    width: 150px;
+    height: 150px;
+    font-size: 2rem;
+    margin: 0;
+    /* Supprimer les marges éventuelles */
   }
+
+  .buzz-icon {
+    width: 40px;
+    height: 40px;
+    filter: drop-shadow(0 1px 2px rgba(0, 0, 0, 0.4));
+  }
+
+  .room-info {
+    flex-direction: column;
+  }
+
+  .room-code {
+    flex-direction: column;
+    gap: 1rem;
+    align-items: flex-start;
+  }
+
+  .player-info {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 0.5rem;
+  }
+
+  /* Réduction de la taille du bouton et espacement */
+  .room-code h2 {
+    font-size: 1.25rem;
+    padding: 0.5rem 1rem;
+  }
+
+  /* On maintient room-code sur une ligne */
+  .room-code {
+    display: flex;
+    flex-direction: row;
+    justify-content: space-between;
+    align-items: center;
+    width: 100%;
+    gap: 0.5rem;
+  }
+
+  /* On fait prendre moins d'espace au code de salle */
+  .room-code h2 {
+    flex-grow: 1;
+    text-align: center;
+    font-size: 1.2rem;
+  }
+
+  /* Ajustement du bouton de sortie */
+  .room-exit {
+    width: 32px;
+    height: 32px;
+    min-width: 32px;
+    /* Empêche rétrécissement */
+  }
+
+  /* Player-info sur une seule ligne */
+  .player-info {
+    flex-direction: row;
+    justify-content: space-between;
+    align-items: center;
+    padding: 0.5rem 0.75rem;
+  }
+
+  /* Pseudo plus petit sur mobile */
+  .player-pseudo {
+    font-size: 0.95rem;
+    max-width: 65%;
+    /* Limiter la largeur pour éviter débordement */
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  /* Status de connexion plus compact */
+  .connection-status {
+    font-size: 0.8rem;
+    gap: 0.3rem;
+    white-space: nowrap;
+  }
+
+  /* Réduction taille icône */
+  .status-indicator {
+    width: 6px;
+    height: 6px;
+  }
+
+  /* Ajustement des marges et espacements du container */
+  .header-zone {
+    padding: 0.5rem 0;
+    padding-bottom: 0.25rem;
+  }
+
+  .room-info {
+    gap: 0.5rem;
+  }
+
+
+
+  /* Ajustements pour le bouton BUZZ */
+  .buzz-button {
+    width: 150px;
+    height: 150px;
+    font-size: 2rem;
+    margin: 0;
+    /* Supprimer les marges éventuelles */
+  }
+
+  .buzz-icon {
+    width: 32px;
+    height: 32px;
+  }
+
+  .buzz-text {
+    font-size: 2.25rem;
+  }
+
+  /* Focus maximal sur le buzzer */
+  .buzz-zone {
+    padding: 2rem 0 2.5rem;
+    flex: 2;
+    /* Encore plus d'importance sur mobile */
+    flex: 0.3;
+    /* Très compact sur mobile */
+    min-height: auto;
+    margin: 0.5rem 0;
+    padding: 0;
+  }
+
+  /* Rendre le buzzer plus attrayant et apparent */
+  .buzz-button {
+    width: 180px;
+    /* Plus grand que dans la version précédente */
+    height: 180px;
+    box-shadow: 0 10px 20px rgba(255, 58, 76, 0.4), 0 -2px 8px rgba(255, 255, 255, 0.3) inset;
+    /* Animation subtile pour attirer l'attention */
+    animation: subtle-pulse 2s infinite;
+    margin: 0;
+    /* Supprimer les marges éventuelles */
+  }
+
+  @keyframes subtle-pulse {
+
+    0%,
+    100% {
+      transform: scale(1);
+    }
+
+    50% {
+      transform: scale(1.03);
+    }
+  }
+
+  .buzz-button:hover:not(:disabled) {
+    animation: none;
+    /* Arrêter l'animation au survol */
+  }
+
+  /* Effet de lueur autour du buzzer pour attirer l'attention */
+  .buzz-button::after {
+    content: '';
+    position: absolute;
+    top: -10px;
+    left: -10px;
+    right: -10px;
+    bottom: -10px;
+    border-radius: 50%;
+    z-index: -1;
+    background: radial-gradient(circle, rgba(255, 58, 76, 0.2) 0%, rgba(255, 58, 76, 0) 70%);
+  }
+
+  /* Diminuer encore l'importance visuelle du footer */
+  .footer-zone {
+    margin-top: 0.5rem;
+    opacity: 0.95;
+    /* Légèrement plus transparent */
+    max-height: 35vh;
+    /* Limiter la hauteur maximale */
+    overflow-y: auto;
+    /* Permettre le défilement */
+    margin-top: 0.75rem;
+    flex-grow: 1;
+    /* Donner plus d'importance au tableau */
+    max-height: none;
+    /* Ne pas limiter la hauteur */
+  }
+
+  /* Rendre le tableau plus compact */
+  .ranking-table th,
+  .ranking-table td {
+    padding: 0.5rem 0.75rem;
+    font-size: 0.9rem;
+  }
+
+  /* Réduire encore les médailles */
+  .position-medal {
+    width: 25px;
+    height: 25px;
+  }
+
+  .position-number {
+    width: 22px;
+    height: 22px;
+  }
+}
+
+/* Header très compact */
+@media (max-width: 480px) {
+  .header-zone {
+    padding: 0.25rem 0;
+    padding-bottom: 0.25rem;
+  }
+
+  /* Buzz zone encore plus dominante */
+  .buzz-zone {
+    flex: 1;
+    min-height: 35vh;
+    /* Encore plus grand sur petit écran */
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    padding: 0;
+    /* Supprimer le padding pour maximiser l'espace */
+    flex: 0.3;
+    /* Très compact sur mobile */
+    min-height: auto;
+    margin: 0.5rem 0;
+    padding: 0;
+  }
+
+  /* Bouton TRÈS grand sur mobile */
+  .buzz-button {
+    width: 200px;
+    /* Beaucoup plus grand */
+    height: 200px;
+    box-shadow: 0 15px 30px rgba(255, 58, 76, 0.45), 0 -3px 10px rgba(255, 255, 255, 0.3) inset;
+    animation: subtle-pulse 2s infinite;
+    margin: 0;
+    /* Supprimer les marges éventuelles */
+  }
+
+  .buzz-text {
+    font-size: 3rem;
+    /* Texte plus grand */
+  }
+
+  .buzz-icon {
+    width: 56px;
+    /* Icône plus grande */
+    height: 56px;
+  }
+
+  /* Réduire encore le footer */
+  .footer-zone {
+    max-height: 30vh;
+    margin-top: 0.75rem;
+    flex-grow: 1;
+    /* Donner plus d'importance au tableau */
+    max-height: none;
+    /* Ne pas limiter la hauteur */
+  }
+}
+
+/* Pour les très petits écrans */
+@media (max-width: 350px) {
+  .room-code h2 {
+    font-size: 1rem;
+    padding: 0.4rem 0.8rem;
+  }
+
+  .player-pseudo {
+    max-width: 60%;
+    font-size: 0.9rem;
+  }
+
+  .connection-status {
+    font-size: 0.75rem;
+  }
+
+  .connection-status .status-text {
+    max-width: 60px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  .buzz-button {
+    width: 130px;
+    height: 130px;
+    margin: 0;
+    /* Supprimer les marges éventuelles */
+  }
+
+  .buzz-text {
+    font-size: 2rem;
+  }
+
+  .buzz-icon {
+    width: 32px;
+    height: 32px;
+  }
+
+  .buzz-button {
+    width: 150px;
+    /* Plus grand que dans la version précédente */
+    height: 150px;
+    margin: 0;
+    /* Supprimer les marges éventuelles */
+  }
+
+  /* Réduire le padding global pour maximiser l'espace */
+  .client-container {
+    padding: 0.5rem;
+  }
+
+  /* Faire apparaître le tableau en mode ultra-compact */
+  .footer-zone {
+    max-height: 30vh;
+    margin-top: 0.25rem;
+  }
+
+  .ranking-table th,
+  .ranking-table td {
+    padding: 0.4rem 0.6rem;
+    font-size: 0.85rem;
+  }
+
+  /* Simplifier les informations du tableau */
+  .position-medal,
+  .position-number {
+    width: 20px;
+    height: 20px;
+    font-size: 0.75rem;
+  }
+
+  .buzz-zone {
+    flex: 0.25;
+    /* Encore plus compact */
+    margin: 0.25rem 0;
+  }
+
+  .footer-zone {
+    max-height: 30vh;
+    /* Encore réduite pour les très petits écrans */
+  }
+}
+
+/* Pour les très petits écrans */
+@media (max-width: 350px) {
+
+  /* Garder un bouton imposant mais adapter aux contraintes d'espace */
+  .buzz-button {
+    width: 200px;
+    /* Réduire légèrement pour les très petits écrans */
+    height: 200px;
+    margin: 0;
+    /* Supprimer les marges éventuelles */
+  }
+
+  .buzz-text {
+    font-size: 2.5rem;
+  }
+
+  .buzz-icon {
+    width: 48px;
+    height: 48px;
+  }
+
+  /* Réduire le footer au minimum */
+  .footer-zone {
+    max-height: 25vh;
+    margin-top: 0.25rem;
+  }
+}
+
+/* Animation pour attirer l'attention */
+@keyframes subtle-pulse {
+
+  0%,
+  100% {
+    transform: scale(1);
+  }
+
+  50% {
+    transform: scale(1.03);
+  }
+}
+
+/* Effet de lueur pour mieux mettre en valeur le bouton */
+.buzz-button::after {
+  content: '';
+  position: absolute;
+  top: -15px;
+  left: -15px;
+  right: -15px;
+  bottom: -15px;
+  border-radius: 50%;
+  z-index: -1;
+  background: radial-gradient(circle, rgba(255, 58, 76, 0.2) 0%, rgba(255, 58, 76, 0) 70%);
+}
+
+/* Ajustements supplémentaires pour les très petits écrans */
+@media (max-width: 380px) {
+  .ranking-header {
+    padding: 0.6rem 0.75rem;
+    /* Encore plus compact */
+  }
+
+  /* Réduire davantage la taille du texte si nécessaire */
+  .game-status {
+    font-size: 0.75rem;
+  }
+
+  /* Au besoin, simplifier le texte du statut pour les très petits écrans */
+  .game-status.active::after {
+    content: "Active";
+  }
+
+  .game-status.paused::after {
+    content: "En pause";
+  }
+
+  /* Masquer le texte original */
+  .game-status span {
+    display: none;
+  }
+}
+
+/* Améliorations pour le classement final */
+.final-ranking-content {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+.final-ranking-message {
+  margin-bottom: 0.5rem;
+  line-height: 1.5;
+}
+
+.final-ranking-note {
+  font-size: 1.1rem;
+  font-weight: 500;
+  margin-bottom: 1rem;
+  color: var(--primary);
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.dark-mode .final-ranking-note {
+  color: #40c9ff;
+}
+
+.final-ranking-table-container {
+  max-height: 50vh;
+  overflow-y: auto;
+  border-radius: var(--border-radius-md);
+  border: 1px solid var(--border-light);
+  margin-bottom: 1.5rem;
+}
+
+.dark-mode .final-ranking-table-container {
+  border-color: var(--border-dark);
+}
+
+/* Style amélioré pour les rangs dans le tableau final */
+.final-ranking-table td:first-child {
+  text-align: center;
+  width: 80px;
+}
+
+/* Badges de position améliorés, similaires à PublicRanking */
+.final-ranking-table .position-cell {
+  text-align: center;
+  padding: 0.5rem;
+}
+
+/* Médailles stylisées pour le top 3 */
+.final-ranking-table tr:nth-child(1) td:first-child {
+  font-size: 1.5rem;
+}
+
+.final-ranking-table tr:nth-child(2) td:first-child {
+  font-size: 1.5rem;
+}
+
+.final-ranking-table tr:nth-child(3) td:first-child {
+  font-size: 1.5rem;
+}
+
+/* Effets de ligne pour le top 3 */
+.final-ranking-table tr.top-1 {
+  background: linear-gradient(to right, rgba(255, 215, 0, 0.1), transparent);
+}
+
+.final-ranking-table tr.top-2 {
+  background: linear-gradient(to right, rgba(192, 192, 192, 0.1), transparent);
+}
+
+.final-ranking-table tr.top-3 {
+  background: linear-gradient(to right, rgba(205, 127, 50, 0.1), transparent);
+}
+
+.dark-mode .final-ranking-table tr.top-1 {
+  background: linear-gradient(to right, rgba(255, 215, 0, 0.15), transparent);
+}
+
+.dark-mode .final-ranking-table tr.top-2 {
+  background: linear-gradient(to right, rgba(192, 192, 192, 0.15), transparent);
+}
+
+.dark-mode .final-ranking-table tr.top-3 {
+  background: linear-gradient(to right, rgba(205, 127, 50, 0.15), transparent);
+}
+
+/* Badge pour les rangs supérieurs à 3 */
+.position-rank-badge {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  width: 28px;
+  height: 28px;
+  background: linear-gradient(135deg, #f0f0f0, #e0e0e0);
+  border-radius: 50%;
+  font-size: 0.9rem;
+  font-weight: 600;
+  color: #555;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+  margin: 0 auto;
+}
+
+.dark-mode .position-rank-badge {
+  background: linear-gradient(135deg, #3a3a45, #2a2a35);
+  color: #ccc;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
+}
+
+/* Animation subtile au survol pour tous les rangs */
+.position-rank-badge:hover,
+.final-ranking-table tr:nth-child(1) td:first-child:hover,
+.final-ranking-table tr:nth-child(2) td:first-child:hover,
+.final-ranking-table tr:nth-child(3) td:first-child:hover {
+  transform: translateY(-2px);
+  transition: transform 0.2s ease;
+}
+
+/* Style pour le score dans le classement final */
+.final-ranking-table td:nth-child(3) {
+  font-weight: 600;
+  color: var(--primary);
+}
+
+.dark-mode .final-ranking-table td:nth-child(3) {
+  color: #40c9ff;
+}
+
+/* Mise en évidence du joueur actuel */
+.final-ranking-table tr.current-player {
+  background-color: rgba(0, 123, 255, 0.1);
+  font-weight: 500;
+  position: relative;
+  border-left: 3px solid var(--primary);
+  /* Ajouter une bordure à gauche plutôt qu'une flèche */
+}
+
+.dark-mode .final-ranking-table tr.current-player {
+  background-color: rgba(64, 201, 255, 0.15);
+  border-left-color: #40c9ff;
+}
+
+.final-ranking-table tr.current-player.top-1,
+.final-ranking-table tr.current-player.top-2,
+.final-ranking-table tr.current-player.top-3 {
+  background: linear-gradient(to right, rgba(0, 123, 255, 0.1), rgba(0, 123, 255, 0.05));
+  border-left: 3px solid var(--primary);
+}
+
+.dark-mode .final-ranking-table tr.current-player.top-1,
+.dark-mode .final-ranking-table tr.current-player.top-2,
+.dark-mode .final-ranking-table tr.current-player.top-3 {
+  background: linear-gradient(to right, rgba(64, 201, 255, 0.15), rgba(64, 201, 255, 0.05));
+  border-left: 3px solid #40c9ff;
+}
+
+.final-ranking-table tr.current-player td:first-child {
+  padding-left: calc(0.5rem - 3px);
+  /* Compenser la bordure gauche */
+}
+
+.final-ranking-table tr.current-player td:first-child::before {
+  display: inline-block;
+  margin-right: 0.2rem;
+  color: var(--primary);
+  font-weight: bold;
+}
+
+.dark-mode .final-ranking-table tr.current-player td:first-child::before {
+  color: #40c9ff;
+}
+
+/* Style pour les liens sociaux */
+.social-links {
+  margin-top: 1.5rem;
+  text-align: center;
+  padding: 1rem;
+  border-radius: var(--border-radius-md);
+  background-color: rgba(0, 0, 0, 0.03);
+  transition: all 0.3s ease;
+}
+
+.dark-mode .social-links {
+  background-color: rgba(255, 255, 255, 0.05);
+}
+
+.social-links a {
+  display: inline-flex;
+  align-items: center;
+  text-decoration: none;
+  font-weight: 500;
+  color: var(--primary);
+  transition: all 0.2s ease;
+  gap: 0.5rem;
+}
+
+.dark-mode .social-links a {
+  color: #40c9ff;
+}
+
+.social-links a:hover {
+  opacity: 0.8;
+  transform: translateY(-1px);
+}
+
+.social-links img {
+  height: 1.2em;
+  width: auto;
+  transition: transform 0.2s ease;
+}
+
+.social-links a:hover img {
+  transform: scale(1.1);
+}
+
+/* Améliorations pour les tailles d'écran plus petites */
+@media (max-width: 576px) {
+  .final-ranking-content {
+    padding: 0;
+  }
+
+  .final-ranking-table-container {
+    border-radius: var(--border-radius-sm);
+  }
+
+  .final-ranking-table th,
+  .final-ranking-table td {
+    padding: 0.5rem;
+    font-size: 0.9rem;
+  }
+
+  .position-rank-badge {
+    width: 24px;
+    height: 24px;
+    font-size: 0.8rem;
+  }
+
+  .social-links {
+    padding: 0.75rem;
+  }
+}

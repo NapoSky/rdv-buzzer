@@ -75,10 +75,8 @@ function handleJoinRoom(socket, io, data, callback) {
     if (isAdmin) {
       if (!room.adminId || forceOwnership) {
         Room.setAdminId(roomCode, socket.id);
-        Room.setPaused(roomCode, false);
         
         io.to(roomCode).emit('admin_connected');
-        io.to(roomCode).emit('game_paused', { paused: false });
         
         // Chercher et supprimer l'ancien admin si présent
         const adminPlayerEntry = Object.entries(room.players)
@@ -112,7 +110,7 @@ function handleJoinRoom(socket, io, data, callback) {
           success: true,
           roomCode,
           pseudo,
-          paused: false,
+          paused: true,
           isAdmin: true
         });
       }
@@ -300,6 +298,14 @@ function handleDisconnect(socket, io, reason) {
             currentRoom.adminId = null;
             io.to(roomCode).emit('admin_disconnected');
             logger.info('ROOM', 'Admin déconnecté après délai', { roomCode });
+
+            // Mettre la partie en pause quand l'admin se déconnecte
+            Room.setPaused(roomCode, true);
+            
+            io.to(roomCode).emit('admin_disconnected');
+            io.to(roomCode).emit('game_paused', { paused: true });
+            logger.info('ROOM', 'Admin déconnecté après délai, partie mise en pause', { roomCode });
+
           }
         }, 1500);
       }

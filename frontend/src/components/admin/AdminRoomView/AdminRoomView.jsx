@@ -15,8 +15,8 @@ import SpotifyModal from '../../shared/modals/admin/SpotifyModal';
 import BuzzReceivedModal from '../../shared/modals/admin/BuzzReceivedModal';
 import UpdateScoreModal from '../../shared/modals/admin/UpdateScoreModal';
 // Import des SVG
-import { ReactComponent as SpotifyConnectedIcon } from '../../../assets/icons/spotify-connected.svg';
-import { ReactComponent as SpotifyDisconnectedIcon } from '../../../assets/icons/spotify-disconnected.svg';
+import SpotifyConnectedIcon from '../../../assets/icons/spotify-connected.svg';
+import SpotifyDisconnectedIcon from '../../../assets/icons/spotify-disconnected.svg';
 
 const BONUS_POINTS = 10;
 
@@ -142,9 +142,19 @@ function AdminRoomView() {
       // Uniquement se reconnecter si la socket a été déconnectée
       if (roomCode && !isConnectedToRoom) {
         setIsConnectedToRoom(true);
-        joinRoom(roomCode, 'Admin', true, true);
+        joinRoom(roomCode, 'Admin', true, true).then((response) => {
+          console.log('Réponse complète de joinRoom:', response);
+          // À la reconnexion, synchroniser l'état de pause avec le serveur
+          if (response && response.paused !== undefined) {
+            setPaused(response.paused);
+            console.log(`État de pause synchronisé: ${response.paused}`);
+          }
+        }).catch(error => {
+          console.error("Erreur lors de la reconnexion admin:", error);
+        });
       }
     };
+
 
     const handlePlayerKicked = (data) => {
       console.log('Joueur kické:', data);
@@ -240,6 +250,32 @@ function AdminRoomView() {
     
     initializeRoom();
   }, []); // Dépendance vide pour que cet effet ne s'exécute qu'une fois au montage
+
+  // Effet pour le Wake Lock - empêche l'écran de s'éteindre
+  useEffect(() => {
+    let wakeLock = null;
+    
+    // Acquérir le wake lock uniquement lorsque l'administrateur est connecté à une salle
+    if (isConnectedToRoom && 'wakeLock' in navigator) {
+      navigator.wakeLock.request('screen')
+        .then(lock => {
+          wakeLock = lock;
+          console.log('Wake Lock activé - écran maintenu allumé pour l\'admin');
+        })
+        .catch(err => {
+          console.log('Wake Lock non disponible:', err.message);
+        });
+    }
+    
+    // Libérer le wake lock quand l'administrateur quitte la salle
+    return () => {
+      if (wakeLock) {
+        wakeLock.release()
+          .then(() => console.log('Wake Lock libéré'))
+          .catch(e => console.log('Erreur lors de la libération du Wake Lock'));
+      }
+    };
+  }, [isConnectedToRoom]); // Ne dépend que de la valeur de 'isConnectedToRoom'
 
   // Fonctions de gestion de Spotify
   const handleConnectSpotify = () => {
@@ -472,23 +508,19 @@ const handleKick = async (playerId) => {
             <h3 className="mt-4">Liste des joueurs :</h3>
             <div className="d-flex align-items-center">
               <button
-                className="btn btn-link p-0 me-3"
+                className="btn btn-link p-0 me-3 spotify-button"
                 onClick={() => {
                   console.log('Bouton Spotify cliqué');
                   setShowSpotifyModal(true)
                 }}
                 title={spotifyConnected ? 'Spotify connecté' : 'Connecter Spotify'}
-                style={{ marginTop: '-2px', display: 'block', cursor: 'pointer', zIndex: 101 }}
+                style={{ marginTop: '-2px', display: 'flex', cursor: 'pointer', zIndex: 101 }}
               >
-                {spotifyConnected ? (
-                  <div style={{ pointerEvents: 'auto' }}>
-                    <SpotifyConnectedIcon />
-                  </div>
-                ) : (
-                  <div style={{ pointerEvents: 'auto' }}>
-                    <SpotifyDisconnectedIcon />
-                  </div>
-                )}
+                <img 
+                  src={spotifyConnected ? SpotifyConnectedIcon : SpotifyDisconnectedIcon} 
+                  alt={spotifyConnected ? "Spotify Connecté" : "Spotify Déconnecté"} 
+                  style={{ pointerEvents: 'none' }}
+                />
               </button>
               
               <button className="btn btn-outline-secondary" onClick={handleSortByScore}>
@@ -588,7 +620,7 @@ const handleKick = async (playerId) => {
           className="btn btn-grey fixed-width-button"
           onClick={() => setShowUpdateScoreList(!showUpdateScoreList)}
         >
-          {showUpdateScoreList ? 'Masquer la liste' : 'Modifier score joueur'}
+          {showUpdateScoreList ? 'Masquer la liste' : 'Modifier un score'}
         </button>
         <button
           className="btn btn-warning fixed-width-button"
@@ -670,3 +702,4 @@ const handleKick = async (playerId) => {
 }
 
 export default AdminRoomView;
+

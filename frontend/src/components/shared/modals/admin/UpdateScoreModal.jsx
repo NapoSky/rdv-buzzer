@@ -14,7 +14,7 @@ const UpdateScoreModal = ({ show, players, scoreUpdates, onScoreChange, onUpdate
             key={playerId}
             playerId={playerId}
             player={player}
-            additionalInfo={player.score}
+            additionalInfo={` ${player.score}`}
           >
             <div>
               <input
