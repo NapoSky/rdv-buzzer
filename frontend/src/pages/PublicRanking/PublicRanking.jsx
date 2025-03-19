@@ -42,18 +42,19 @@ function PublicRanking() {
       
       console.log("Données reçues du backend:", res.data);
       
+      // S'assurer que res.data est un tableau
+      const rankingData = Array.isArray(res.data) ? res.data : [];
+      
       // Examiner la structure du premier élément
-      if (res.data.length > 0) {
-        console.log("Premier élément:", res.data[0]);
-        console.log("Date du premier élément:", res.data[0].timestamp);
-        console.log("Type de date:", typeof res.data[0].timestamp);
+      if (rankingData.length > 0) {
+        console.log("Premier élément:", rankingData[0]);
       }
       
-      setGlobalRanking(res.data);
-      setTotalEntries(res.data.length);
+      setGlobalRanking(rankingData);
+      setTotalEntries(rankingData.length);
       
       // Calculer le nombre de joueurs uniques
-      const uniquePseudos = new Set(res.data.map(entry => entry.pseudo));
+      const uniquePseudos = new Set(rankingData.map(entry => entry.pseudo));
       setUniquePlayers(uniquePseudos.size);
       
       // Date de statistiques
@@ -64,6 +65,9 @@ function PublicRanking() {
       }));
     } catch (err) {
       console.error("Erreur lors du chargement du classement:", err);
+      setGlobalRanking([]);
+      setTotalEntries(0);
+      setUniquePlayers(0);
     } finally {
       setIsLoading(false);
     }
@@ -83,7 +87,7 @@ function PublicRanking() {
       const params = {};
       
       if (filterType === 'monthly' && filterMonth && filterYear) {
-        // Format adéquat pour correspondre au format "JJ-MM-AAAA" du backend
+        // Format adéquat pour correspondre au format attendu par le backend
         const monthString = String(filterMonth).padStart(2, '0');
         const yearString = String(filterYear);
         params.month = monthString;
@@ -98,14 +102,21 @@ function PublicRanking() {
       }
       
       const res = await axios.get(`${BACKEND_URL}/api/ranking`, { params });
-      setGlobalRanking(res.data);
+      
+      // Vérifier si res.data est un tableau
+      const rankingData = Array.isArray(res.data) ? res.data : [];
+      
+      setGlobalRanking(rankingData);
       
       // Mettre à jour les stats
-      setTotalEntries(res.data.length);
-      const uniquePseudos = new Set(res.data.map(entry => entry.pseudo));
+      setTotalEntries(rankingData.length);
+      const uniquePseudos = new Set(rankingData.map(entry => entry.pseudo));
       setUniquePlayers(uniquePseudos.size);
     } catch (err) {
       console.error("Erreur lors du filtrage:", err);
+      setGlobalRanking([]);
+      setTotalEntries(0);
+      setUniquePlayers(0);
     } finally {
       setIsLoading(false);
     }
@@ -154,23 +165,6 @@ function PublicRanking() {
   // Générer les années pour le dropdown
   const currentYear = new Date().getFullYear();
   const years = Array.from({ length: 6 }, (_, i) => currentYear - i);
-
-  // Fonction pour exporter le classement en CSV
-  const exportToCSV = () => {
-    const csvContent = "data:text/csv;charset=utf-8," 
-      + "Rang,Pseudo,Score,Date\n"
-      + globalRanking.map((entry, index) => 
-        `${index + 1},"${entry.pseudo}",${entry.score},"${entry.timestamp || ''}"`)
-        .join("\n");
-    
-    const encodedUri = encodeURI(csvContent);
-    const link = document.createElement("a");
-    link.setAttribute("href", encodedUri);
-    link.setAttribute("download", `classement-rdv-sdb_${new Date().toISOString().slice(0,10)}.csv`);
-    document.body.appendChild(link);
-    link.click();
-    document.body.removeChild(link);
-  };
 
   // Remplacer votre fonction formatDate par celle-ci :
 const formatDate = (dateString) => {
