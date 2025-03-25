@@ -792,3 +792,123 @@ body.dark-mode .fixed-width-button.btn-danger {
 body.dark-mode .fixed-width-button.btn-danger:hover {
   background: linear-gradient(135deg, #c0392b, #a93226);
 }
+
+/* Ajout d'optimisation pour les appareils mobiles */
+
+@media (max-width: 768px) {
+  /* Réduction de la taille du texte dans le tableau pour mobile */
+  .table {
+    font-size: 0.85rem;
+  }
+  
+  /* Réduction du padding dans les cellules du tableau pour gagner de l'espace */
+  .table th,
+  .table td {
+    padding: 0.5rem;
+  }
+  
+  /* Optimisation de l'affichage du pseudo */
+  .pseudo-column {
+    max-width: 100px;
+  }
+  
+  /* Réduction de la hauteur des lignes */
+  .table tr {
+    line-height: 1.2;
+  }
+  
+  /* Ajustement du player-list-container pour mobile */
+  .player-list-container {
+    padding: 0.75rem;
+  }
+  
+  /* Optimisation de la zone de défilement */
+  .ranking-scroll {
+    padding: 0.25rem;
+  }
+  
+  /* Boutons plus compacts sur mobile */
+  .button-container {
+    padding: 0.75rem;
+    gap: 0.5rem;
+  }
+  
+  /* Augmentation de la hauteur du conteneur pour voir plus de contenu */
+  .admin-container {
+    height: 90vh;
+    padding: 1rem;
+  }
+  
+  /* Optimisation des boutons d'action dans le tableau pour mobile */
+  .table .btn-sm {
+    padding: 0.2rem 0.4rem;
+    font-size: 0.7rem;
+    line-height: 1;
+    margin-right: 0.2rem !important;
+    min-width: 25px;
+    height: 100%; /* Utiliser toute la hauteur disponible */
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+  }
+  
+  /* Amélioration de l'alignement des boutons */
+  .table td:last-child {
+    white-space: nowrap;
+    display: flex;
+    justify-content: flex-start;
+    align-items: stretch; /* Étirer les enfants pour prendre toute la hauteur */
+    gap: 0.2rem;
+    padding: 0.3rem 0.5rem;
+    height: 100%;
+  }
+}
+
+/* Pour les très petits écrans */
+@media (max-width: 480px) {
+  .table {
+    font-size: 0.75rem;
+  }
+  
+  .table th,
+  .table td {
+    padding: 0.4rem;
+  }
+  
+  .pseudo-column {
+    max-width: 80px;
+  }
+  
+  /* Réduction des marges pour maximiser l'espace de contenu */
+  .admin-header {
+    margin-bottom: 0.75rem;
+    padding: 0.75rem;
+  }
+  
+  /* Ajustement supplémentaire pour les boutons sur très petits écrans */
+  .table .btn-sm {
+    padding: 0.25rem 0.45rem; /* Augmentation légère du padding pour une meilleure zone tactile */
+    font-size: 0.8rem; /* Police légèrement plus grande */
+    min-width: 30px; /* Largeur minimale plus grande pour une meilleure cible */
+    height: 30px; /* Hauteur fixe pour garantir une bonne zone tactile */
+    margin: 0 0.2rem; /* Espacement horizontal entre les boutons */
+    border-radius: 4px; /* Coins légèrement arrondis */
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.2); /* Légère ombre pour effet 3D */
+  }
+  
+  /* Réduction maximale de l'espace entre les boutons - tout en maintenant la hauteur complète */
+  .table td:last-child {
+    padding: 0.35rem;
+    display: flex;
+    flex-direction: row; /* Forcer l'alignement horizontal */
+    justify-content: flex-start;
+    align-items: center; /* Centrer verticalement */
+    gap: 0.3rem; /* Plus d'espace entre les boutons */
+    height: auto; /* Hauteur automatique */
+  }
+}
+
+

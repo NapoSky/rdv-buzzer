@@ -536,28 +536,138 @@ function ClientView({ setActiveRoomCode }) {
   // Effet simple pour le Wake Lock - empêche l'écran de s'éteindre
   useEffect(() => {
     let wakeLock = null;
+    let videoElement = null;
+    let isUsingVideoWakeLock = false;
     
-    // Acquérir le wake lock uniquement lorsque l'utilisateur a rejoint la salle
-    if (joined && 'wakeLock' in navigator) {
-      navigator.wakeLock.request('screen')
-        .then(lock => {
-          wakeLock = lock;
-          console.log('Wake Lock activé - écran maintenu allumé');
-        })
-        .catch(err => {
-          console.log('Wake Lock non disponible:', err.message);
-        });
+    // Fonction pour gérer le wake lock selon la plateforme
+    const enableWakeLock = async () => {
+      // Solution standard pour Chrome, Edge, etc.
+      if ('wakeLock' in navigator) {
+        try {
+          wakeLock = await navigator.wakeLock.request('screen');
+          console.log('Wake Lock activé via API standard - écran maintenu allumé');
+          
+          // Si on utilisait précédemment la vidéo, on peut la nettoyer
+          if (isUsingVideoWakeLock && videoElement) {
+            videoElement.pause();
+            videoElement.remove();
+            videoElement = null;
+            isUsingVideoWakeLock = false;
+            console.log('Vidéo de Wake Lock supprimée car API standard disponible');
+          }
+          
+          return true; // Signal que l'API standard fonctionne
+        } catch (err) {
+          console.log('Wake Lock API non disponible, utilisation de l\'alternative vidéo');
+          return createVideoWakeLock();
+        }
+      } 
+      // Solution alternative pour Safari iOS et autres navigateurs sans API Wake Lock
+      else {
+        return createVideoWakeLock();
+      }
+    };
+    
+    // Fonction pour créer un wake lock basé sur une vidéo
+    const createVideoWakeLock = () => {
+      try {
+        // Si un élément vidéo existe déjà et semble fonctionner, ne pas le recréer
+        if (videoElement && videoElement.parentNode) {
+          try {
+            videoElement.play().then(() => {
+              console.log('Wake Lock vidéo existant réactivé');
+              isUsingVideoWakeLock = true;
+              return true;
+            }).catch(err => {
+              console.log('Erreur lors de la relecture de la vidéo existante, création d\'un nouvel élément');
+              // Si la lecture échoue, on nettoie et on continue pour créer un nouveau
+              videoElement.pause();
+              videoElement.remove();
+              videoElement = null;
+            });
+          } catch (e) {
+            // En cas d'erreur, on nettoie et on continue
+            if (videoElement) {
+              videoElement.pause();
+              videoElement.remove();
+              videoElement = null;
+            }
+          }
+        }
+        
+        // Création d'un nouvel élément vidéo
+        if (!videoElement) {
+          videoElement = document.createElement('video');
+          videoElement.setAttribute('playsinline', '');
+          videoElement.setAttribute('muted', '');
+          // Vidéo transparente, ultra-courte en base64
+          videoElement.setAttribute('src', 'data:video/mp4;base64,AAAAIGZ0eXBtcDQyAAAAAG1wNDJtcDQxaXNvbWF2YzEAAATKbW9vdgAAAGxtdmhkAAAAANLEP5XSxD+VAAB1MAAAdU4AAQAAAQAAAAAAAAAAAAAAAAEAAAAAAAAAAAAAAAAAAAABAAAAAAAAAAAAAAAAAABAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAgAAACFpb2RzAAAAABCAgIAHAE/////+/wAAAiF0cmFrAAAAXHRraGQAAAAP0sQ/ldLEP5UAAAABAAAAAAAAAHUyAAAAAAAAAAAAAAAAAAAAAAEAAAAAAAAAAAAAAAAAAAABAAAAAAAAAAAAAAAAAABAAAAAALAAAACQAAAAAAAkZWR0cwAAABxlbHN0AAAAAAAAAAEAAHUyAAAAAAABAAAAAAKobWRpYQAAACBtZGhkAAAAANLEP5XSxD+VAAB1MAAAdU5VxAAAAAAANmhkbHIAAAAAAAAAAHZpZGUAAAAAAAAAAAAAAABMLVNNQVNIIFZpZGVvIEhhbmRsZXIAAAACC21pbmYAAAAUdm1oZAAAAAEAAAAAAAAAAAAAACRkaW5mAAAAHGRyZWYAAAAAAAAAAQAAAAx1cmwgAAAAAQAAAcNzdGJsAAAAwXN0c2QAAAAAAAAAAQAAALFhdmMxAAAAAAAAAAEAAAAAAAAAAAAAAAAAAAAAALAAkABIAAAASAAAAAAAAAABCkFWQyBDb2RpbmcAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAP//AAAAOGF2Y0MBZAAf/+EAHGdkAB+s2UCgC/oAAAMADwABAAZAGBerEQAAABhzdHRzAAAAAAAAAAEAAAAeAAAB4AAAABRzdHNzAAAAAAAAAAEAAAABAAAAHHN0c2MAAAAAAAAAAQAAAAEAAAABAAAAAQAAAIxzdHN6AAAAAAAAAAAAAAAeAAADygAAAE8AAABPAAAATwAAAE8AAABOAAAATwAAAE8AAABPAAAATwAAAE8AAABPAAAATwAAAE8AAABPAAAA4HN0Y28AAAAAAAAAAQAAADAAAABidWR0YQAAAFptZXRhAAAAAAAAACFoZGxyAAAAAAAAAABtZGlyYXBwbAAAAAAAAAAAAAAAAC1pbHN0AAAAJal0b28AAAAdZGF0YQAAAAEAAAAATGF2ZjU2LjQwLjEwMQ==');
+          videoElement.setAttribute('loop', '');
+          videoElement.style.width = '1px';
+          videoElement.style.height = '1px';
+          videoElement.style.position = 'absolute';
+          videoElement.style.opacity = '0';
+          videoElement.style.pointerEvents = 'none';
+          document.body.appendChild(videoElement);
+          
+          videoElement.muted = true;
+          return videoElement.play().then(() => {
+            console.log('Wake Lock activé via vidéo en arrière-plan - écran maintenu allumé');
+            isUsingVideoWakeLock = true;
+            return true;
+          }).catch(err => {
+            console.error('Erreur lors de la lecture de la vidéo:', err);
+            return false;
+          });
+        }
+        return false;
+      } catch (err) {
+        console.error('Erreur lors de la création du wake lock vidéo:', err);
+        return false;
+      }
+    };
+    
+    // Gérer les changements de visibilité pour réactiver le wake lock
+    const handleVisibilityChange = () => {
+      if (document.visibilityState === 'visible' && joined) {
+        // Réactiver le wake lock quand l'utilisateur revient sur la page
+        if ('wakeLock' in navigator && !wakeLock) {
+          enableWakeLock();
+        } else if (isUsingVideoWakeLock && videoElement) {
+          // Seulement tenter de relancer la vidéo si c'est la méthode qu'on utilise
+          videoElement.play().catch(err => {
+            console.error('Erreur lors de la reprise de la vidéo:', err);
+            // Si la reprise échoue, essayer de recréer complètement le mécanisme de wake lock
+            createVideoWakeLock();
+          });
+        }
+      }
+    };
+    
+    // Activer le wake lock uniquement quand l'utilisateur a rejoint la salle
+    if (joined) {
+      enableWakeLock();
+      // Ajouter un gestionnaire d'événements pour réactiver le wake lock
+      document.addEventListener('visibilitychange', handleVisibilityChange);
     }
     
-    // Libérer le wake lock quand l'utilisateur quitte la salle
+    // Fonction de nettoyage
     return () => {
       if (wakeLock) {
         wakeLock.release()
           .then(() => console.log('Wake Lock libéré'))
           .catch(e => console.log('Erreur lors de la libération du Wake Lock'));
       }
+      
+      if (videoElement) {
+        videoElement.pause();
+        videoElement.remove();
+        console.log('Vidéo de Wake Lock supprimée');
+      }
+      
+      document.removeEventListener('visibilitychange', handleVisibilityChange);
     };
-  }, [joined]); // Ne dépend que de la valeur de 'joined'
+  }, [joined]);
 
   // Rendu conditionnel si pas de code de salle ou pas de pseudo
   if (!roomCode || !pseudo) {
