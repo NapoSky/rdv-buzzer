@@ -299,7 +299,6 @@ function ClientView({ setActiveRoomCode }) {
       if (prevScore.current !== currentScore) {
         setScoreIncreased(currentScore > prevScore.current);
         setScoreChanged(true);
-        setTimeout(() => setScoreChanged(false), 800); // Durée de l'animation
         prevScore.current = currentScore;
       }
   
