@@ -184,6 +184,70 @@
   font-size: 1rem;
 }
 
+/* GESTION COULEUR AFFICHAGE SCORE HEADER */
+/* Animation lorsque le score change */
+@keyframes score-pulse {
+  0% { 
+    transform: scale(1); 
+    color: inherit; 
+  }
+  30% { 
+    transform: scale(1.1); 
+    color: var(--success); 
+    text-shadow: 0 0 5px rgba(40, 167, 69, 0.5); 
+  }
+  70% {
+    transform: scale(1.05);
+    color: var(--success);
+    text-shadow: 0 0 3px rgba(40, 167, 69, 0.3);
+  }
+  100% { 
+    transform: scale(1); 
+    color: inherit; 
+    text-shadow: none;
+  }
+}
+
+/* Animation pour score négatif */
+@keyframes score-pulse-negative {
+  0% { 
+    transform: scale(1); 
+    color: inherit; 
+  }
+  30% { 
+    transform: scale(1.1); 
+    color: var(--danger); 
+    text-shadow: 0 0 5px rgba(220, 53, 69, 0.5); 
+  }
+  70% {
+    transform: scale(1.05);
+    color: var(--danger);
+    text-shadow: 0 0 3px rgba(220, 53, 69, 0.3);
+  }
+  100% { 
+    transform: scale(1); 
+    color: inherit; 
+    text-shadow: none;
+  }
+}
+
+.score-changed {
+  animation: score-pulse 0.8s ease-in-out;
+}
+
+.score-changed.negative {
+  animation: score-pulse-negative 0.8s ease-in-out;
+}
+
+
+
+
+.player-score {
+  font-weight: 500;
+  font-size: 1rem;
+}
+
+
 .connection-status {
   display: flex;
   align-items: center;
@@ -620,7 +684,7 @@ tr.buzzed-player {
   top: 50%;
   left: 50%;
   transform: translate(-50%, -50%);
-  background-color: var(--bg-light);
+  background-color: var(--bg-light-secondary);
   border-radius: var(--border-radius-lg);
   padding: 1.5rem;
   box-shadow: var(--shadow-lg);
@@ -691,8 +755,31 @@ tr.buzzed-player {
   text-align: center;
 }
 
+/* Animation pour l'icône dans la boîte de dialogue */
+@keyframes pulse-buzz-icon {
+  0% { transform: scale(1); }
+  50% { transform: scale(1.1); }
+  100% { transform: scale(1); }
+}
+
+/* Lorsque c'est l'utilisateur actuel qui a buzzé */
+.dialog-content.self-buzzed .dialog-title .buzz-icon {
+  color: var(--success) !important;
+  animation: pulse-buzz-icon 2s infinite ease-in-out;
+}
+
+/* Lorsque c'est un autre utilisateur qui a buzzé */
+.dialog-content.other-buzzed .dialog-title .buzz-icon {
+  color: var(--danger) !important;
+  animation: pulse-buzz-icon 2s infinite ease-in-out;
+}
+
 .buzzed-dialog.self-buzzed {
-  border: 2px solid var(--success);
+  border: 3px solid var(--success);
+}
+
+.buzzed-dialog.other-buzzed {
+  border: 3px solid var(--danger);
 }
 
 .buzzed-message {
@@ -705,7 +792,7 @@ tr.buzzed-player {
 }
 
 .buzzed-message.other {
-  color: var(--buzz-red);
+  color: var(--danger);
 }
 
 .admin-missing-dialog {
@@ -1265,6 +1352,15 @@ tr.buzzed-player {
     white-space: nowrap;
   }
 
+  .player-score {
+    font-size: 0.95rem;
+    max-width: 65%;
+    /* Limiter la largeur pour éviter débordement */
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
   /* Status de connexion plus compact */
   .connection-status {
     font-size: 0.8rem;
@@ -1462,6 +1558,11 @@ tr.buzzed-player {
   }
 
   .player-pseudo {
+    max-width: 60%;
+    font-size: 0.9rem;
+  }
+
+  .player-score {
     max-width: 60%;
     font-size: 0.9rem;
   }

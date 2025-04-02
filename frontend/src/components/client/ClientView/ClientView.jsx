@@ -46,6 +46,9 @@ function ClientView({ setActiveRoomCode }) {
   const [pseudo, setPseudo] = useState(paramPseudo);
   const [joined, setJoined] = useState(false);
   const [players, setPlayers] = useState({});
+  const [scoreChanged, setScoreChanged] = useState(false);
+  const [scoreIncreased, setScoreIncreased] = useState(true); // true pour positif, false pour négatif
+  const prevScore = useRef(0);
   const playersRef = useRef({});
   
   // États pour le buzzer et le jeu
@@ -288,6 +291,17 @@ function ClientView({ setActiveRoomCode }) {
     const onUpdatePlayers = (updatedPlayers) => {
       setPlayers(updatedPlayers);
       playersRef.current = updatedPlayers;
+
+      // Vérifier si le score du joueur a changé
+      const currentPlayer = Object.values(updatedPlayers).find(player => player.pseudo === pseudo);
+      const currentScore = currentPlayer?.score || 0;
+      
+      if (prevScore.current !== currentScore) {
+        setScoreIncreased(currentScore > prevScore.current);
+        setScoreChanged(true);
+        setTimeout(() => setScoreChanged(false), 800); // Durée de l'animation
+        prevScore.current = currentScore;
+      }
   
       const playerExists = Object.values(updatedPlayers).some(
         (player) => player.pseudo === pseudo && !player.disconnected
@@ -870,6 +884,9 @@ function ClientView({ setActiveRoomCode }) {
             </div>
             <div className="player-info">
               <div className="player-pseudo">Pseudo: {pseudo}</div>
+              <div className={`player-score ${scoreChanged ? (scoreIncreased ? 'score-changed' : 'score-changed negative') : ''}`}>
+                Score: {Object.values(players).find(player => player.pseudo === pseudo)?.score || 0}
+              </div>
               <div className={`connection-status ${isConnected ? 'connected' : 'disconnected'}`}>
                 <span className="status-indicator"></span>
                 <span className="status-text">{isConnected ? 'Connecté' : 'Déconnecté'}</span>
@@ -961,16 +978,16 @@ function ClientView({ setActiveRoomCode }) {
       >
         <Dialog.Portal>
           <Dialog.Overlay className="dialog-overlay" />
-          <Dialog.Content className={`dialog-content buzzed-dialog ${buzzedBy === pseudo ? 'self-buzzed' : ''}`}>
+          <Dialog.Content className={`dialog-content buzzed-dialog ${buzzedBy === pseudo ? 'self-buzzed' : 'other-buzzed'}`}>
             <Dialog.Title className="dialog-title">
               <BellIcon className="dialog-icon buzz-icon" />
               BUZZ!
             </Dialog.Title>
             <Dialog.Description className="dialog-description">
               {buzzedBy === pseudo ? (
-                <span className="buzzed-message self">Vous avez buzzé en premier!</span>
+                <span className="buzzed-message self">C'est à vous !</span>
               ) : (
-                <span className="buzzed-message other">{buzzedBy} a buzzé en premier!</span>
+                <span className="buzzed-message other">{buzzedBy} a buzzé en premier !</span>
               )}
             </Dialog.Description>
           </Dialog.Content>
