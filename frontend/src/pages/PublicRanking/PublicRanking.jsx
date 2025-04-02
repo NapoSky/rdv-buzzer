@@ -78,49 +78,48 @@ function PublicRanking() {
   }, []);
 
   // Gérer le filtrage du classement
-  const handleFilterRanking = async (e) => {
-    e.preventDefault();
-    setIsLoading(true);
-    setCurrentPage(1);
+const handleFilterRanking = async (e) => {
+  e.preventDefault();
+  setIsLoading(true);
+  setCurrentPage(1);
+  
+  try {
+    const params = {};
     
-    try {
-      const params = {};
+    if (filterType === 'monthly' && filterMonth && filterYear) {
+      // Format adéquat pour correspondre au format attendu par le backend
+      const monthString = String(filterMonth).padStart(2, '0');
+      const yearString = String(filterYear);
+      params.month = monthString;
+      params.year = yearString;
+    } else if (filterType === 'dateRange' && filterFrom && filterTo) {
+      // Format ISO pour les dates: YYYY-MM-DD
+      // Ce format est directement fourni par l'input type="date"
+      params.from = filterFrom;  // déjà au format YYYY-MM-DD
+      params.to = filterTo;      // déjà au format YYYY-MM-DD
       
-      if (filterType === 'monthly' && filterMonth && filterYear) {
-        // Format adéquat pour correspondre au format attendu par le backend
-        const monthString = String(filterMonth).padStart(2, '0');
-        const yearString = String(filterYear);
-        params.month = monthString;
-        params.year = yearString;
-      } else if (filterType === 'dateRange' && filterFrom && filterTo) {
-        // Convertir les dates ISO de l'input date HTML au format attendu par le backend
-        const fromDate = new Date(filterFrom);
-        const toDate = new Date(filterTo);
-        
-        params.from = formatDateForBackend(fromDate);
-        params.to = formatDateForBackend(toDate);
-      }
-      
-      const res = await axios.get(`${BACKEND_URL}/api/ranking`, { params });
-      
-      // Vérifier si res.data est un tableau
-      const rankingData = Array.isArray(res.data) ? res.data : [];
-      
-      setGlobalRanking(rankingData);
-      
-      // Mettre à jour les stats
-      setTotalEntries(rankingData.length);
-      const uniquePseudos = new Set(rankingData.map(entry => entry.pseudo));
-      setUniquePlayers(uniquePseudos.size);
-    } catch (err) {
-      console.error("Erreur lors du filtrage:", err);
-      setGlobalRanking([]);
-      setTotalEntries(0);
-      setUniquePlayers(0);
-    } finally {
-      setIsLoading(false);
     }
-  };
+    
+    const res = await axios.get(`${BACKEND_URL}/api/ranking`, { params });
+    
+    // Vérifier si res.data est un tableau
+    const rankingData = Array.isArray(res.data) ? res.data : [];
+    
+    setGlobalRanking(rankingData);
+    
+    // Mettre à jour les stats
+    setTotalEntries(rankingData.length);
+    const uniquePseudos = new Set(rankingData.map(entry => entry.pseudo));
+    setUniquePlayers(uniquePseudos.size);
+  } catch (err) {
+    console.error("Erreur lors du filtrage:", err);
+    setGlobalRanking([]);
+    setTotalEntries(0);
+    setUniquePlayers(0);
+  } finally {
+    setIsLoading(false);
+  }
+};
 
   // Fonction helper pour formater les dates au format attendu par le backend
   const formatDateForBackend = (date) => {
@@ -130,7 +129,6 @@ function PublicRanking() {
       const year = String(date.getFullYear()).substring(2); // Prendre seulement les 2 derniers chiffres
       
       const formattedDate = `${day}-${month}-${year}`;
-      console.log("Date formatée pour backend:", formattedDate);
       
       return formattedDate;
     } catch (error) {
@@ -170,12 +168,8 @@ function PublicRanking() {
 const formatDate = (dateString) => {
   // En cas d'absence de date
   if (!dateString) {
-    console.log("Date manquante");
     return "Date inconnue";
   }
-  
-  // Afficher le format de la date pour débogage
-  console.log(`Date reçue: "${dateString}", type: ${typeof dateString}`);
   
   // Traitement spécifique selon le format
   try {
@@ -192,14 +186,12 @@ const formatDate = (dateString) => {
       // Calculer le mois (0-indexed)
       const monthIndex = parseInt(month, 10) - 1;
       if (monthIndex < 0 || monthIndex > 11) {
-        console.log(`Index de mois invalide: ${monthIndex}`);
         return dateString; // Retourner la date originale si le mois est invalide
       }
       
       const monthName = monthNames[monthIndex];
       const fullYear = 2000 + parseInt(yearShort, 10); // Ajouter 2000 à l'année à 2 chiffres
       
-      console.log(`Date formatée: ${parseInt(day, 10)} ${monthName} ${fullYear}`);
       return `${parseInt(day, 10)} ${monthName} ${fullYear}`;
     } 
     // Autres formats de date possibles
