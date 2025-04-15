@@ -1,11 +1,12 @@
 // src/components/admin/AdminRoomView/AdminRoomView.js
 import React, { useState, useEffect, useRef, useContext, useCallback } from 'react';
-import { useSearchParams, useNavigate } from 'react-router-dom';
+import { useSearchParams, useNavigate, useLocation } from 'react-router-dom';
 import { ThemeContext } from '../../../contexts/ThemeContext';
 import './AdminRoomView.css';
 import { pausePlayback, resumePlayback, authenticateSpotify, disconnectSpotify } from '../../../services/api/spotifyService';
 import { useSpotify } from '../../../hooks/useSpotify';
-import { getSocket, createRoom, joinRoom, on, off, resetBuzzer, togglePause, kickPlayer, closeRoom } from '../../../services/socket/socketService';
+import { getSocket, createRoom, joinRoom, on, off, resetBuzzer, togglePause, kickPlayer, closeRoom, judgeResponse, adjustScore } from '../../../services/socket/socketService';
+import { ExclamationTriangleIcon, CheckIcon } from '@radix-ui/react-icons'; 
 
 // Import des composants modaux
 import CloseRoomModal from '../../shared/modals/admin/CloseRoomModal';
@@ -18,14 +19,29 @@ import UpdateScoreModal from '../../shared/modals/admin/UpdateScoreModal';
 import SpotifyConnectedIcon from '../../../assets/icons/spotify-connected.svg';
 import SpotifyDisconnectedIcon from '../../../assets/icons/spotify-disconnected.svg';
 
-const BONUS_POINTS = 10;
+// Définir les options par défaut au cas où elles ne seraient pas passées
+const DEFAULT_ROOM_OPTIONS = {
+  roomType: 'Standard',
+  pointsCorrect: 10,
+  pointsWrong: 5,
+  penaltyDelay: 3,
+  saveRoom: true,
+};
 
 function AdminRoomView() {
   const { isDarkMode } = useContext(ThemeContext);
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
+  // Utiliser useLocation pour obtenir l'état de navigation
+  const location = useLocation();
   const urlRoomCode = searchParams.get('roomCode');
   const forceOwnership = searchParams.get('forceOwnership') === 'true';
+
+  // État pour stocker les options de la salle
+  const [currentRoomOptions, setCurrentRoomOptions] = useState(
+    // Initialiser uniquement avec les défauts
+    location.state?.roomOptions || DEFAULT_ROOM_OPTIONS
+  );
 
   const [roomCode, setRoomCode] = useState(urlRoomCode || '');
   const [players, setPlayers] = useState({});
@@ -45,6 +61,8 @@ function AdminRoomView() {
   const [isCreatingRoom, setIsCreatingRoom] = useState(false);
   const [isConnectedToRoom, setIsConnectedToRoom] = useState(false);
   const initializationAttempted = useRef(false);
+  const [foundArtist, setFoundArtist] = useState(false);
+  const [foundTitle, setFoundTitle] = useState(false);
 
   // Fonction pour créer une nouvelle salle
   const handleCreateRoom = async () => {
@@ -63,7 +81,7 @@ function AdminRoomView() {
         });
       }
       
-      const response = await createRoom();
+      const response = await createRoom(currentRoomOptions); // Passer les options ici
       if (response && response.roomCode) {
         const createdRoom = response.roomCode;
         
@@ -96,6 +114,17 @@ function AdminRoomView() {
         setIsConnectedToRoom(false); // Réinitialiser en cas d'erreur
       } else {
         setPaused(joinResponse.paused);
+        // !! IMPORTANT !! : Le backend devrait renvoyer les options de la salle
+        // lors du join pour les récupérer en cas de reconnexion ou accès direct.
+        if (joinResponse.options) {
+           setCurrentRoomOptions(joinResponse.options);
+           console.log("Options de salle récupérées du serveur :", joinResponse.options);
+        } else {
+           // Fallback si le backend ne renvoie pas encore les options
+           console.warn("Les options de la salle n'ont pas été récupérées du serveur lors de la jointure. Utilisation des options par défaut.");
+           // Utiliser uniquement les options par défaut comme fallback
+           setCurrentRoomOptions(DEFAULT_ROOM_OPTIONS);
+        }
       }
     } catch (error) {
       console.error("Erreur lors de la jointure de salle:", error);
@@ -120,7 +149,6 @@ function AdminRoomView() {
     };
     
     const handleBuzzed = async (data) => {
-      console.log('Buzz reçu par admin :', data);
       setBuzzedPlayer({ pseudo: data.buzzedBy, playerId: data.playerId });
       
       // Gérer Spotify si connecté
@@ -149,6 +177,16 @@ function AdminRoomView() {
             setPaused(response.paused);
             console.log(`État de pause synchronisé: ${response.paused}`);
           }
+          // ---> AJOUT: Synchroniser aussi les options de la salle <---
+          if (response && response.options) {
+            setCurrentRoomOptions(response.options);
+            console.log("Options de salle synchronisées lors de la reconnexion:", response.options);
+          } else {
+            console.warn("Les options de la salle n'ont pas été récupérées lors de la reconnexion.");
+            // Optionnel: Tenter de recharger depuis location.state ou défauts ?
+            // setCurrentRoomOptions(location.state?.roomOptions || DEFAULT_ROOM_OPTIONS);
+          }
+          // ---------------------------------------------------------
         }).catch(error => {
           console.error("Erreur lors de la reconnexion admin:", error);
         });
@@ -168,6 +206,44 @@ function AdminRoomView() {
       }
     };
 
+    // ---> GESTIONNAIRE MODIFIÉ <---
+    const handleRoomOptionsUpdated = (options) => {
+      console.log("[AdminRoomView] Événement room_options_updated REÇU (stringifié):", JSON.stringify(options)); // Log stringifié
+
+      if (options) {
+        // ---> AJOUTER LOG AVANT SET <---
+        console.log("[AdminRoomView] AVANT setCurrentRoomOptions, options reçu:", JSON.stringify(options));
+        // -----------------------------
+
+        setCurrentRoomOptions(options); // Met à jour l'état local
+
+        // ---> AJOUTER LOG APRÈS SET (via callback pour voir la valeur appliquée) <---
+        // Note: setCurrentRoomOptions est asynchrone, pour voir la valeur *après* mise à jour,
+        // il faudrait logguer dans un autre useEffect dépendant de currentRoomOptions,
+        // ou utiliser le log avant le rendu de BuzzReceivedModal comme point de contrôle.
+        // Le log avant le rendu (ligne 741) est déjà en place et montre 'undefined'.
+        // --------------------------------------------------------------------------
+      } else {
+        console.warn("[AdminRoomView] Événement room_options_updated reçu avec payload vide ou falsy.");
+      }
+    };
+    // -----------------------------
+
+    // ---> NOUVEAU GESTIONNAIRE POUR LE CHANGEMENT DE PISTE SPOTIFY <---
+    const handleSpotifyTrackChanged = (/* data */) => {
+      // Vérifier si Spotify est connecté au moment où l'événement est reçu
+      if (spotifyConnected) {
+        console.log("[AdminRoomView] Nouvelle piste Spotify détectée, réinitialisation de foundArtist/Title.");
+        setFoundArtist(false);
+        setFoundTitle(false);
+        // Optionnel: Réinitialiser aussi le joueur ayant buzzé si nécessaire pour votre logique
+        // setBuzzedPlayer(null);
+      } else {
+        console.log("[AdminRoomView] Événement spotify_track_changed reçu, mais ignoré car Spotify n'est pas connecté.");
+      }
+    };
+    // --------------------------------------------------------------------
+
     // Abonnement aux événements
     on('update_players', handleUpdatePlayers);
     on('game_paused', handleGamePaused);
@@ -175,6 +251,8 @@ function AdminRoomView() {
     on('buzzed', handleBuzzed);
     on('connect', handleConnect);
     on('player_kicked', handlePlayerKicked);
+    on('room_options_updated', handleRoomOptionsUpdated);
+    on('spotify_track_changed', handleSpotifyTrackChanged); 
 
     // Nettoyage des abonnements
     return () => {
@@ -184,8 +262,10 @@ function AdminRoomView() {
       off('buzzed', handleBuzzed);
       off('connect', handleConnect);
       off('player_kicked', handlePlayerKicked);
+      off('room_options_updated', handleRoomOptionsUpdated); 
+      off('spotify_track_changed', handleSpotifyTrackChanged);
     };
-  }, [roomCode, refreshStatus]);
+  }, [roomCode, refreshStatus, spotifyConnected]);
 
   // Vérification de l'authentification admin
   useEffect(() => {
@@ -319,7 +399,7 @@ function AdminRoomView() {
           videoElement.setAttribute('playsinline', '');
           videoElement.setAttribute('muted', '');
           // Vidéo transparente, ultra-courte en base64
-          videoElement.setAttribute('src', 'data:video/mp4;base64,AAAAIGZ0eXBtcDQyAAAAAG1wNDJtcDQxaXNvbWF2YzEAAATKbW9vdgAAAGxtdmhkAAAAANLEP5XSxD+VAAB1MAAAdU4AAQAAAQAAAAAAAAAAAAAAAAEAAAAAAAAAAAAAAAAAAAABAAAAAAAAAAAAAAAAAABAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAgAAACFpb2RzAAAAABCAgIAHAE/////+/wAAAiF0cmFrAAAAXHRraGQAAAAP0sQ/ldLEP5UAAAABAAAAAAAAAHUyAAAAAAAAAAAAAAAAAAAAAAEAAAAAAAAAAAAAAAAAAAABAAAAAAAAAAAAAAAAAABAAAAAALAAAACQAAAAAAAkZWR0cwAAABxlbHN0AAAAAAAAAAEAAHUyAAAAAAABAAAAAAKobWRpYQAAACBtZGhkAAAAANLEP5XSxD+VAAB1MAAAdU5VxAAAAAAANmhkbHIAAAAAAAAAAHZpZGUAAAAAAAAAAAAAAABMLVNNQVNIIFZpZGVvIEhhbmRsZXIAAAACC21pbmYAAAAUdm1oZAAAAAEAAAAAAAAAAAAAACRkaW5mAAAAHGRyZWYAAAAAAAAAAQAAAAx1cmwgAAAAAQAAAcNzdGJsAAAAwXN0c2QAAAAAAAAAAQAAALFhdmMxAAAAAAAAAAEAAAAAAAAAAAAAAAAAAAAAALAAkABIAAAASAAAAAAAAAABCkFWQyBDb2RpbmcAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAP//AAAAOGF2Y0MBZAAf/+EAHGdkAB+s2UCgC/oAAAMADwABAAZAGBerEQAAABhzdHRzAAAAAAAAAAEAAAAeAAAB4AAAABRzdHNzAAAAAAAAAAEAAAABAAAAHHN0c2MAAAAAAAAAAQAAAAEAAAABAAAAAQAAAIxzdHN6AAAAAAAAAAAAAAAeAAADygAAAE8AAABPAAAATwAAAE8AAABOAAAATwAAAE8AAABPAAAATwAAAE8AAABPAAAATwAAAE8AAABPAAAA4HN0Y28AAAAAAAAAAQAAADAAAABidWR0YQAAAFptZXRhAAAAAAAAACFoZGxyAAAAAAAAAABtZGlyYXBwbAAAAAAAAAAAAAAAAC1pbHN0AAAAJal0b28AAAAdZGF0YQAAAAEAAAAATGF2ZjU2LjQwLjEwMQ==');
+          videoElement.setAttribute('src', 'data:video/mp4;base64,AAAAIGZ0eXBtcDQyAAAAAG1wNDJtcDQxaXNvbWF2YzEAAATKbW9vdgAAAGxtdmhkAAAAANLEP5XSxD+VAAB1MAAAdU4AAQAAAQAAAAAAAAAAAAAAAAEAAAAAAAAAAAAAAAAAAAABAAAAAAAAAAAAAAAAAABAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAgAAACFpb2RzAAAAABCAgIAHAE/////+/wAAAiF0cmFrAAAAXHRraGQAAAAP0sQ/ldLEP5UAAAABAAAAAAAAAHUyAAAAAAAAAAAAAAAAAAAAAAEAAAAAAAAAAAAAAAAAAAABAAAAAAAAAAAAAAAAAABAAAAAALAAAACQAAAAAAAkZWR0cwAAABxlbHN0AAAAAAAAAAEAAHUyAAAAAAABAAAAAAKobWRpYQAAACBtZGhkAAAAANLEP5XSxD+VAAB1MAAAdU5VxAAAAAAANmhkbHIAAAAAAAAAAHZpZGUAAAAAAAAAAAAAAABMLVNNQVNIIFZpZGVvIEhhbmRsZXIAAAACC21pbmYAAAAUdm1oZAAAAAEAAAAAAAAAAAAAACRkaW5mAAAAHGRyZWYAAAAAAAAAAQAAAAx1cmwgAAAAAQAAAcNzdGJsAAAAwXN0c2QAAAAAAAAAAQAAALFhdmMxAAAAAAAAAAEAAAAAAAAAAAAAAAAAAAAAALAAkABIAAAASAAAAAAAAAABCkFWQyBDb2RpbmcAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAP//AAAAOGF2Y0MBZAAf/+EAHGdkAB+s2UCgC/oAAAMADwABAAZAGBerEQAAABhzdHRzAAAAAAAAAAEAAAAeAAAB4AAAABRzdHNzAAAAAAAAAAEAAAABAAAAHHN0c2MAAAAAAAAAAQAAAAEAAAABAAAAAQAAAIxzdHN6AAAAAAAAAAAAAAAeAAADygAAAE8AAABPAAAATwAAAE8AAABOAAAATwAAAE8AAABPAAAATwAAAAAE8AAABPAAAATwAEAAAE8AAABPAAAATw8AAAAE8AAABPAAAATwAAAAAE8AAABPAAAATwBPAAAE8AAABPAAAATwAAAATwAAAE8AAABPAAAA4HN0Y28AAAAAAAAAAQAAADAAAABidWR0YQAAAFptZXRhAAAAAAAAACFoZGxyAAAAAAAAAABtZGlyYXBwbAAAAAAAAAAAAAAAAC1pbHN0AAAAJal0b28AAAAdZGF0YQAAAAEAAAAATGF2ZjU2LjQwLjEwMQ==');
           videoElement.setAttribute('loop', '');
           videoElement.style.width = '1px';
           videoElement.style.height = '1px';
@@ -438,10 +518,14 @@ const handleKick = async (playerId) => {
   }
 };
 
+
   const handleResetBuzzer = () => {
     if (roomCode) {
       resetBuzzer(roomCode);
       setBuzzedPlayer(null);
+      // Réinitialiser l'état trouvé pour la nouvelle piste/question
+      setFoundArtist(false);
+      setFoundTitle(false);
     }
   };
 
@@ -478,60 +562,52 @@ const handleKick = async (playerId) => {
   };
 
   const handleUpdateScore = (playerId) => {
-    if (roomCode && scoreUpdates[playerId] !== undefined) {
-      const newScore = Number(scoreUpdates[playerId]);
-      const socket = getSocket();
-      socket.emit('update_score', {
-        roomCode,
-        playerId,
-        score: newScore
-      });
-    }
-  };
+   if (roomCode && scoreUpdates[playerId] !== undefined && players[playerId]) {
+     const currentScore = players[playerId].score || 0;
+     const newScore = Number(scoreUpdates[playerId]);
+     const difference = newScore - currentScore;
 
-  const handleIncrementScore = (playerId, increment) => {
-    if (roomCode) {
-      const currentScore = Number(players[playerId]?.score || 0);
-      const newScore = currentScore + increment;
-      const socket = getSocket();
-      socket.emit('update_score', {
-        roomCode,
-        playerId,
-        score: newScore
-      });
-    }
-  };
+     if (difference !== 0) {
+       // Envoyer l'ajustement au backend via le nouvel événement
+       adjustScore(roomCode, playerId, difference);
+     }
 
-  const handleJudgeResponse = async (isCorrect) => {
+     // Réinitialiser l'état local après envoi
+     setScoreUpdates(prev => {
+       const updates = { ...prev };
+       delete updates[playerId];
+       return updates;
+     });
+   }
+ };
+
+const handleIncrementScore = (playerId, adjustment) => { // Renommer 'increment' en 'adjustment' pour la clarté
+  if (roomCode && players[playerId] && adjustment !== 0) { // Vérifier que l'ajustement n'est pas nul
+    console.log(`[AdminRoomView] Appel adjustScore pour ${playerId} avec ajustement ${adjustment}`);
+    // Appeler le nouveau service qui émet 'adjust_score'
+    adjustScore(roomCode, playerId, adjustment);
+
+    // L'UI se mettra à jour via l'événement 'update_players' reçu du backend
+  } else {
+    console.warn('[AdminRoomView] Données manquantes ou ajustement nul pour handleIncrementScore', { roomCode, playerId, adjustment });
+  }
+};
+
+  const handleJudgeResponse = async (judgementType) => {
     if (buzzedPlayer && roomCode) {
-      const currentScore = Number(players[buzzedPlayer.playerId]?.score || 0);
-      let duration_lock = 0;
-      let newScore = currentScore;
-      
-      if (isCorrect) {
-        newScore += BONUS_POINTS;
-        duration_lock = 1;
-      } else {
-        newScore -= 1;
-        duration_lock = 3;
+      judgeResponse(roomCode, buzzedPlayer.playerId, judgementType);
+  
+      // Met à jour l'état localement basé sur le jugement
+      if (judgementType === 'correct_title') {
+        setFoundTitle(true);
+      } else if (judgementType === 'correct_artist') {
+        setFoundArtist(true);
+      } else if (judgementType === 'correct_both') {
+        setFoundArtist(true);
+        setFoundTitle(true);
       }
-      
-      const socket = getSocket();
-
-      // 1. Mettre à jour le score
-      socket.emit('update_score', {
-        roomCode,
-        playerId: buzzedPlayer.playerId,
-        score: newScore
-      });
-
-      // 2. Ensuite seulement, envoyer disable_buzzer
-      socket.emit('disable_buzzer', { 
-        roomCode, 
-        playerId: buzzedPlayer.playerId, 
-        duration: duration_lock
-      });
-
+  
+      // Gérer la reprise Spotify côté client si nécessaire
       if (spotifyConnected) {
         try {
           await resumePlayback();
@@ -539,22 +615,18 @@ const handleKick = async (playerId) => {
           console.error('Erreur reprise Spotify:', error);
         }
       }
-
-      // Réinitialiser le buzzer pour tous les clients
-      socket.emit('reset_buzzer', { roomCode });
+  
+      // Réinitialiser l'état local du joueur ayant buzzé
       setBuzzedPlayer(null);
     }
   };
 
   const handlePassBuzz = async () => {
     if (buzzedPlayer && roomCode) {
-      const socket = getSocket();
-      socket.emit('disable_buzzer', { 
-        roomCode, 
-        playerId: buzzedPlayer.playerId, 
-        duration: 1
-      });
-      
+      // On pourrait juste reset le buzzer, ou informer le serveur que le buzz est annulé/passé
+      // Pour l'instant, on reset simplement, le serveur ne fera rien si personne n'a buzzé
+      resetBuzzer(roomCode); // Demande au serveur de réactiver les buzzers pour tous
+
       if (spotifyConnected) {
         try {
           await resumePlayback();
@@ -562,9 +634,8 @@ const handleKick = async (playerId) => {
           console.error('Erreur reprise Spotify:', error);
         }
       }
-            
-      resetBuzzer(roomCode);
-      setBuzzedPlayer(null);
+
+      setBuzzedPlayer(null); // Nettoyer l'état local
     }
   };
 
@@ -581,7 +652,7 @@ const handleKick = async (playerId) => {
   const handleCloseRoom = async () => {
     try {
       // Utiliser closeRoom du service socket au lieu de closeRoomRequest
-      const response = await closeRoom(roomCode);
+      const response = await closeRoom(roomCode, currentRoomOptions.saveRoom); // Passer l'option ici
       
       if (response && response.error) {
         console.error("Erreur lors de la fermeture de la salle:", response.error);
@@ -589,14 +660,16 @@ const handleKick = async (playerId) => {
         setShowCloseRoomModal(false);
       } else {
         console.log("Salle fermée avec succès");
-        setCloseStatus({ roomClosed: true, dataSaved: true });
+        // La réponse du backend pourrait confirmer si la sauvegarde a eu lieu
+        setCloseStatus({ roomClosed: true, dataSaved: response?.dataSaved ?? currentRoomOptions.saveRoom });
         setShowCloseRoomModal(false);
+        setShowPostCloseModal(true); // Afficher la modale post-fermeture
       }
     } catch (error) {
       console.error("Exception lors de la fermeture de la salle:", error);
       setCloseStatus({ roomClosed: false, dataSaved: false });
       setShowCloseRoomModal(false);
-      setShowPostCloseModal(true);
+      setShowPostCloseModal(true); // Afficher la modale même en cas d'erreur
     }
   };
 
@@ -663,19 +736,26 @@ const handleKick = async (playerId) => {
                     <tr key={playerId}>
                       <td className="pseudo-column">{player.pseudo}</td>
                       <td>{player.score}</td>
-                      <td>{player.disconnected ? '⚠️' : '✅'}</td>
+                      <td className="status-column">
+                        {/* Remplacer l'emoji par les icônes Radix */}
+                        <span className={`status-icon ${player.disconnected ? 'disconnected' : 'connected'}`}>
+                          {player.disconnected ? <ExclamationTriangleIcon /> : <CheckIcon />}
+                        </span>
+                      </td>
                       <td>
                         <button
                           className="btn btn-sm btn-success me-2"
-                          onClick={() => handleIncrementScore(playerId, BONUS_POINTS)}
+                          // Utiliser handleIncrementScore avec la valeur positive des options
+                          onClick={() => handleIncrementScore(playerId, currentRoomOptions.pointsCorrect)}
                         >
-                          +
+                          +{currentRoomOptions.pointsCorrect} {/* Afficher la valeur dynamique */}
                         </button>
                         <button
                           className="btn btn-sm btn-danger"
-                          onClick={() => handleIncrementScore(playerId, -BONUS_POINTS)}
+                          // Utiliser handleIncrementScore avec la valeur négative des options
+                          onClick={() => handleIncrementScore(playerId, -currentRoomOptions.pointsWrong)}
                         >
-                          -
+                          -{currentRoomOptions.pointsWrong} {/* Afficher la valeur dynamique */}
                         </button>
                       </td>
                     </tr>
@@ -708,13 +788,15 @@ const handleKick = async (playerId) => {
         />
       )}
       
-      {buzzedPlayer && (
+      {buzzedPlayer && (      
         <BuzzReceivedModal
           show={!!buzzedPlayer}
           pseudo={buzzedPlayer.pseudo}
-          onCorrectAnswer={() => handleJudgeResponse(true)}
-          onWrongAnswer={() => handleJudgeResponse(false)}
+          roomType={currentRoomOptions.roomType} // Passer le type de blindtest
+          onJudgeResponse={handleJudgeResponse} // Passer la fonction de jugement unifiée
           onPass={handlePassBuzz}
+          foundArtist={foundArtist} // Nouvelle prop
+          foundTitle={foundTitle}   // Nouvelle prop
         />
       )}
 

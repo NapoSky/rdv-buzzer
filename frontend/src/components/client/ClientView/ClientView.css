@@ -72,9 +72,7 @@
   /* Hauteur fixe avec marge en bas */
   max-height: 100%;
   padding: 1rem;
-  padding-bottom: 1;
-  /* Ajouter un espace en bas */
-  ;
+  padding-bottom: 70px; /* Hauteur du footer + marge */
   gap: 0;
   /* Supprimer les espaces entre les flex items */
   overflow: hidden;
@@ -164,8 +162,9 @@
 
 .player-info {
   display: flex;
-  justify-content: space-between;
+  justify-content: space-between; /* Garde l'espacement général */
   align-items: center;
+  gap: 1rem; /* Ajouter un espace minimum entre les éléments */
   padding: 0.75rem 1rem;
   background-color: rgba(248, 249, 250, 0.7);
   border-radius: var(--border-radius-md);
@@ -173,6 +172,7 @@
   -webkit-backdrop-filter: blur(10px);
   transition: background-color 0.3s ease;
   box-shadow: var(--shadow-sm);
+  overflow: hidden; /* Empêcher tout débordement global de cette barre */
 }
 
 .dark-mode .player-info {
@@ -182,6 +182,13 @@
 .player-pseudo {
   font-weight: 500;
   font-size: 1rem;
+  /* Modifications Flexbox */
+  flex: 1 1 auto; /* Autoriser à grandir et rétrécir, base automatique */
+  min-width: 0; /* TRÈS IMPORTANT: Permet de rétrécir en dessous de la taille du contenu */
+  overflow: hidden; /* Cacher le débordement */
+  white-space: nowrap; /* Empêcher le retour à la ligne */
+  text-overflow: ellipsis; /* Ajouter '...' si le texte est trop long */
+  text-align: left; /* S'assurer que le texte est aligné à gauche */
 }
 
 /* GESTION COULEUR AFFICHAGE SCORE HEADER */
@@ -245,6 +252,11 @@
 .player-score {
   font-weight: 500;
   font-size: 1rem;
+  /* Modifications Flexbox */
+  flex-shrink: 0; /* Empêcher le score de rétrécir */
+  white-space: nowrap; /* S'assurer que "Score: X" ne passe pas à la ligne */
+  text-align: right; /* Aligner le score à droite pour une meilleure lisibilité */
+  margin-left: auto; /* Pousser le score vers la droite, créant un espace avec le pseudo */
 }
 
 
@@ -253,6 +265,9 @@
   align-items: center;
   gap: 0.5rem;
   font-size: 0.85rem;
+  /* Modifications Flexbox */
+  flex-shrink: 0; /* Empêcher le statut de rétrécir */
+  white-space: nowrap; /* Empêcher le texte du statut de passer à la ligne */
 }
 
 .status-indicator {
@@ -379,50 +394,132 @@
   text-align: center;
 }
 
-/* Footer Zone - Classement */
+/* Footer Zone - Classement déroulant */
 .footer-zone {
-  margin-top: 0.3rem;
-  /* Réduire la marge entre le buzzer et le tableau */
-  margin-bottom: 0.3rem;
-  /* Marge en bas pour éviter de toucher le bord */
-  border-radius: var(--border-radius-lg);
-  background-color: rgba(248, 249, 250, 0.8);
-  backdrop-filter: blur(10px);
-  -webkit-backdrop-filter: blur(10px);
-  box-shadow: var(--shadow-md);
-  overflow: hidden;
-  /* Pas de scroll sur le footer lui-même */
-  transition: background-color 0.3s ease;
-  width: 100%;
-  display: flex;
-  flex-direction: column;
-  flex: 1;
-  /* Prend l'espace restant disponible */
-  min-height: 0;
-  /* Important pour que flex-grow fonctionne correctement */
-  max-height: calc(100% - 10px);
-  margin-bottom: 10px;
+  position: fixed; /* Fixer en bas */
+  bottom: 0;
+  left: 0;
+  right: 0;
+  z-index: 100; /* Au-dessus du reste */
+  background-color: rgba(248, 249, 250, 0.9); /* Fond légèrement transparent */
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+  box-shadow: 0 -2px 10px rgba(0, 0, 0, 0.1); /* Ombre vers le haut */
+  border-top-left-radius: var(--border-radius-lg); /* Arrondir les coins supérieurs */
+  border-top-right-radius: var(--border-radius-lg);
+  overflow: hidden; /* Important pour cacher le contenu */
+  max-height: 60px; /* Hauteur par défaut (juste le header) - Ajuster si besoin */
+  transition: max-height 0.3s ease-in-out; /* Animation fluide */
+  display: flex; /* Garder flex pour la structure interne */
+  flex-direction: column; /* Header au-dessus du tableau */
 }
 
 .dark-mode .footer-zone {
-  background-color: rgba(30, 30, 30, 0.8);
+  background-color: rgba(30, 30, 30, 0.9);
+  box-shadow: 0 -2px 10px rgba(0, 0, 0, 0.3);
 }
 
+/* État déplié */
+.footer-zone.expanded {
+  max-height: 45vh; /* Hauteur maximale lorsque déplié - Ajuster selon vos besoins */
+}
+
+/* Header du classement (la barre cliquable) */
 .ranking-header {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  padding: 1rem 1.25rem;
-  border-bottom: 1px solid rgba(233, 236, 239, 0.6);
-  position: sticky;
-  top: 0;
-  z-index: 10;
-  background-color: rgba(248, 249, 250, 0.95);
-  backdrop-filter: blur(5px);
-  -webkit-backdrop-filter: blur(5px);
-  border-bottom: 1px solid rgba(233, 236, 239, 0.8);
-  flex-shrink: 0;
-  /* Ne pas réduire l'en-tête */
+  padding: 0.75rem 1rem; /* Ajuster le padding */
+  cursor: pointer; /* Indiquer que c'est cliquable */
+  user-select: none; /* Empêcher la sélection de texte */
+  border-bottom: 1px solid rgba(0, 0, 0, 0.05); /* Ligne subtile */
+  flex-shrink: 0; /* Empêcher le header de rétrécir */
+  height: 60px; /* Hauteur fixe pour le header - Doit correspondre à max-height du footer-zone */
+  box-sizing: border-box; /* Inclure padding/border dans la hauteur */
+}
+
+.dark-mode .ranking-header {
+  border-bottom-color: rgba(255, 255, 255, 0.1);
+}
+
+.ranking-header:hover {
+  background-color: rgba(0, 0, 0, 0.02);
+}
+.dark-mode .ranking-header:hover {
+  background-color: rgba(255, 255, 255, 0.04);
+}
+
+.ranking-header-left {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem; /* Espace entre "Classement" et la position */
+}
+
+.ranking-header-right {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem; /* Espace entre statut et flèche */
+}
+
+.ranking-header h3 {
+  margin: 0;
+  font-size: 1.1rem; /* Ajuster la taille */
+  font-weight: 600;
+}
+
+.current-rank-indicator {
+  font-size: 0.85rem;
+  /* Appliquer la couleur primaire directement */
+  color: var(--primary, #007bff);
+  font-weight: 500;
+  padding: 0.2rem 0.6rem;
+  border-radius: var(--border-radius-md);
+  /* Appliquer la bordure primaire directement */
+  border: 1px solid var(--primary, #007bff);
+  background-color: transparent;
+  margin-left: 0.75rem;
+  white-space: nowrap;
+  transition: all 0.2s ease; /* Garder la transition si d'autres effets sont possibles */
+}
+
+.dark-mode .current-rank-indicator {
+  /* Appliquer la couleur primaire claire directement pour le mode sombre */
+  color: #40c9ff;
+  /* Appliquer la bordure primaire claire directement pour le mode sombre */
+  border-color: #40c9ff;
+}
+
+.game-status {
+  /* Styles existants */
+  font-size: 0.8rem; /* Ajuster si besoin */
+  padding: 0.2rem 0.6rem;
+}
+
+.ranking-toggle-icon {
+  display: flex; /* Pour bien aligner l'icône */
+  align-items: center;
+  color: var(--text-secondary);
+}
+.dark-mode .ranking-toggle-icon {
+  color: var(--text-secondary-dark);
+}
+
+/* Conteneur de la table (partie qui se déroule) */
+.ranking-table-container {
+  flex: 1; /* Prend l'espace restant */
+  overflow-y: auto; /* Scroll si nécessaire */
+  overflow-x: hidden;
+  /* La transition de hauteur est gérée par .footer-zone */
+  /* Pas besoin de max-height ici, il est contrôlé par le parent */
+  padding: 0 0.5rem 0.5rem 0.5rem; /* Ajouter un peu de padding */
+}
+
+.dark-mode .ranking-table th {
+  border-bottom-color: rgba(44, 44, 44, 0.6);
+}
+
+.ranking-table tr {
+  border-bottom-color: rgba(44, 44, 44, 0.4);
 }
 
 .dark-mode .ranking-header {
@@ -432,7 +529,6 @@
 }
 
 .ranking-header h3 {
-  margin: 0;
   font-size: 1.25rem;
   font-weight: 600;
 }
@@ -484,6 +580,162 @@
 .ranking-table td {
   padding: 0.75rem 1rem;
   text-align: left;
+  vertical-align: middle; /* Garder middle pour les données */
+}
+
+/* Largeurs de colonnes par défaut (PC) */
+.ranking-table th:nth-child(1), /* Position */
+.ranking-table td.position-cell {
+  width: 15%; /* Un peu plus large par défaut */
+  max-width: 80px;
+  text-align: center;
+}
+
+.ranking-table th:nth-child(2), /* Pseudo */
+.ranking-table td.pseudo-cell {
+  width: 45%; /* Prend le plus de place */
+  /* max-width géré par text-overflow */
+}
+
+.ranking-table th:nth-child(3), /* Score */
+.ranking-table td.score-cell {
+  width: 25%;
+  text-align: right; /* Aligner le score à droite */
+  padding-right: 1.5rem; /* Plus de padding à droite pour l'alignement */
+}
+
+.ranking-table th:nth-child(4), /* Statut */
+.ranking-table td.status-cell {
+  width: 15%;
+  max-width: 60px;
+  text-align: center;
+}
+
+
+/* --- Ajustements Media Queries pour les colonnes --- */
+
+@media (max-width: 768px) {
+  .ranking-table th,
+  .ranking-table td {
+    padding: 0.6rem 0.8rem; /* Réduire padding */
+  }
+
+  .ranking-table th:nth-child(1), /* Position */
+  .ranking-table td.position-cell {
+    width: 12%;
+    max-width: 60px;
+  }
+
+  .ranking-table th:nth-child(2), /* Pseudo */
+  .ranking-table td.pseudo-cell {
+    width: 50%; /* Plus de place pour le pseudo */
+  }
+
+  .ranking-table th:nth-child(3), /* Score */
+  .ranking-table td.score-cell {
+    width: 26%;
+    padding-right: 1rem;
+  }
+
+  .ranking-table th:nth-child(4), /* Statut */
+  .ranking-table td.status-cell {
+    width: 12%;
+    max-width: 50px;
+  }
+
+  .current-rank-indicator {
+    font-size: 0.8rem;
+    padding: 0.15rem 0.5rem;
+    margin-left: 0.5rem;
+  }
+}
+
+
+@media (max-width: 480px) {
+  .ranking-table th,
+  .ranking-table td {
+    padding: 0.5rem 0.5rem; /* Padding encore réduit */
+    font-size: 0.9rem;
+  }
+
+  .ranking-table th:nth-child(1), /* Position */
+  .ranking-table td.position-cell {
+    width: 50px; /* Largeur fixe pour la position */
+    max-width: 50px;
+    padding-left: 0.25rem;
+    padding-right: 0.25rem;
+  }
+
+  .ranking-table th:nth-child(2), /* Pseudo */
+  .ranking-table td.pseudo-cell {
+    /* Prend l'espace restant implicitement */
+    /* Assurer que l'overflow fonctionne */
+    max-width: calc(100% - 50px - 60px - 50px - 1rem); /* Calcul approximatif */
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  .ranking-table th:nth-child(3), /* Score */
+  .ranking-table td.score-cell {
+    width: 60px; /* Largeur fixe pour le score */
+    max-width: 60px;
+    text-align: right;
+    padding-right: 0.5rem;
+  }
+
+  .ranking-table th:nth-child(4), /* Statut */
+  .ranking-table td.status-cell {
+    width: 50px; /* Largeur fixe pour le statut */
+    max-width: 50px;
+    padding-left: 0.25rem;
+    padding-right: 0.25rem;
+  }
+
+  .current-rank-indicator {
+    font-size: 0.75rem;
+    padding: 0.1rem 0.4rem;
+    margin-left: 0.4rem;
+    border-radius: var(--border-radius-sm);
+  }
+}
+
+@media (max-width: 380px) {
+  .ranking-table th,
+  .ranking-table td {
+    padding: 0.4rem 0.3rem; /* Padding minimal */
+    font-size: 0.85rem;
+  }
+
+  .ranking-table th:nth-child(1), /* Position */
+  .ranking-table td.position-cell {
+    width: 40px;
+    max-width: 40px;
+  }
+
+  .ranking-table th:nth-child(3), /* Score */
+  .ranking-table td.score-cell {
+    width: 50px;
+    max-width: 50px;
+    padding-right: 0.3rem;
+  }
+
+  .ranking-table th:nth-child(4), /* Statut */
+  .ranking-table td.status-cell {
+    width: 40px;
+    max-width: 40px;
+  }
+
+  /* Ajuster le max-width du pseudo en conséquence */
+  .ranking-table td.pseudo-cell {
+     max-width: calc(100% - 40px - 50px - 40px - 0.6rem);
+  }
+
+  .current-rank-indicator {
+    font-size: 0.7rem;
+    padding: 0.05rem 0.3rem;
+    margin-left: 0.3rem;
+  }
 }
 
 .ranking-table th {
@@ -491,6 +743,14 @@
   font-size: 0.9rem;
   color: #6c757d;
   border-bottom: 1px solid rgba(233, 236, 239, 0.6);
+  /* Permettre le retour à la ligne si nécessaire */
+  white-space: normal; /* CHANGEMENT: Autoriser le retour à la ligne */
+  /* Aligner au milieu verticalement */
+  vertical-align: middle; /* CHANGEMENT: Aligner au milieu */
+  /* Ajuster le padding vertical */
+  padding-top: 0.75rem;
+  padding-bottom: 0.75rem;
+  /* Retirer overflow/ellipsis car on permet le wrap */
 }
 
 .dark-mode .ranking-table th {
@@ -1142,11 +1402,30 @@ tr.buzzed-player {
   }
 
   .footer-zone {
-    flex: 1;
-    min-height: 0;
-    max-height: calc(100% - 8px);
-    margin-bottom: 8px;
-    border-radius: var(--border-radius-lg);
+    max-height: 55px; /* Légèrement plus petit */
+    border-top-left-radius: var(--border-radius-md);
+    border-top-right-radius: var(--border-radius-md);
+  }
+
+  .footer-zone.expanded {
+    max-height: 40vh; /* Un peu moins haut */
+  }
+
+  .ranking-header {
+    height: 55px;
+    padding: 0.6rem 0.8rem;
+  }
+
+  .client-container {
+    padding-bottom: 65px; /* 55px + 10px */
+  }
+
+  .ranking-header h3 {
+    font-size: 1rem;
+  }
+
+  .game-status {
+    font-size: 0.75rem;
   }
 
   .buzz-button {
@@ -1268,6 +1547,12 @@ tr.buzzed-player {
     border-bottom-left-radius: var(--border-radius-lg);
     border-bottom-right-radius: var(--border-radius-lg);
   }
+
+  .current-rank-indicator {
+    font-size: 0.85rem;
+    padding: 0.1rem 0.35rem;
+    margin-left: 0.4rem;
+  }
 }
 
 /* Media queries *//* Media queries *//* Media queries *//* Media queries *//* Media queries *//* Media queries *//* Media queries *//* Media queries *//* Media queries */
@@ -1295,6 +1580,25 @@ tr.buzzed-player {
     flex-direction: column;
     gap: 1rem;
     align-items: flex-start;
+  }
+
+  .player-info {
+    gap: 0.5rem; /* Réduire l'espace entre les éléments */
+    padding: 0.5rem 0.75rem;
+  }
+  .player-pseudo {
+    font-size: 0.9rem;
+  }
+  .player-score {
+    font-size: 0.9rem;
+  }
+  .connection-status {
+    font-size: 0.75rem;
+    gap: 0.3rem;
+  }
+  .status-indicator {
+    width: 6px;
+    height: 6px;
   }
 
   .player-info {
@@ -1421,7 +1725,7 @@ tr.buzzed-player {
     width: 180px;
     /* Plus grand que dans la version précédente */
     height: 180px;
-    box-shadow: 0 10px 20px rgba(255, 58, 76, 0.4), 0 -2px 8px rgba(255, 255, 255, 0.3) inset;
+    box-shadow: 0 12px 24px rgba(255, 58, 76, 0.4), 0 -2px 8px rgba(255, 255, 255, 0.3) inset;
     /* Animation subtile pour attirer l'attention */
     animation: subtle-pulse 2s infinite;
     margin: 0;
@@ -1460,21 +1764,22 @@ tr.buzzed-player {
 
   /* Diminuer encore l'importance visuelle du footer */
   .footer-zone {
-    margin-top: 0.5rem;
-    opacity: 0.95;
-    /* Légèrement plus transparent */
-    max-height: 35vh;
-    /* Limiter la hauteur maximale */
-    overflow-y: auto;
-    /* Permettre le défilement */
-    margin-top: 0.75rem;
-    flex-grow: 1;
-    /* Donner plus d'importance au tableau */
-    max-height: none;
-    /* Ne pas limiter la hauteur */
+    max-height: 50px; /* Encore plus petit */
   }
 
-  /* Rendre le tableau plus compact */
+  .footer-zone.expanded {
+    max-height: 35vh; /* Limiter la hauteur dépliée */
+  }
+
+  .ranking-header {
+    height: 50px;
+    padding: 0.5rem 0.75rem;
+  }
+
+  .client-container {
+    padding-bottom: 60px; /* 50px + 10px */
+  }
+
   .ranking-table th,
   .ranking-table td {
     padding: 0.5rem 0.75rem;
@@ -1490,6 +1795,12 @@ tr.buzzed-player {
   .position-number {
     width: 22px;
     height: 22px;
+  }
+
+  .current-rank-indicator {
+    font-size: 0.8rem;
+    padding: 0.05rem 0.3rem;
+    margin-left: 0.3rem;
   }
 }
 
@@ -1541,12 +1852,39 @@ tr.buzzed-player {
 
   /* Réduire encore le footer */
   .footer-zone {
-    max-height: 30vh;
-    margin-top: 0.75rem;
-    flex-grow: 1;
-    /* Donner plus d'importance au tableau */
-    max-height: none;
-    /* Ne pas limiter la hauteur */
+    max-height: 45px; /* Très compact */
+  }
+
+  .footer-zone.expanded {
+    max-height: 30vh; /* Limiter encore plus */
+  }
+
+  .ranking-header {
+    height: 45px;
+    padding: 0.4rem 0.6rem;
+  }
+
+  .client-container {
+    padding-bottom: 55px; /* 45px + 10px */
+  }
+
+  .ranking-header h3 {
+    font-size: 0.9rem;
+  }
+
+  .current-rank-indicator {
+    font-size: 0.75rem;
+  }
+
+  .game-status {
+    font-size: 0.7rem;
+    padding: 0.15rem 0.4rem;
+  }
+
+  .ranking-table th,
+  .ranking-table td {
+    padding: 0.4rem 0.6rem;
+    font-size: 0.85rem;
   }
 }
 
@@ -1636,6 +1974,12 @@ tr.buzzed-player {
   .footer-zone {
     max-height: 30vh;
     /* Encore réduite pour les très petits écrans */
+  }
+
+  .current-rank-indicator {
+    font-size: 0.75rem;
+    padding: 0.05rem 0.25rem;
+    margin-left: 0.25rem;
   }
 }
 

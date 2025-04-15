@@ -1,7 +1,7 @@
 // src/controllers/roomController.js
 const { Room } = require('../models/Room');
 const logger = require('../utils/logger');
-const { getIO } = require('../socket');
+const { getIO } = require('../socket/index');
 const roomService = require('../services/roomService');
 
 async function listAllRooms(req, res) {

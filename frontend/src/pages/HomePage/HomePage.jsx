@@ -1,6 +1,7 @@
 // src/components/HomePage.js
 import React, { useState, useContext, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
+import * as Dialog from '@radix-ui/react-dialog'
 import { AdminAuthContext } from '../../contexts/AdminAuthContext';
 import { ThemeContext } from '../../contexts/ThemeContext';
 import './HomePage.css';  // Import du CSS local
@@ -53,6 +54,14 @@ function HomePage({ setActiveRoomCode }) {
   const { isAdminAuthenticated, setIsAdminAuthenticated } = useContext(AdminAuthContext);
   const { isDarkMode } = useContext(ThemeContext);
   const { info, warn, error, success } = useNotification();
+  const [showCreateRoomDialog, setShowCreateRoomDialog] = useState(false);
+  const [roomOptions, setRoomOptions] = useState({
+    roomType: 'Standard',
+    pointsCorrect: 10,
+    pointsWrong: 5,
+    penaltyDelay: 3,
+    saveRoom: true,
+  });
 
   // Récupérer les valeurs de roomCode et pseudo depuis le localStorage si le client s'est déjà connecté auparavant
   useEffect(() => {
@@ -164,8 +173,25 @@ function HomePage({ setActiveRoomCode }) {
   // Exemple de création de salle (ou navigation vers AdminRoomView)
   const handleCreateRoom = () => {
     if (isAdminAuthenticated) {
-      navigate('/admin-room');
+      setShowCreateRoomDialog(true);
     }
+  };
+
+  // Gérer les changements dans les options de la salle
+  const handleOptionChange = (e) => {
+    const { name, value, type, checked } = e.target;
+    setRoomOptions(prevOptions => ({
+      ...prevOptions,
+      [name]: type === 'checkbox' ? checked : (type === 'number' ? parseInt(value, 10) : value)
+    }));
+  };
+
+  // Fonction pour finaliser la création (pour l'instant, ferme juste le dialogue)
+  const handleFinalizeCreateRoom = () => {
+    console.log("Options de la salle :", roomOptions);
+    // Ici, plus tard, on enverra les options au backend ou à AdminRoomView
+    setShowCreateRoomDialog(false);
+    navigate('/admin-room', { state: { roomOptions } });
   };
 
   return (
@@ -280,6 +306,87 @@ function HomePage({ setActiveRoomCode }) {
           >NapoSky</a>
         </p>
       </footer>
+
+      {/* Dialogue de création de salle */}
+      <Dialog.Root open={showCreateRoomDialog} onOpenChange={setShowCreateRoomDialog}>
+        <Dialog.Portal>
+          <Dialog.Overlay className="dialog-overlay" />
+          <Dialog.Content className={`dialog-content ${isDarkMode ? 'dark-mode' : ''}`}>
+            <Dialog.Title className="dialog-title">Options de la nouvelle salle</Dialog.Title>
+            
+            <div className="form-group mt-3">
+              <label className="form-label">Type de blindtest :</label>
+              <select 
+                name="roomType" 
+                className="form-control" 
+                value={roomOptions.roomType} 
+                onChange={handleOptionChange}
+              >
+                <option value="Standard">Standard</option>
+                <option value="Titre/Artiste">Titre/Artiste</option>
+              </select>
+            </div>
+
+            <div className="form-group mt-3">
+              <label className="form-label">Points par bonne réponse :</label>
+              <input 
+                type="number" 
+                name="pointsCorrect" 
+                className="form-control" 
+                value={roomOptions.pointsCorrect} 
+                onChange={handleOptionChange} 
+                min="1"
+              />
+            </div>
+
+            <div className="form-group mt-3">
+              <label className="form-label">Points retirés par mauvaise réponse :</label>
+              <input 
+                type="number" 
+                name="pointsWrong" 
+                className="form-control" 
+                value={roomOptions.pointsWrong} 
+                onChange={handleOptionChange} 
+                min="0"
+              />
+            </div>
+
+            <div className="form-group mt-3">
+              <label className="form-label">Pénalité de buzzer (secondes) :</label>
+              <input 
+                type="number" 
+                name="penaltyDelay" 
+                className="form-control" 
+                value={roomOptions.penaltyDelay} 
+                onChange={handleOptionChange} 
+                min="0"
+              />
+            </div>
+
+            <div className="form-check mt-3">
+              <input 
+                type="checkbox" 
+                name="saveRoom" 
+                className="form-check-input" 
+                id="saveRoomCheck"
+                checked={roomOptions.saveRoom} 
+                onChange={handleOptionChange} 
+              />
+              <label className="form-check-label" htmlFor="saveRoomCheck">
+                Sauvegarder la session après fermeture
+              </label>
+            </div>
+
+            <div className="dialog-footer mt-4">
+              <Dialog.Close asChild>
+                <button className="btn btn-secondary">Annuler</button>
+              </Dialog.Close>
+              <button className="btn btn-primary" onClick={handleFinalizeCreateRoom}>Créer la salle</button>
+            </div>
+          </Dialog.Content>
+        </Dialog.Portal>
+      </Dialog.Root>
+
     </div>
   );
 }

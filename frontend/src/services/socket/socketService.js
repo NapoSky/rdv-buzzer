@@ -123,26 +123,27 @@ export const getSocket = () => {
 };
 
 // Création de salle avec logs détaillés et gestion d'erreur
-export const createRoom = async () => {
+export const createRoom = async (options) => { // Accepter les options en argument
   try {
     const socket = await ensureSocketConnection();
-    
-    console.log('Émission de create_room depuis socket ID:', socket.id);
-    
+
+    console.log('Émission de create_room avec options:', options, 'depuis socket ID:', socket.id);
+
     return new Promise((resolve, reject) => {
       const timeout = setTimeout(() => {
         console.error('Timeout lors de la création de salle');
         reject(new Error('Délai de création de salle dépassé'));
       }, 5000);
-      
-      socket.emit('create_room', (response) => {
+
+      // Envoyer les options au backend
+      socket.emit('create_room', options, (response) => {
         clearTimeout(timeout);
-        
+
         if (response && response.error) {
           console.error('Erreur serveur lors de la création de salle:', response.error);
           reject(new Error(response.error));
         } else if (response && response.roomCode) {
-          console.log('Salle créée avec code:', response.roomCode);
+          console.log('Salle créée avec code:', response.roomCode, 'Options reçues par serveur:', response.options); // Log options confirmées par serveur si dispo
           resolve(response);
         } else {
           console.error('Réponse invalide de création de salle:', response);
@@ -151,8 +152,8 @@ export const createRoom = async () => {
       });
     });
   } catch (error) {
-    console.error('Erreur lors de la préparation de la socket:', error);
-    throw error;
+    console.error('Erreur lors de la préparation de la socket pour createRoom:', error);
+    throw error; // Rethrow pour que l'appelant puisse gérer
   }
 };
 
@@ -206,10 +207,13 @@ export const leaveRoom = (roomCode, pseudo) => {
   socket.emit('leave_room', { roomCode, pseudo });
 };
 
-export const closeRoom = (roomCode) => {
+export const closeRoom = (roomCode, saveRoom) => { // Accepter saveRoom en argument
   const socket = getSocket();
   return new Promise((resolve) => {
-    socket.emit('close_room', { roomCode }, (response) => {
+    console.log(`Émission de close_room pour ${roomCode} avec saveRoom: ${saveRoom}`);
+    // Envoyer roomCode et saveRoom au backend
+    socket.emit('close_room', { roomCode, saveRoom }, (response) => {
+      console.log(`Réponse de close_room pour ${roomCode}:`, response);
       resolve(response);
     });
   });
@@ -226,6 +230,7 @@ export const buzz = (roomCode, pseudo, callback = () => {}) => {
 
 export const resetBuzzer = (roomCode) => {
   const socket = getSocket();
+  console.log(`Émission de reset_buzzer pour ${roomCode}`);
   socket.emit('reset_buzzer', { roomCode });
 };
 
@@ -270,4 +275,34 @@ export const disconnect = () => {
   if (socket) {
     socket.disconnect();
   }
+};
+
+// Centralise l'émission de l'événement de jugement vers le backend
+export const judgeResponse = (roomCode, playerId, judgementType) => {
+  const socket = getSocket();
+  console.log(`Émission de judge_response: room=${roomCode}, player=${playerId}, judgement=${judgementType}`);
+  socket.emit('judge_response', {
+    roomCode,
+    playerId,
+    judgment: judgementType // 'correct', 'incorrect', 'correct_title', 'correct_artist', 'correct_both'
+  });
+};
+
+/**
+ * Émet un événement pour ajuster manuellement le score d'un joueur.
+ * @param {string} roomCode - Le code de la salle.
+ * @param {string} playerId - L'ID du joueur dont le score doit être ajusté.
+ * @param {number} adjustment - La valeur à ajouter (positive ou négative) au score.
+ */
+export const adjustScore = (roomCode, playerId, adjustment) => {
+  if (!socket) {
+    console.error('Socket non initialisée pour adjustScore');
+    return;
+  }
+  console.log(`[SocketService] Émission adjust_score: room=${roomCode}, player=${playerId}, adjustment=${adjustment}`);
+  socket.emit('adjust_score', {
+    roomCode,
+    playerId,
+    adjustment // Envoyer directement l'ajustement numérique
+  });
 };

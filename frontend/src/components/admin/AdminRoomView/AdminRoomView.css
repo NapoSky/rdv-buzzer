@@ -911,4 +911,272 @@ body.dark-mode .fixed-width-button.btn-danger:hover {
   }
 }
 
+/* Styles de base pour le tableau (Desktop et fallback) */
+.table {
+  border-collapse: separate; /* Assure que border-spacing fonctionne */
+  border-spacing: 0;
+  width: 100%;
+  /* La couleur est gérée par les thèmes globaux/dark */
+}
+
+.table th,
+.table td {
+  padding: 0.65rem 1rem; /* Augmenter légèrement le padding vertical */
+  vertical-align: middle;
+  border-bottom: 1px solid rgba(0, 0, 0, 0.05); /* Bordure light mode */
+}
+
+body.dark-mode .table th,
+body.dark-mode .table td {
+  border-bottom: 1px solid rgba(255, 255, 255, 0.05); /* Bordure dark mode plus visible */
+}
+
+.table th {
+  font-weight: 600;
+  text-transform: uppercase;
+  position: sticky;
+  top: 0;
+  z-index: 10;
+  /* Les couleurs de fond sont gérées par les thèmes */
+  background: rgba(0, 123, 255, 0.05); /* Fond léger pour light mode */
+}
+
+body.dark-mode .table th {
+  background: rgba(64, 201, 255, 0.15); /* Fond bleu accentué dark mode */
+  color: #e0e0e0;
+}
+
+/* Colonne Pseudo */
+.pseudo-column {
+  max-width: 180px; /* Un peu plus de place par défaut */
+  min-width: 100px; /* Empêche d'être trop écrasé */
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/* Colonne Statut */
+.status-column { /* Ajoutez cette classe au <td> correspondant dans le JSX */
+  width: 80px; /* Donner une largeur fixe */
+  text-align: center;
+}
+
+/* Style pour les icônes de statut (emojis) */
+.status-icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 28px; /* Taille du cercle */
+  height: 28px;
+  border-radius: 50%;
+  font-size: 1rem; /* Taille de l'emoji */
+}
+
+.status-icon.connected {
+  background-color: rgba(40, 167, 69, 0.1); /* Vert léger (comme ClientView) */
+  color: #28a745; /* Vert */
+}
+
+.status-icon.disconnected {
+  background-color: rgba(220, 53, 69, 0.1); /* Rouge léger (comme ClientView) */
+  color: #dc3545; /* Rouge */
+}
+
+body.dark-mode .status-icon.connected {
+  /* Bleu/vert en dark mode, cohérent avec PublicRanking/ClientView */
+  background-color: rgba(64, 201, 255, 0.15);
+  color: #40c9ff;
+}
+
+body.dark-mode .status-icon.disconnected {
+  /* Rouge plus visible en dark mode */
+  background-color: rgba(231, 76, 60, 0.2);
+  color: #e74c3c;
+}
+
+/* Colonne Actions */
+.table td:last-child {
+  text-align: right; /* Aligner les boutons à droite par défaut */
+  white-space: nowrap; /* Empêcher le retour à la ligne des boutons */
+}
+
+/* Styles des boutons d'action dans le tableau */
+.table .btn-sm {
+  padding: 0.35rem 0.7rem; /* Taille de base confortable */
+  font-size: 0.85rem;
+  margin-left: 0.4rem; /* Espacement entre boutons */
+  min-width: 38px; /* Largeur minimale */
+  line-height: 1.2; /* Assurer un bon alignement vertical du texte */
+}
+
+/* Alternance de lignes */
+.table-striped tbody tr:nth-of-type(odd) {
+  background-color: rgba(0, 0, 0, 0.02); /* Très subtil en light mode */
+}
+
+body.dark-mode .table-striped tbody tr:nth-of-type(odd) {
+  background-color: rgba(64, 201, 255, 0.03) !important; /* Bleu très subtil en dark mode */
+}
+
+/* Survol */
+.table-hover tbody tr:hover {
+  background-color: rgba(0, 123, 255, 0.06); /* Léger bleu au survol light */
+  transform: none; /* Désactiver le petit saut au survol si non désiré */
+  transition: background-color 0.2s ease;
+}
+
+body.dark-mode .table-hover tbody tr:hover {
+  background-color: rgba(64, 201, 255, 0.1) !important; /* Bleu plus prononcé au survol dark */
+}
+
+/* --- Optimisations pour Tablettes (cible principale: 683x1024) --- */
+@media (max-width: 992px) { /* Cible les tablettes et en dessous */
+  .table {
+    font-size: 0.9rem; /* Légère réduction de la police */
+  }
+
+  .table th,
+  .table td {
+    padding: 0.55rem 0.75rem; /* Réduire le padding */
+  }
+
+  .pseudo-column {
+    max-width: 140px; /* Réduire la largeur max du pseudo */
+    min-width: 80px;
+  }
+
+  .status-column {
+    width: 65px; /* Réduire largeur statut */
+  }
+
+  .status-icon {
+    width: 26px;
+    height: 26px;
+    font-size: 0.9rem;
+  }
+
+  /* Colonne Actions sur tablette */
+  .table td:last-child {
+    /* Utiliser flex pour mieux contrôler l'alignement et l'espacement */
+    display: flex;
+    justify-content: flex-end; /* Garder les boutons à droite */
+    align-items: center; /* Centrer verticalement */
+    gap: 0.4rem; /* Espacement entre les boutons */
+    padding: 0.45rem 0.75rem; /* Ajuster le padding */
+  }
+
+  .table .btn-sm {
+    padding: 0.3rem 0.6rem; /* Boutons légèrement plus petits */
+    font-size: 0.8rem;
+    margin-left: 0; /* Le gap gère l'espacement */
+    min-width: 32px;
+  }
+}
+
+/* --- Optimisations pour Mobiles --- */
+@media (max-width: 767px) { /* Cible les mobiles */
+  .table {
+    font-size: 0.85rem;
+  }
+
+  .table th,
+  .table td {
+    padding: 0.45rem 0.5rem; /* Padding encore réduit */
+  }
+
+  .pseudo-column {
+    max-width: 100px; /* Encore plus court */
+    min-width: 60px;
+  }
+
+  .status-column {
+    width: 55px;
+  }
+
+  .status-icon {
+    width: 24px;
+    height: 24px;
+    font-size: 0.8rem;
+  }
+
+  /* Colonne Actions sur mobile */
+  .table td:last-child {
+    justify-content: flex-start; /* Aligner à gauche pour gagner de la place */
+    gap: 0.3rem;
+    padding: 0.35rem 0.5rem;
+  }
+
+  .table .btn-sm {
+    padding: 0.25rem 0.45rem; /* Boutons plus compacts */
+    font-size: 0.75rem;
+    min-width: 28px; /* Assurer une zone cliquable minimale */
+    height: 26px; /* Hauteur fixe pour cohérence */
+    display: inline-flex; /* Pour aligner le contenu */
+    align-items: center;
+    justify-content: center;
+  }
+}
+
+/* --- Optimisations pour Très Petits Écrans --- */
+@media (max-width: 480px) {
+  .admin-container {
+    padding: 0.75rem; /* Moins de padding global */
+  }
+
+  .table {
+    font-size: 0.8rem;
+  }
+
+  .table th,
+  .table td {
+    padding: 0.35rem 0.3rem; /* Padding minimal */
+  }
+
+  .pseudo-column {
+    max-width: 80px;
+    min-width: 50px;
+  }
+
+  .status-column {
+    width: 45px;
+  }
+
+  .status-icon {
+    width: 22px;
+    height: 22px;
+    font-size: 0.75rem;
+  }
+
+  /* Colonne Actions sur très petits écrans */
+  .table td:last-child {
+    gap: 0.2rem; /* Espacement minimal */
+    padding: 0.3rem;
+  }
+
+  .table .btn-sm {
+    padding: 0.2rem 0.35rem;
+    font-size: 0.7rem;
+    min-width: 26px;
+    height: 24px;
+  }
+
+  /* Ajustement des boutons principaux en bas */
+  .button-container {
+    padding: 0.5rem;
+    gap: 0.5rem;
+  }
+  .fixed-width-button {
+      width: auto; /* Permettre aux boutons de s'adapter */
+      flex: 1; /* Prendre l'espace disponible */
+      height: 60px; /* Réduire la hauteur */
+      font-size: 0.8rem; /* Réduire la police */
+      padding: 0.2rem;
+  }
+  .btn-closeroom {
+      padding: 0.6rem; /* Réduire le padding */
+      font-size: 0.9rem;
+      margin-top: 0.5rem; /* Réduire la marge négative */
+  }
+}
+
 

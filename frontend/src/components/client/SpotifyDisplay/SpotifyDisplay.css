@@ -1,0 +1,170 @@
+/* Styles basés sur AdminRoomView.css et ClientView.css pour la cohérence */
+.spotifyDisplayContainer {
+    display: flex;
+    align-items: center;
+    /* Fond légèrement différent pour se démarquer */
+    background: linear-gradient(135deg, rgba(255, 255, 255, 0.8), rgba(240, 240, 245, 0.7));
+    color: var(--text-light);
+    padding: 12px 18px; /* Padding légèrement augmenté */
+    border-radius: var(--border-radius-lg, 12px); /* Coins plus arrondis */
+    margin: 1rem auto; /* Marge standardisée */
+    box-shadow: var(--shadow-sm); /* Ombre légère */
+    border: 1px solid rgba(0, 0, 0, 0.05); /* Bordure très subtile */
+    min-height: 75px; /* Hauteur minimale légèrement augmentée */
+    max-width: 650px; /* Largeur max légèrement augmentée */
+    width: 90%;
+    transition: all 0.3s ease; /* Transition globale */
+    box-sizing: border-box;
+    overflow: hidden; /* Pour les effets de fond/bordure */
+}
+
+/* Mode sombre */
+.dark-mode .spotifyDisplayContainer {
+    background: linear-gradient(135deg, rgba(30, 30, 35, 0.8), rgba(40, 40, 50, 0.7));
+    color: var(--text-dark);
+    border-color: rgba(255, 255, 255, 0.1);
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2); /* Ombre plus prononcée en sombre */
+}
+
+.artworkContainer {
+    flex-shrink: 0;
+    margin-right: 18px; /* Espace augmenté */
+    width: 55px; /* Taille augmentée */
+    height: 55px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: var(--border-radius-md, 8px); /* Coins arrondis pour le conteneur */
+    overflow: hidden; /* Pour l'effet sur l'image */
+}
+
+.artwork {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    display: block;
+    background-color: rgba(0, 0, 0, 0.1); /* Fond pendant le chargement */
+    transition: opacity 0.4s ease, filter 0.4s ease, transform 0.4s ease; /* Transitions plus douces */
+    border-radius: var(--border-radius-md, 8px); /* Assurer l'arrondi */
+}
+
+/* Jaquette visible */
+.visibleArtwork {
+    opacity: 1;
+    filter: none;
+    transform: scale(1);
+}
+
+/* Jaquette cachée - Effet plus marqué */
+.hiddenArtwork {
+    opacity: 0.4;
+    filter: grayscale(60%) blur(1px); /* Grisé et légèrement flou */
+    transform: scale(0.95); /* Légèrement réduite */
+}
+
+.trackInfo {
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    overflow: hidden; /* Empêche le texte de déborder */
+    flex-grow: 1; /* Prend l'espace restant */
+    gap: 2px; /* Petit espace entre artiste et titre */
+}
+
+.artist,
+.title {
+    margin: 0; /* Supprimer les marges par défaut */
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis; /* Ajoute '...' si le texte est trop long */
+    color: var(--text-color-primary); /* Couleur par défaut */
+}
+
+.artist {
+    font-weight: 600; /* Plus gras */
+    font-size: 1em; /* Taille de base */
+    color: var(--text-light); /* Utiliser variable globale */
+}
+
+.title {
+    font-size: 0.85em; /* Légèrement plus petit */
+    color: var(--text-light); /* Utiliser variable globale */
+    opacity: 0.75; /* Moins d'emphase */
+}
+
+/* Mode sombre pour les textes */
+.dark-mode .artist {
+    color: var(--text-dark);
+}
+
+.dark-mode .title {
+    color: var(--text-dark);
+    opacity: 0.7;
+}
+
+/* --- Responsive Design --- */
+
+/* Tablettes et petits écrans (max-width: 768px) */
+@media (max-width: 768px) {
+    .spotifyDisplayContainer {
+        padding: 10px 15px;
+        min-height: 70px;
+        width: 92%;
+    }
+    .artworkContainer {
+        width: 50px;
+        height: 50px;
+        margin-right: 15px;
+    }
+    .artist {
+        font-size: 0.95em;
+    }
+    .title {
+        font-size: 0.8em;
+    }
+}
+
+/* Mobiles (ex: 412px, 375px, 300px) (max-width: 480px) */
+@media (max-width: 480px) {
+    .spotifyDisplayContainer {
+        padding: 8px 12px;
+        margin: 0.75rem auto;
+        min-height: 65px;
+        width: 95%; /* Prend presque toute la largeur */
+        border-radius: var(--border-radius-md, 8px); /* Moins arrondi sur mobile */
+    }
+    .artworkContainer {
+        width: 45px;
+        height: 45px;
+        margin-right: 12px;
+        border-radius: var(--border-radius-sm, 4px);
+    }
+    .artwork {
+        border-radius: var(--border-radius-sm, 4px);
+    }
+    .artist {
+        font-size: 0.9em;
+    }
+    .title {
+        font-size: 0.75em;
+    }
+}
+
+/* Très petits écrans (ex: 300px) (max-width: 320px) */
+@media (max-width: 320px) {
+    .spotifyDisplayContainer {
+        padding: 6px 10px;
+        min-height: 60px;
+    }
+    .artworkContainer {
+        width: 40px;
+        height: 40px;
+        margin-right: 10px;
+    }
+    .artist {
+        font-size: 0.85em;
+    }
+    .title {
+        font-size: 0.7em;
+    }
+}
