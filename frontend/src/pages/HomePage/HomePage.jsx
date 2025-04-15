@@ -313,6 +313,9 @@ function HomePage({ setActiveRoomCode }) {
           <Dialog.Overlay className="dialog-overlay" />
           <Dialog.Content className={`dialog-content ${isDarkMode ? 'dark-mode' : ''}`}>
             <Dialog.Title className="dialog-title">Options de la nouvelle salle</Dialog.Title>
+            <Dialog.Description className="dialog-description visually-hidden">
+              Configurez les options pour la nouvelle salle de blindtest.
+            </Dialog.Description>
             
             <div className="form-group mt-3">
               <label className="form-label">Type de blindtest :</label>
