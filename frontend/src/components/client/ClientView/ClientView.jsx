@@ -418,13 +418,23 @@ const handleBuzz = () => {
   
     const onBuzzerDisabled = ({ duration }) => {
       setIsDisabled(true);
-      resetBuzzerState(false); // Ne pas afficher de notification ici
+      resetBuzzerState(false);
       
       error(`Le buzzer sera réactivé dans ${duration/1000} secondes`);
       
       setTimeout(() => {
-        setIsDisabled(false);
-        success('Le buzzer est à nouveau disponible');
+        // AVANT de réactiver le buzzer, vérifier si d'autres conditions l'empêchent
+        const trackFullyFound = 
+          (roomOptions?.roomType === 'Standard' && (foundArtist || foundTitle)) ||
+          (roomOptions?.roomType === 'Titre/Artiste' && foundArtist && foundTitle);
+        
+        // Ne réactiver que si la piste n'est pas trouvée et le jeu n'est pas en pause
+        if (!trackFullyFound && !gamePaused) {
+          setIsDisabled(false);
+          success('Le buzzer est à nouveau disponible');
+        } else {
+          console.log("Buzzer reste désactivé après pénalité car piste trouvée ou jeu en pause");
+        }
       }, duration * 1000);
     };
   

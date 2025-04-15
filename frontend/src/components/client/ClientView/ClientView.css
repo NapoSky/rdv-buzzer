@@ -1967,8 +1967,8 @@ tr.buzzed-player {
 
   .buzz-zone {
     flex: 0.25;
-    /* Encore plus compact */
-    margin: 0.25rem 0;
+    margin-top: 5px;
+    margin-bottom: 5px;
   }
 
   .footer-zone {

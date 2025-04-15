@@ -331,6 +331,12 @@ function handleDisableBuzzer(socket, io, data) {
           // Ne réactiver que si le joueur est toujours marqué comme 'buzzed' (évite conflits)
           if (currentRoom.players[playerId].buzzed) {
               currentRoom.players[playerId].buzzed = false;
+              
+              // AJOUT ICI: Si c'est ce joueur qui avait le firstBuzz, le réinitialiser
+              if (currentRoom.firstBuzz === playerId) {
+                  Room.resetBuzz(roomCode); // Réinitialiser firstBuzz et lastBuzz
+              }
+              
               io.to(roomCode).emit('update_players', currentRoom.players);
               io.to(playerId).emit('buzzer_enabled'); // Informer le joueur qu'il est réactivé
               
