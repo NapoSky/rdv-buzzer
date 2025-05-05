@@ -67,10 +67,23 @@ function HomePage({ setActiveRoomCode }) {
   useEffect(() => {
     const savedRoomCode = localStorage.getItem('roomCode');
     const savedPseudo = localStorage.getItem('pseudo');
-    if (savedRoomCode && savedPseudo) {
-      setRoomCode(savedRoomCode);
+
+    // Restaurer le pseudo s'il existe
+    if (savedPseudo) {
       setPseudo(savedPseudo);
     }
+
+    // Restaurer le code de la salle s'il existe (optionnel, mais conserve la logique précédente pour le code)
+    // Si vous voulez que le code de la salle soit aussi restauré indépendamment,
+    // déplacez cette ligne en dehors du 'if (savedPseudo)'
+    if (savedRoomCode) {
+       setRoomCode(savedRoomCode);
+    }
+    // L'ancien code qui nécessitait les deux :
+    // if (savedRoomCode && savedPseudo) {
+    //   setRoomCode(savedRoomCode);
+    //   setPseudo(savedPseudo);
+    // }
   }, []);
 
   // Rejoindre en tant que client
@@ -137,7 +150,6 @@ function HomePage({ setActiveRoomCode }) {
       error('Vous avez été expulsé de cette salle par l\'admin.');
       // Nettoyer pour éviter de futurs problèmes
       localStorage.removeItem('roomCode');
-      localStorage.removeItem('pseudo');
       return;
     }
 
@@ -146,7 +158,6 @@ function HomePage({ setActiveRoomCode }) {
     
     if (!roomExists) {
       localStorage.removeItem('roomCode');
-      localStorage.removeItem('pseudo');
       return;
     }
     

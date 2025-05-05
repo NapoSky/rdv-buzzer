@@ -5,7 +5,7 @@ import { ThemeContext } from '../../../contexts/ThemeContext';
 import './AdminRoomView.css';
 import { pausePlayback, resumePlayback, authenticateSpotify, disconnectSpotify } from '../../../services/api/spotifyService';
 import { useSpotify } from '../../../hooks/useSpotify';
-import { getSocket, createRoom, joinRoom, on, off, resetBuzzer, togglePause, kickPlayer, closeRoom, judgeResponse, adjustScore } from '../../../services/socket/socketService';
+import { getSocket, createRoom, joinRoom, on, off, resetBuzzer, togglePause, kickPlayer, closeRoom, judgeResponse, adjustScore, forceShowTitle, forceShowArtist, forceHideTitle, forceHideArtist } from '../../../services/socket/socketService';
 import { ExclamationTriangleIcon, CheckIcon } from '@radix-ui/react-icons'; 
 
 // Import des composants modaux
@@ -105,24 +105,26 @@ function AdminRoomView() {
   // Fonction pour rejoindre une salle existante
   const handleJoinExistingRoom = async () => {
     if (!roomCode || isConnectedToRoom) return;
-    
+
     try {
       setIsConnectedToRoom(true); // Marquer comme tentative en cours
-      const joinResponse = await joinRoom(roomCode, 'Admin', true, forceOwnership);
+      // ---> MODIFICATION ICI <---
+      // Toujours forcer la prise de contrôle lors de la jointure en tant qu'admin.
+      const joinResponse = await joinRoom(roomCode, 'Admin', true, true); // forceOwnership = true
+      // --------------------------
       if (joinResponse.error) {
         alert(joinResponse.error);
         setIsConnectedToRoom(false); // Réinitialiser en cas d'erreur
       } else {
         setPaused(joinResponse.paused);
-        // !! IMPORTANT !! : Le backend devrait renvoyer les options de la salle
+// !! IMPORTANT !! : Le backend devrait renvoyer les options de la salle
         // lors du join pour les récupérer en cas de reconnexion ou accès direct.
         if (joinResponse.options) {
            setCurrentRoomOptions(joinResponse.options);
            console.log("Options de salle récupérées du serveur :", joinResponse.options);
         } else {
-           // Fallback si le backend ne renvoie pas encore les options
+// Fallback si le backend ne renvoie pas encore les options
            console.warn("Les options de la salle n'ont pas été récupérées du serveur lors de la jointure. Utilisation des options par défaut.");
-           // Utiliser uniquement les options par défaut comme fallback
            setCurrentRoomOptions(DEFAULT_ROOM_OPTIONS);
         }
       }
@@ -244,6 +246,14 @@ function AdminRoomView() {
     };
     // --------------------------------------------------------------------
 
+    const handleJudgeAnswerUpdate = (data) => {
+      if (data && data.artistFound !== undefined && data.titleFound !== undefined) {
+        console.log(`[AdminRoomView] Mise à jour locale via judge_answer: artist=${data.artistFound}, title=${data.titleFound}`);
+        setFoundArtist(data.artistFound);
+        setFoundTitle(data.titleFound);
+      }
+    };
+
     // Abonnement aux événements
     on('update_players', handleUpdatePlayers);
     on('game_paused', handleGamePaused);
@@ -253,6 +263,7 @@ function AdminRoomView() {
     on('player_kicked', handlePlayerKicked);
     on('room_options_updated', handleRoomOptionsUpdated);
     on('spotify_track_changed', handleSpotifyTrackChanged); 
+    on('judge_answer', handleJudgeAnswerUpdate);
 
     // Nettoyage des abonnements
     return () => {
@@ -264,6 +275,7 @@ function AdminRoomView() {
       off('player_kicked', handlePlayerKicked);
       off('room_options_updated', handleRoomOptionsUpdated); 
       off('spotify_track_changed', handleSpotifyTrackChanged);
+      off('judge_answer', handleJudgeAnswerUpdate);
     };
   }, [roomCode, refreshStatus, spotifyConnected]);
 
@@ -582,7 +594,7 @@ const handleKick = async (playerId) => {
  };
 
 const handleIncrementScore = (playerId, adjustment) => { // Renommer 'increment' en 'adjustment' pour la clarté
-  if (roomCode && players[playerId] && adjustment !== 0) { // Vérifier que l'ajustement n'est pas nul
+  if (roomCode && players[playerId] && adjustment !== 0) { // Vérifier que l'ajustement n'est nul
     console.log(`[AdminRoomView] Appel adjustScore pour ${playerId} avec ajustement ${adjustment}`);
     // Appeler le nouveau service qui émet 'adjust_score'
     adjustScore(roomCode, playerId, adjustment);
@@ -670,6 +682,34 @@ const handleIncrementScore = (playerId, adjustment) => { // Renommer 'increment'
       setCloseStatus({ roomClosed: false, dataSaved: false });
       setShowCloseRoomModal(false);
       setShowPostCloseModal(true); // Afficher la modale même en cas d'erreur
+    }
+  };
+
+  const handleForceShowTitle = () => {
+    if (roomCode && !foundTitle) { // N'envoyer que si pas déjà affiché
+      console.log(`[AdminRoomView] Demande manuelle: Afficher Titre pour room ${roomCode}`);
+      forceShowTitle(roomCode);
+    }
+  };
+
+  const handleForceShowArtist = () => {
+    if (roomCode && !foundArtist) { // N'envoyer que si pas déjà affiché
+      console.log(`[AdminRoomView] Demande manuelle: Afficher Artiste pour room ${roomCode}`);
+      forceShowArtist(roomCode);
+    }
+  };
+
+  const handleForceHideTitle = () => {
+    if (roomCode && foundTitle) { // N'envoyer que si affiché
+      console.log(`[AdminRoomView] Demande manuelle: Masquer Titre pour room ${roomCode}`);
+      forceHideTitle(roomCode); // Nouvelle fonction service socket
+    }
+  };
+
+  const handleForceHideArtist = () => {
+    if (roomCode && foundArtist) { // N'envoyer que si affiché
+      console.log(`[AdminRoomView] Demande manuelle: Masquer Artiste pour room ${roomCode}`);
+      forceHideArtist(roomCode); // Nouvelle fonction service socket
     }
   };
 
@@ -879,7 +919,7 @@ const handleIncrementScore = (playerId, adjustment) => { // Renommer 'increment'
             setShowSpotifyModal(false);
           }}
           onChangeAccount={() => {
-            handleConnectSpotify();
+            handleConnectSpotify(); // Relance l'auth pour changer
             setShowSpotifyModal(false);
           }}
           onDisconnect={() => {
@@ -887,6 +927,12 @@ const handleIncrementScore = (playerId, adjustment) => { // Renommer 'increment'
             setShowSpotifyModal(false);
           }}
           onClose={() => setShowSpotifyModal(false)}
+          foundTitle={foundTitle}
+          foundArtist={foundArtist}
+          onForceShowTitle={handleForceShowTitle}
+          onForceShowArtist={handleForceShowArtist}
+          onForceHideTitle={handleForceHideTitle}
+          onForceHideArtist={handleForceHideArtist}
         />
       )}
     </div>

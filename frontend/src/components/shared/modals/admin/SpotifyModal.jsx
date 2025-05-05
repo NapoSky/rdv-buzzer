@@ -1,20 +1,24 @@
 import React from 'react';
 
-const SpotifyModal = ({ 
-  show, 
-  spotifyConnected, 
+const SpotifyModal = ({
+  show,
+  spotifyConnected,
   spotifyUser,
   hasDevices,
   onConnect,
   onChangeAccount,
   onDisconnect,
-  onClose 
+  onClose,
+  foundTitle, // Nouvelle prop
+  foundArtist, // Nouvelle prop
+  onForceShowTitle, // Nouvelle prop
+  onForceShowArtist, // Nouvelle prop
+  onForceHideTitle, // Nouvelle prop
+  onForceHideArtist // Nouvelle prop
 }) => {
   if (!show) return null;
 
-  
   return (
-    
     <div className="modal show">
       <div className="modal-dialog modal-dialog-centered">
         <div className="modal-content">
@@ -40,6 +44,31 @@ const SpotifyModal = ({
                   </div>
                 </div>
                 <p className="text-muted small">La lecture sera automatiquement mise en pause lorsqu'un joueur buzze.</p>
+                {/* Section pour forcer l'affichage/masquage */}
+                <div className="mt-3 border-top pt-3">
+                  <h6>Forcer l'affichage côté joueurs :</h6>
+                  <div className="d-flex justify-content-start gap-2 mt-2">
+                    {foundTitle ? (
+                      <button className="btn btn-sm btn-outline-secondary" onClick={onForceHideTitle}>
+                        Masquer Titre
+                      </button>
+                    ) : (
+                      <button className="btn btn-sm btn-outline-warning" onClick={onForceShowTitle}>
+                        Afficher Titre
+                      </button>
+                    )}
+                    {foundArtist ? (
+                      <button className="btn btn-sm btn-outline-secondary" onClick={onForceHideArtist}>
+                        Masquer Artiste
+                      </button>
+                    ) : (
+                      <button className="btn btn-sm btn-outline-warning" onClick={onForceShowArtist}>
+                        Afficher Artiste
+                      </button>
+                    )}
+                  </div>
+                  <p className="text-muted small mt-2">Permet de révéler ou cacher manuellement le titre ou l'artiste sur l'écran des joueurs.</p>
+                </div>
               </div>
             ) : (
               <div className="alert alert-secondary">

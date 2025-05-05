@@ -6,21 +6,25 @@ import PlayerListItem from '../../PlayerListItem';
 const KickPlayerModal = ({ show, players, onKick, onClose }) => {
   return (
     <BaseModal show={show} title="Kicker un joueur" isOverlay={true} onClose={onClose}>
-      <FilteredPlayerList 
+      <FilteredPlayerList
         players={players}
-        className="kick-list"
+        className="kick-list" // Vous pouvez ajouter des classes spécifiques si nécessaire
         renderItem={(playerId, player) => (
-          <PlayerListItem 
+          <PlayerListItem
             key={playerId}
             playerId={playerId}
             player={player}
+            // Pas d'info additionnelle nécessaire ici par défaut
           >
-            <button
-              className="btn btn-danger btn-sm"
-              onClick={() => onKick(playerId)}
-            >
-              Kick
-            </button>
+            {/* Utiliser flexbox pour aligner le bouton à droite */}
+            <div className="d-flex align-items-center ms-auto">
+              <button
+                className="btn btn-danger btn-sm"
+                onClick={() => onKick(playerId)}
+              >
+                Kick
+              </button>
+            </div>
           </PlayerListItem>
         )}
       />

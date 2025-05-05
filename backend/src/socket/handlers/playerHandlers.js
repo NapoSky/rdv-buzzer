@@ -178,6 +178,178 @@ console.log('Envoi judge_answer avec:', {
   }
 }
 
+// ---> NOUVELLE FONCTION HANDLER POUR FORCE_SHOW_TITLE <---
+/**
+ * Gère la demande de l'admin pour forcer l'affichage du titre.
+ */
+function handleForceShowTitle(socket, io, data) {
+  try {
+    const { roomCode } = data;
+    const room = Room.get(roomCode);
+
+    if (!room) return logger.warn('PLAYERS', 'Salle non trouvée pour force_show_title', { roomCode });
+    // Vérifier si l'émetteur est l'admin de la salle
+    if (room.adminId !== socket.id) return logger.warn('PLAYERS', 'Tentative non-admin de force_show_title', { roomCode, socketId: socket.id });
+
+    // Si le titre n'est pas déjà trouvé
+    if (!room.titleFound) {
+      logger.info('PLAYERS', `Admin force l'affichage du titre pour la salle ${roomCode}`);
+      room.titleFound = true; // Mettre à jour l'état
+
+      // Recalculer si la piste est entièrement trouvée
+      const roomType = room.options?.roomType || 'Standard';
+      room.trackIsFullyFound = (roomType === 'Standard' && (room.artistFound || room.titleFound)) ||
+                               (roomType === 'Titre/Artiste' && room.artistFound && room.titleFound);
+
+      // Émettre l'événement 'judge_answer' pour notifier tous les clients du nouvel état
+      io.to(roomCode).emit('judge_answer', {
+        // judgment: 'admin_reveal_title', // Optionnel: pour info côté client si besoin
+        trackInfo: room.currentTrack,
+        artistFound: room.artistFound,
+        titleFound: room.titleFound // L'état mis à jour
+      });
+
+      // Si la piste est maintenant entièrement trouvée à cause de cette action, reset les buzzers
+      if (room.trackIsFullyFound) {
+          logger.info('PLAYERS', `Piste entièrement trouvée après force_show_title, reset général des buzzers`, { roomCode });
+          handleResetBuzzer(socket, io, { roomCode }); // Utiliser la fonction existante
+      }
+
+    } else {
+      logger.info('PLAYERS', `Titre déjà trouvé pour la salle ${roomCode}, force_show_title ignoré.`);
+    }
+  } catch (error) {
+    logger.error('PLAYERS', 'Erreur lors de force_show_title', error);
+  }
+}
+
+// ---> NOUVELLE FONCTION HANDLER POUR FORCE_SHOW_ARTIST <---
+/**
+ * Gère la demande de l'admin pour forcer l'affichage de l'artiste.
+ */
+function handleForceShowArtist(socket, io, data) {
+  try {
+    const { roomCode } = data;
+    const room = Room.get(roomCode);
+
+    if (!room) return logger.warn('PLAYERS', 'Salle non trouvée pour force_show_artist', { roomCode });
+    // Vérifier si l'émetteur est l'admin de la salle
+    if (room.adminId !== socket.id) return logger.warn('PLAYERS', 'Tentative non-admin de force_show_artist', { roomCode, socketId: socket.id });
+
+    // Si l'artiste n'est pas déjà trouvé
+    if (!room.artistFound) {
+      logger.info('PLAYERS', `Admin force l'affichage de l'artiste pour la salle ${roomCode}`);
+      room.artistFound = true; // Mettre à jour l'état
+
+      // Recalculer si la piste est entièrement trouvée
+      const roomType = room.options?.roomType || 'Standard';
+      room.trackIsFullyFound = (roomType === 'Standard' && (room.artistFound || room.titleFound)) ||
+                               (roomType === 'Titre/Artiste' && room.artistFound && room.titleFound);
+
+      // Émettre l'événement 'judge_answer' pour notifier tous les clients du nouvel état
+      io.to(roomCode).emit('judge_answer', {
+        // judgment: 'admin_reveal_artist', // Optionnel
+        trackInfo: room.currentTrack,
+        artistFound: room.artistFound, // L'état mis à jour
+        titleFound: room.titleFound
+      });
+
+       // Si la piste est maintenant entièrement trouvée à cause de cette action, reset les buzzers
+       if (room.trackIsFullyFound) {
+          logger.info('PLAYERS', `Piste entièrement trouvée après force_show_artist, reset général des buzzers`, { roomCode });
+          handleResetBuzzer(socket, io, { roomCode }); // Utiliser la fonction existante
+      }
+
+    } else {
+      logger.info('PLAYERS', `Artiste déjà trouvé pour la salle ${roomCode}, force_show_artist ignoré.`);
+    }
+  } catch (error) {
+    logger.error('PLAYERS', 'Erreur lors de force_show_artist', error);
+  }
+}
+
+// ---> NOUVELLE FONCTION HANDLER POUR FORCE_HIDE_TITLE <---
+function handleForceHideTitle(socket, io, data) {
+  try {
+    const { roomCode } = data;
+    const room = Room.get(roomCode);
+
+    if (!room) return logger.warn('PLAYERS', 'Salle non trouvée pour force_hide_title', { roomCode });
+    if (room.adminId !== socket.id) return logger.warn('PLAYERS', 'Tentative non-admin de force_hide_title', { roomCode, socketId: socket.id });
+
+    // Si le titre est actuellement trouvé
+    if (room.titleFound) {
+      logger.info('PLAYERS', `Admin force le masquage du titre pour la salle ${roomCode}`);
+      const wasFullyFound = room.trackIsFullyFound; // Sauvegarder l'état avant modif
+      room.titleFound = false; // Mettre à jour l'état
+
+      // Recalculer si la piste est entièrement trouvée
+      const roomType = room.options?.roomType || 'Standard';
+      room.trackIsFullyFound = (roomType === 'Standard' && (room.artistFound || room.titleFound)) ||
+                               (roomType === 'Titre/Artiste' && room.artistFound && room.titleFound);
+
+      // Émettre l'événement 'judge_answer' pour notifier tous les clients du nouvel état
+      io.to(roomCode).emit('judge_answer', {
+        trackInfo: room.currentTrack,
+        artistFound: room.artistFound,
+        titleFound: room.titleFound // L'état mis à jour
+      });
+
+      // Si la piste N'EST PLUS entièrement trouvée à cause de cette action, reset les buzzers pour permettre de re-buzzer
+      if (wasFullyFound && !room.trackIsFullyFound) {
+          logger.info('PLAYERS', `Piste n'est plus entièrement trouvée après force_hide_title, reset général des buzzers`, { roomCode });
+          handleResetBuzzer(socket, io, { roomCode });
+      }
+
+    } else {
+      logger.info('PLAYERS', `Titre déjà masqué pour la salle ${roomCode}, force_hide_title ignoré.`);
+    }
+  } catch (error) {
+    logger.error('PLAYERS', 'Erreur lors de force_hide_title', error);
+  }
+}
+
+// ---> NOUVELLE FONCTION HANDLER POUR FORCE_HIDE_ARTIST <---
+function handleForceHideArtist(socket, io, data) {
+  try {
+    const { roomCode } = data;
+    const room = Room.get(roomCode);
+
+    if (!room) return logger.warn('PLAYERS', 'Salle non trouvée pour force_hide_artist', { roomCode });
+    if (room.adminId !== socket.id) return logger.warn('PLAYERS', 'Tentative non-admin de force_hide_artist', { roomCode, socketId: socket.id });
+
+    // Si l'artiste est actuellement trouvé
+    if (room.artistFound) {
+      logger.info('PLAYERS', `Admin force le masquage de l'artiste pour la salle ${roomCode}`);
+       const wasFullyFound = room.trackIsFullyFound; // Sauvegarder l'état avant modif
+      room.artistFound = false; // Mettre à jour l'état
+
+      // Recalculer si la piste est entièrement trouvée
+      const roomType = room.options?.roomType || 'Standard';
+      room.trackIsFullyFound = (roomType === 'Standard' && (room.artistFound || room.titleFound)) ||
+                               (roomType === 'Titre/Artiste' && room.artistFound && room.titleFound);
+
+      // Émettre l'événement 'judge_answer' pour notifier tous les clients du nouvel état
+      io.to(roomCode).emit('judge_answer', {
+        trackInfo: room.currentTrack,
+        artistFound: room.artistFound, // L'état mis à jour
+        titleFound: room.titleFound
+      });
+
+      // Si la piste N'EST PLUS entièrement trouvée à cause de cette action, reset les buzzers
+      if (wasFullyFound && !room.trackIsFullyFound) {
+          logger.info('PLAYERS', `Piste n'est plus entièrement trouvée après force_hide_artist, reset général des buzzers`, { roomCode });
+          handleResetBuzzer(socket, io, { roomCode });
+      }
+
+    } else {
+      logger.info('PLAYERS', `Artiste déjà masqué pour la salle ${roomCode}, force_hide_artist ignoré.`);
+    }
+  } catch (error) {
+    logger.error('PLAYERS', 'Erreur lors de force_hide_artist', error);
+  }
+}
+
 /**
  * Attache les événements de joueur au socket
  * @param {Socket} socket - Socket client
@@ -187,8 +359,15 @@ function attachEvents(socket, io) {
   // Événement pour le jugement d'un buzz (affecte score ET buzzer)
   socket.on('judge_response', (data) => handleJudgeAnswer(socket, io, data));
 
-  // NOUVEL Événement pour l'ajustement manuel (affecte score SEULEMENT)
+  // Événement pour l'ajustement manuel (affecte score SEULEMENT)
   socket.on('adjust_score', (data) => handleAdjustScore(socket, io, data));
+
+  // ---> AJOUT DES NOUVEAUX ÉCOUTEURS <---
+  socket.on('force_show_title', (data) => handleForceShowTitle(socket, io, data));
+  socket.on('force_show_artist', (data) => handleForceShowArtist(socket, io, data));
+  socket.on('force_hide_title', (data) => handleForceHideTitle(socket, io, data));
+  socket.on('force_hide_artist', (data) => handleForceHideArtist(socket, io, data));
+  // ------------------------------------
 
   // Garder l'ancien 'update_score' commenté ou le supprimer
   // socket.on('update_score', (data) => handleUpdateScore(socket, io, data));

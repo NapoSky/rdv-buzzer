@@ -306,3 +306,57 @@ export const adjustScore = (roomCode, playerId, adjustment) => {
     adjustment // Envoyer directement l'ajustement numérique
   });
 };
+
+/**
+ * Demande au serveur de forcer l'affichage du titre pour tous les clients.
+ * @param {string} roomCode - Le code de la salle.
+ */
+export const forceShowTitle = (roomCode) => {
+  const socket = getSocket();
+  if (socket && roomCode) {
+    socket.emit('force_show_title', { roomCode }); // Événement envoyé au backend
+  } else {
+    console.error("Socket non dispo ou roomCode manquant pour forceShowTitle");
+  }
+};
+
+/**
+ * Demande au serveur de forcer l'affichage de l'artiste pour tous les clients.
+ * @param {string} roomCode - Le code de la salle.
+ */
+export const forceShowArtist = (roomCode) => {
+  const socket = getSocket();
+  if (socket && roomCode) {
+    socket.emit('force_show_artist', { roomCode }); // Événement envoyé au backend
+  } else {
+    console.error("Socket non dispo ou roomCode manquant pour forceShowArtist");
+  }
+};
+
+/**
+ * Demande au serveur de masquer le titre pour tous les clients.
+ * @param {string} roomCode - Le code de la salle.
+ */
+export const forceHideTitle = (roomCode) => {
+  // Correction: Utiliser la même structure que forceShowTitle
+  const socket = getSocket();
+  if (socket && roomCode) {
+    socket.emit('force_hide_title', { roomCode });
+  } else {
+    console.error("Socket non dispo ou roomCode manquant pour forceHideTitle");
+  }
+};
+
+/**
+ * Demande au serveur de masquer l'artiste pour tous les clients.
+ * @param {string} roomCode - Le code de la salle.
+ */
+export const forceHideArtist = (roomCode) => {
+  // Correction: Utiliser la même structure que forceShowArtist
+  const socket = getSocket();
+  if (socket && roomCode) {
+    socket.emit('force_hide_artist', { roomCode });
+  } else {
+    console.error("Socket non dispo ou roomCode manquant pour forceHideArtist");
+  }
+};
