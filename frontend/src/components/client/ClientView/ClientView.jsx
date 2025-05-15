@@ -547,10 +547,25 @@ const handleBuzz = () => {
         console.log("Piste entièrement trouvée (selon serveur), désactivation du buzzer.");
         setIsDisabled(true);
       } else if (!gamePaused) {
-        // Si le jeu n'est pas en pause et la piste n'est pas trouvée, réactiver le buzzer
-        setIsDisabled(false);
-        console.log("Réactivation du buzzer après jugement.");
+        // Introduire un délai avant de réactiver le buzzer
+        setIsDisabled(true); // Garder désactivé pendant le délai
+        console.log("Jugement reçu, application d'un délai avant réactivation du buzzer.");
+        setTimeout(() => {
+          // Re-vérifier les conditions au moment de la réactivation
+          const currentTrackFullyFoundAfterDelay = 
+            (roomOptions?.roomType === 'Standard' && (foundArtist || foundTitle)) || // Utiliser les états actuels
+            (roomOptions?.roomType === 'Titre/Artiste' && foundArtist && foundTitle);
+
+          if (!currentTrackFullyFoundAfterDelay && !gamePaused) {
+            setIsDisabled(false);
+            console.log("Buzzer réactivé après délai post-jugement.");
+            info('Le buzzer est à nouveau disponible.'); // Notification optionnelle
+          } else {
+            console.log("Buzzer reste désactivé après délai post-jugement (piste trouvée ou jeu en pause).");
+          }
+        }, 1000); // Délai de 1 seconde (1000 ms)
       }
+      // Si gamePaused est true, isDisabled restera true ou deviendra true, ce qui est correct.
     };
     
     const handleSpotifyTrackChanged = (data) => {
