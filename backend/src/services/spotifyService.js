@@ -8,6 +8,10 @@ const roomTokens = {};
 // Stockage des ID utilisateur Spotify associés à l'admin d'une salle
 const roomAdminUserIds = {}; // { roomCode: spotifyUserId }
 
+// NOUVEAU : Cache des informations de playlist par salle
+// TODO FUTUR : Implémenter une vérification périodique pour détecter les modifications de playlist
+const playlistCache = {}; // { roomCode: { id, name, total, tracks: [...] } }
+
 // Initialiser l'API Spotify avec le token de la salle - existant
 const initSpotifyApiForRoom = (roomCode) => {
   if (!roomTokens[roomCode]) {
@@ -131,6 +135,203 @@ const getUserProfile = async (roomCode) => {
   }
 };
 
+/**
+ * Récupère les détails d'une playlist Spotify et les met en cache
+ * @param {string} roomCode - Code de la salle
+ * @param {string} playlistId - ID de la playlist Spotify
+ * @returns {Promise<object|null>} Informations de la playlist ou null
+ */
+async function getPlaylistDetails(roomCode, playlistId) {
+    const spotifyApi = initSpotifyApiForRoom(roomCode);
+    if (!spotifyApi) return null;
+
+    try {
+        const playlistData = await spotifyApi.getPlaylist(playlistId);
+        const playlist = {
+            id: playlistId,
+            name: playlistData.body.name,
+            total: playlistData.body.tracks.total,
+            tracks: playlistData.body.tracks.items.map((item, index) => ({
+                id: item.track.id,
+                position: index + 1, // Position 1-based
+                name: item.track.name,
+                artist: item.track.artists.map(a => a.name).join(', ')
+            }))
+        };
+
+        // Mise en cache
+        playlistCache[roomCode] = playlist;
+        logger.info('SPOTIFY_PLAYLIST', `Playlist "${playlist.name}" mise en cache pour ${roomCode}`, {
+            total: playlist.total,
+            playlistId
+        });
+
+        return playlist;
+    } catch (error) {
+        logger.error('SPOTIFY_PLAYLIST', `Erreur récupération playlist ${playlistId} pour ${roomCode}`, error);
+        return null;
+    }
+}
+
+/**
+ * Calcule la position d'une piste dans une playlist
+ * @param {string} trackId - ID de la piste
+ * @param {object} playlist - Objet playlist du cache
+ * @returns {object|null} { position, total } ou null si non trouvé
+ */
+function calculateTrackPosition(trackId, playlist) {
+    if (!playlist || !trackId) return null;
+
+    const track = playlist.tracks.find(t => t.id === trackId);
+    if (!track) return null;
+
+    return {
+        position: track.position,
+        total: playlist.total,
+        playlistName: playlist.name
+    };
+}
+
+/**
+ * Extrait l'ID de playlist depuis l'URI du contexte Spotify
+ * @param {string} contextUri - URI du contexte (ex: "spotify:playlist:37i9dQZF1DX0XUsuxWHRQd")
+ * @returns {string|null} ID de la playlist ou null
+ */
+function extractPlaylistId(contextUri) {
+    if (!contextUri || !contextUri.startsWith('spotify:playlist:')) {
+        return null;
+    }
+    return contextUri.split(':')[2];
+}
+
+/**
+ * Récupère l'état de lecture actuel pour l'admin de la salle, y compris la piste chargée (même si en pause).
+ * ENRICHI : Détecte et gère les informations de playlist
+ * @param {string} roomCode
+ * @returns {object | null} L'objet playback state enrichi avec les infos de playlist
+ */
+async function getCurrentPlayback(roomCode) {
+    let spotifyApi = initSpotifyApiForRoom(roomCode);
+    if (!spotifyApi) return null;
+
+    try {
+        // Utiliser getMyCurrentPlaybackState pour obtenir l'état, même si en pause
+        const data = await spotifyApi.getMyCurrentPlaybackState();
+
+        // Vérifier si un 'item' (piste) est présent dans la réponse.
+        if (data.body && data.body.item) {
+            // S'assurer que 'item' est bien une piste
+            if (data.body.currently_playing_type === 'track' || !data.body.currently_playing_type) {
+                
+                // NOUVEAU : Enrichir avec les informations de playlist
+                const enrichedPlayback = { ...data.body };
+                
+                // Vérifier si on joue depuis une playlist
+                const contextUri = data.body.context?.uri;
+                const playlistId = extractPlaylistId(contextUri);
+                
+                if (playlistId) {
+                    // Vérifier le cache d'abord
+                    let playlist = playlistCache[roomCode];
+                    
+                    // Si pas en cache OU playlist différente, récupérer les détails
+                    if (!playlist || playlist.id !== playlistId) {
+                        logger.info('SPOTIFY_PLAYLIST', `Nouvelle playlist détectée pour ${roomCode}`, { playlistId });
+                        playlist = await getPlaylistDetails(roomCode, playlistId);
+                    }
+                    
+                    // Calculer la position dans la playlist
+                    if (playlist) {
+                        const positionInfo = calculateTrackPosition(data.body.item.id, playlist);
+                        if (positionInfo) {
+                            enrichedPlayback.playlistInfo = {
+                                id: playlist.id,
+                                name: playlist.name,
+                                position: positionInfo.position,
+                                total: positionInfo.total,
+                                remaining: positionInfo.total - positionInfo.position
+                            };
+                            
+                            logger.info('SPOTIFY_PLAYLIST', `Position calculée pour ${roomCode}`, {
+                                track: data.body.item.name,
+                                position: positionInfo.position,
+                                total: positionInfo.total
+                            });
+                        }
+                    }
+                } else {
+                    // Pas de playlist, effacer le cache si nécessaire
+                    if (playlistCache[roomCode]) {
+                        logger.info('SPOTIFY_PLAYLIST', `Sortie de playlist détectée pour ${roomCode}`);
+                        delete playlistCache[roomCode];
+                    }
+                }
+                
+                return enrichedPlayback;
+            } else {
+                logger.info('SPOTIFY', `Élément en cours (${data.body.currently_playing_type}) ignoré pour ${roomCode}`);
+                return null;
+            }
+        }
+        return null;
+
+    } catch (error) {
+        if (error.statusCode === 401) {
+            logger.warn('SPOTIFY', `Token expiré pour ${roomCode}, tentative de rafraîchissement.`);
+            const refreshed = await refreshAccessTokenIfNeeded(roomCode);
+            if (refreshed) {
+                spotifyApi = initSpotifyApiForRoom(roomCode);
+                if (!spotifyApi) return null;
+                try {
+                    // Réessayer après refresh - même logique enrichie
+                    const data = await spotifyApi.getMyCurrentPlaybackState();
+                    if (data.body && data.body.item) {
+                        if (data.body.currently_playing_type === 'track' || !data.body.currently_playing_type) {
+                            // Répéter la logique d'enrichissement (à factoriser si nécessaire)
+                            const enrichedPlayback = { ...data.body };
+                            const contextUri = data.body.context?.uri;
+                            const playlistId = extractPlaylistId(contextUri);
+                            
+                            if (playlistId) {
+                                let playlist = playlistCache[roomCode];
+                                if (!playlist || playlist.id !== playlistId) {
+                                    playlist = await getPlaylistDetails(roomCode, playlistId);
+                                }
+                                
+                                if (playlist) {
+                                    const positionInfo = calculateTrackPosition(data.body.item.id, playlist);
+                                    if (positionInfo) {
+                                        enrichedPlayback.playlistInfo = {
+                                            id: playlist.id,
+                                            name: playlist.name,
+                                            position: positionInfo.position,
+                                            total: positionInfo.total,
+                                            remaining: positionInfo.total - positionInfo.position
+                                        };
+                                    }
+                                }
+                            }
+                            
+                            return enrichedPlayback;
+                        }
+                        return null;
+                    }
+                    return null;
+                } catch (retryError) {
+                    logger.error('SPOTIFY', `Erreur API Spotify même après refresh pour ${roomCode}`, retryError);
+                    return null;
+                }
+            } else {
+                logger.error('SPOTIFY', `Échec du refresh token pour ${roomCode}`);
+                return null;
+            }
+        } else {
+            logger.error('SPOTIFY', `Erreur API Spotify inattendue pour ${roomCode}`, error);
+            return null;
+        }
+    }
+}
+
 // Méthode pour supprimer les tokens ET l'ID utilisateur d'une salle
 function removeTokenForRoom(roomCode) { // Existant, modifier
   let removed = false;
@@ -142,10 +343,20 @@ function removeTokenForRoom(roomCode) { // Existant, modifier
       delete roomAdminUserIds[roomCode];
       removed = true; // Assurer que c'est true si l'un ou l'autre est supprimé
   }
+  // NOUVEAU : Nettoyer le cache de playlist
+  clearPlaylistCache(roomCode);
   if (removed) {
       stopSpotifyPolling(roomCode); // Arrêter le polling si on déconnecte Spotify
   }
   return removed;
+}
+
+// NOUVEAU : Fonction de nettoyage du cache (à appeler lors de la déconnexion)
+function clearPlaylistCache(roomCode) {
+    if (playlistCache[roomCode]) {
+        delete playlistCache[roomCode];
+        logger.info('SPOTIFY_PLAYLIST', `Cache playlist effacé pour ${roomCode}`);
+    }
 }
 
 // Récupérer les appareils disponibles
@@ -213,69 +424,6 @@ async function refreshAccessTokenIfNeeded(roomCode) {
 }
 
 /**
- * Récupère l'état de lecture actuel pour l'admin de la salle, y compris la piste chargée (même si en pause).
- * Gère le rafraîchissement du token en cas d'erreur 401.
- * Utilise getMyCurrentPlaybackState.
- * @param {string} roomCode
- * @returns {object | null} L'objet playback state (contenant 'item') ou null si rien n'est chargé.
- */
-async function getCurrentPlayback(roomCode) {
-    let spotifyApi = initSpotifyApiForRoom(roomCode);
-    if (!spotifyApi) return null;
-
-    try {
-        // Utiliser getMyCurrentPlaybackState pour obtenir l'état, même si en pause
-        const data = await spotifyApi.getMyCurrentPlaybackState();
-
-        // Vérifier si un 'item' (piste) est présent dans la réponse.
-        // On ne vérifie PAS 'is_playing' car on veut l'info même en pause.
-        if (data.body && data.body.item) {
-            // S'assurer que 'item' est bien une piste (et non un épisode de podcast, etc.)
-            if (data.body.currently_playing_type === 'track' || !data.body.currently_playing_type) { // 'track' ou type inconnu (ancien comportement)
-                 return data.body; // Retourne l'état complet
-            } else {
-                 logger.debug('SPOTIFY', `Élément en cours (${data.body.currently_playing_type}) ignoré pour ${roomCode}`);
-                 return null; // Ignorer les types non-piste (épisodes, etc.)
-            }
-        }
-        // Si pas d'item (rien n'est chargé sur Spotify)
-        return null;
-
-    } catch (error) {
-        if (error.statusCode === 401) { // Unauthorized - Token expiré ?
-            logger.warn('SPOTIFY', `Token expiré pour ${roomCode}, tentative de rafraîchissement.`);
-            const refreshed = await refreshAccessTokenIfNeeded(roomCode);
-            if (refreshed) {
-                spotifyApi = initSpotifyApiForRoom(roomCode); // Récupérer la nouvelle instance API
-                if (!spotifyApi) return null;
-                try {
-                    // Réessayer avec getMyCurrentPlaybackState après refresh
-                    const data = await spotifyApi.getMyCurrentPlaybackState();
-                    // Mêmes vérifications qu'au-dessus
-                    if (data.body && data.body.item) {
-                         if (data.body.currently_playing_type === 'track' || !data.body.currently_playing_type) {
-                            return data.body;
-                         }
-                         return null; // Ignorer non-piste
-                    }
-                    return null;
-                } catch (retryError) {
-                     logger.error('SPOTIFY', `Erreur API Spotify (getMyCurrentPlaybackState) même après refresh pour ${roomCode}`, retryError);
-                     return null;
-                }
-            } else {
-                 logger.error('SPOTIFY', `Échec du refresh token pour ${roomCode}, impossible de récupérer l'état.`);
-                 return null; // Échec du refresh
-            }
-        } else {
-            // Autres erreurs API
-            logger.error('SPOTIFY', `Erreur API Spotify inattendue (getMyCurrentPlaybackState) pour ${roomCode}`, error);
-            return null;
-        }
-    }
-}
-
-/**
  * Vérifie si la piste Spotify a changé et notifie les clients.
  * @param {string} roomCode
  */
@@ -314,27 +462,35 @@ async function checkAndNotifyTrackChange(roomCode) {
             return; // Sortir si les conditions ne sont pas remplies
         }
 
-        // --- Logique principale (inchangée mais maintenant dans le try global) ---
-        const currentPlayback = await getCurrentPlayback(roomCode);
+        // --- Logique principale ---
+        const currentPlayback = await getCurrentPlayback(roomCode); // Maintenant enrichi !
         const newTrack = currentPlayback?.item ? {
             id: currentPlayback.item.id,
             artist: currentPlayback.item.artists.map(a => a.name).join(', '),
             title: currentPlayback.item.name,
-            artworkUrl: currentPlayback.item.album.images?.[0]?.url
+            artworkUrl: currentPlayback.item.album.images?.[0]?.url,
+            // NOUVEAU : Ajouter les infos de playlist si disponibles
+            playlistInfo: currentPlayback.playlistInfo || null
         } : null;
-
 
         const trackIdChanged = newTrack?.id !== room.currentTrack?.id;
 
         if (trackIdChanged) {
             Room.resetSpotifyState(roomCode, newTrack);
-            const updatedRoom = Room.get(roomCode); // Relire après reset
-            const payload = { newTrack: updatedRoom.currentTrack };
-            console.log('[Backend][checkAndNotify] Émission spotify_track_changed (ID changé) AVEC PAYLOAD:', JSON.stringify(payload));
+            const updatedRoom = Room.get(roomCode);
+            
+            // ENRICHIR le payload avec les infos de playlist
+            const payload = { 
+                roomCode,
+                track: updatedRoom.currentTrack,
+                newTrack: updatedRoom.currentTrack // Compatibilité
+            };
+            
+            console.log('[Backend][checkAndNotify] Émission spotify_track_changed avec playlist info:', JSON.stringify(payload));
             io.to(roomCode).emit('spotify_track_changed', payload);
             io.to(roomCode).emit('update_players', updatedRoom.players);
         } else {
-             // logger.debug('SPOTIFY_POLL_DEBUG', `Aucun changement d'ID de piste détecté pour ${roomCode}.`);
+             // logger.info('SPOTIFY_POLL_INFO', `Aucun changement d'ID de piste détecté pour ${roomCode}.`);
         }
 
     } catch (error) { // <--- Bloc catch pour toute erreur dans la fonction ---
@@ -423,8 +579,11 @@ module.exports = {
   getUserProfile,
   removeTokenForRoom,
   getAvailableDevices,
-  getCurrentPlayback, // Utile pour d'autres contrôleurs ?
-  checkAndNotifyTrackChange, // Utile pour déclenchement manuel ?
+  getCurrentPlayback,
+  checkAndNotifyTrackChange,
   startSpotifyPolling,
   stopSpotifyPolling,
+  // NOUVEAUX EXPORTS
+  clearPlaylistCache,
+  getPlaylistDetails, // Pour utilisation externe si besoin
 };

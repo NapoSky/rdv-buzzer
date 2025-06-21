@@ -14,7 +14,8 @@ const SpotifyModal = ({
   onForceShowTitle, // Nouvelle prop
   onForceShowArtist, // Nouvelle prop
   onForceHideTitle, // Nouvelle prop
-  onForceHideArtist // Nouvelle prop
+  onForceHideArtist, // Nouvelle prop
+  currentTrackInfo // Nouvelle prop
 }) => {
   if (!show) return null;
 
@@ -68,6 +69,34 @@ const SpotifyModal = ({
                     )}
                   </div>
                   <p className="text-muted small mt-2">Permet de révéler ou cacher manuellement le titre ou l'artiste sur l'écran des joueurs.</p>
+                </div>
+                {/* NOUVEAU : Affichage des infos de playlist pour l'admin */}
+                <div className="spotify-playlist-info">
+                  <h6>Informations de lecture</h6>
+                  {/* Les infos de piste seront passées via les props depuis AdminRoomView */}
+                  {currentTrackInfo?.playlistInfo ? (
+                    <div className="playlist-details">
+                      <div className="playlist-name">
+                        📁 {currentTrackInfo.playlistInfo.name}
+                      </div>
+                      <div className="playlist-progress">
+                        🎵 Piste {currentTrackInfo.playlistInfo.position} sur {currentTrackInfo.playlistInfo.total}
+                        <div className="progress-bar">
+                          <div 
+                            className="progress-fill"
+                            style={{ 
+                              width: `${(currentTrackInfo.playlistInfo.position / currentTrackInfo.playlistInfo.total) * 100}%` 
+                            }}
+                          ></div>
+                        </div>
+                        <small>{currentTrackInfo.playlistInfo.remaining} piste(s) restante(s)</small>
+                      </div>
+                    </div>
+                  ) : (
+                    <div className="no-playlist">
+                      🎵 Lecture libre (pas de playlist)
+                    </div>
+                  )}
                 </div>
               </div>
             ) : (

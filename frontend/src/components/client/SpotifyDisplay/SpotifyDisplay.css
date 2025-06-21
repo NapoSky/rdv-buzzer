@@ -1,5 +1,6 @@
 /* Styles basés sur AdminRoomView.css et ClientView.css pour la cohérence */
 .spotifyDisplayContainer {
+    position: relative;
     display: flex;
     align-items: center;
     /* Fond légèrement différent pour se démarquer */
@@ -15,7 +16,7 @@
     width: 90%;
     transition: all 0.3s ease; /* Transition globale */
     box-sizing: border-box;
-    overflow: hidden; /* Pour les effets de fond/bordure */
+    overflow: visible; /* Pour les effets de fond/bordure */
 }
 
 /* Mode sombre */
@@ -102,6 +103,42 @@
     opacity: 0.7;
 }
 
+
+/* NOUVEAU : Badge de playlist en coin supérieur droit */
+  .playlist-badge {
+    position: absolute;
+    top: 0.5px;
+    right: 0.5px;
+    background: rgba(40, 167, 69, 0.3);
+    color: var(--success, #28a745);
+    font-size: 0.75rem;
+    font-weight: 600;
+    padding: 4px 8px;
+    border-radius: 12px;
+    box-shadow: 0 2px 4px rgba(40, 167, 69, 0.15);
+    border: 1px solid rgba(40, 167, 69, 0.3);
+    z-index: 10;
+    white-space: nowrap;
+    transform: translateY(0);
+    transition: transform 0.2s ease, box-shadow 0.2s ease;
+  }
+  
+  .playlist-badge:hover {
+    background: rgba(40, 167, 69, 0.15);
+    transform: translateY(-1px);
+  }
+  
+  /* Mode sombre - Badge plus contrasté */
+  .dark-mode .playlist-badge {
+    background: rgba(40, 167, 69, 0.3);
+    color: #4ade80; /* Vert plus clair pour le mode sombre */
+    border-color: rgba(40, 167, 69, 0.4);
+  }
+  
+  .dark-mode .playlist-badge:hover {
+    box-shadow: 0 4px 12px rgba(30, 215, 96, 0.5);
+  }
+
 /* --- Responsive Design --- */
 
 /* Tablettes et petits écrans (max-width: 768px) */
@@ -122,6 +159,14 @@
     .title {
         font-size: 0.8em;
     }
+    .playlist-badge {
+        font-size: 0.7rem;
+        padding: 3px 6px;
+        top: -1px;
+        right: -1px;
+        border-width: 1.5px;
+      }
+
 }
 
 /* Mobiles (ex: 412px, 375px, 300px) (max-width: 480px) */
@@ -148,6 +193,14 @@
     .title {
         font-size: 0.75em;
     }
+    .playlist-badge {
+        font-size: 0.65rem;
+        padding: 2px 5px;
+        top: -0.5px;
+        right: -0.5px;
+        border-width: 1px;
+        border-radius: 10px;
+      }
 }
 
 /* Très petits écrans (ex: 300px) (max-width: 320px) */
@@ -167,4 +220,11 @@
     .title {
         font-size: 0.7em;
     }
+    .playlist-badge {
+        font-size: 0.6rem;
+        padding: 2px 4px;
+        top: -4px;
+        right: -4px;
+      }
 }
+

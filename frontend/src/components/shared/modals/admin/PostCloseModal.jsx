@@ -7,6 +7,20 @@ const PostCloseModal = ({
 }) => {
   if (!show) return null;
   
+  // Fonction pour déterminer le message de sauvegarde
+  const getSaveMessage = () => {
+    if (closeStatus.saveRequested === false) {
+      // L'utilisateur n'a pas voulu sauvegarder
+      return '📝 Salle non sauvegardée';
+    } else if (closeStatus.dataSaved === true) {
+      // L'utilisateur voulait sauvegarder et ça a marché
+      return '✔️ Données sauvegardées';
+    } else {
+      // L'utilisateur voulait sauvegarder mais ça a échoué
+      return '❌ Échec de la sauvegarde';
+    }
+  };
+  
   return (
     <div className="modal show" style={{ backgroundColor: 'rgba(0,0,0,0.5)', display: 'block' }}>
       <div className="modal-dialog modal-dialog-centered">
@@ -16,7 +30,7 @@ const PostCloseModal = ({
           </div>
           <div className="modal-body">
             <p>Status de fermeture : {closeStatus.roomClosed ? '✔️ Salle fermée' : '❌ Salle non fermée'}</p>
-            <p>Status de sauvegarde : {closeStatus.dataSaved ? '✔️ Données sauvegardées' : '❌ Échec de la sauvegarde'}</p>
+            <p>Status de sauvegarde : {getSaveMessage()}</p>
           </div>
           <div className="modal-footer">
             <button

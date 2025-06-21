@@ -63,6 +63,7 @@ function AdminRoomView() {
   const initializationAttempted = useRef(false);
   const [foundArtist, setFoundArtist] = useState(false);
   const [foundTitle, setFoundTitle] = useState(false);
+  const [currentTrackInfo, setCurrentTrackInfo] = useState(null);
 
   // Fonction pour créer une nouvelle salle
   const handleCreateRoom = async () => {
@@ -232,17 +233,22 @@ function AdminRoomView() {
     // -----------------------------
 
     // ---> NOUVEAU GESTIONNAIRE POUR LE CHANGEMENT DE PISTE SPOTIFY <---
-    const handleSpotifyTrackChanged = (/* data */) => {
-      // Vérifier si Spotify est connecté au moment où l'événement est reçu
-      if (spotifyConnected) {
-        console.log("[AdminRoomView] Nouvelle piste Spotify détectée, réinitialisation de foundArtist/Title.");
-        setFoundArtist(false);
-        setFoundTitle(false);
-        // Optionnel: Réinitialiser aussi le joueur ayant buzzé si nécessaire pour votre logique
-        // setBuzzedPlayer(null);
-      } else {
-        console.log("[AdminRoomView] Événement spotify_track_changed reçu, mais ignoré car Spotify n'est pas connecté.");
-      }
+    const handleSpotifyTrackChanged = (data) => {
+      const newTrack = data.track || data.newTrack || null;
+      
+      // NOUVEAU : Stocker les infos de piste pour la modal
+      setCurrentTrackInfo(newTrack);
+      
+      // Réinitialiser les états de découverte
+      setFoundArtist(false);
+      setFoundTitle(false);
+      setBuzzedPlayer(null);
+      
+      console.log('[AdminRoomView] Changement de piste Spotify détecté', {
+        track: newTrack ? `${newTrack.artist} - ${newTrack.title}` : 'Aucune',
+        hasPlaylist: !!(newTrack?.playlistInfo),
+        position: newTrack?.playlistInfo ? `${newTrack.playlistInfo.position}/${newTrack.playlistInfo.total}` : 'N/A'
+      });
     };
     // --------------------------------------------------------------------
 
@@ -688,9 +694,13 @@ const handleIncrementScore = (playerId, adjustment) => { // Renommer 'increment'
   };
 
   const handleCloseRoom = async () => {
+    if (!roomCode) return;
+    
     try {
-      // Utiliser closeRoom du service socket au lieu de closeRoomRequest
-      const response = await closeRoom(roomCode, currentRoomOptions.saveRoom); // Passer l'option ici
+      // Récupérer l'intention de sauvegarde AVANT la fermeture
+      const saveRequested = currentRoomOptions.saveRoom;
+      
+      const response = await closeRoom(roomCode, saveRequested);
       
       if (response && response.error) {
         console.error("Erreur lors de la fermeture de la salle:", response.error);
@@ -698,16 +708,29 @@ const handleIncrementScore = (playerId, adjustment) => { // Renommer 'increment'
         setShowCloseRoomModal(false);
       } else {
         console.log("Salle fermée avec succès");
-        // La réponse du backend pourrait confirmer si la sauvegarde a eu lieu
-        setCloseStatus({ roomClosed: true, dataSaved: response?.dataSaved ?? currentRoomOptions.saveRoom });
+        
+        // NOUVEAU : Passer l'intention de sauvegarde à la modal
+        setCloseStatus({ 
+          roomClosed: true, 
+          dataSaved: response?.dataSaved ?? false,
+          saveRequested: saveRequested // AJOUTER cette information
+        });
+        
         setShowCloseRoomModal(false);
-        setShowPostCloseModal(true); // Afficher la modale post-fermeture
+        setShowPostCloseModal(true);
       }
     } catch (error) {
       console.error("Exception lors de la fermeture de la salle:", error);
-      setCloseStatus({ roomClosed: false, dataSaved: false });
+      
+      // En cas d'erreur, on ne connaît pas l'intention
+      setCloseStatus({ 
+        roomClosed: false, 
+        dataSaved: false,
+        saveRequested: currentRoomOptions.saveRoom // Garder l'intention originale
+      });
+      
       setShowCloseRoomModal(false);
-      setShowPostCloseModal(true); // Afficher la modale même en cas d'erreur
+      setShowPostCloseModal(true);
     }
   };
 
@@ -975,6 +998,7 @@ const handleIncrementScore = (playerId, adjustment) => { // Renommer 'increment'
           onForceShowArtist={handleForceShowArtist}
           onForceHideTitle={handleForceHideTitle}
           onForceHideArtist={handleForceHideArtist}
+          currentTrackInfo={currentTrackInfo} // NOUVEAU
         />
       )}
     </div>

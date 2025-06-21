@@ -176,16 +176,20 @@ function AdminPanelContent({ sessions, fetchSessions }) {
   const handleCloseRoom = async (roomCodeToClose) => {
     const roomCode = roomCodeToClose || selectedRoomCode;
     try {
+      // NOUVEAU : Récupérer l'option saveRoom de la session avant fermeture
+      const session = sessions[roomCode];
+      const saveRequested = session?.options?.saveRoom ?? true; // Par défaut true si inconnu
+      
       const res = await axios.post(`${BACKEND_URL}/api/admin/closeRoom`, 
         { roomCode: roomCode }, {
         headers: { Authorization: `Bearer ${APP_SECRET}` }
       });
       
-      
       setOperationResult({
         success: res.data.success,
         roomClosed: res.data.success,
-        dataSaved: res.data.success,
+        dataSaved: res.data.dataSaved,
+        saveRequested: saveRequested, // AJOUTER l'intention
         roomCode: roomCode
       });
       
@@ -198,6 +202,7 @@ function AdminPanelContent({ sessions, fetchSessions }) {
         success: false,
         roomClosed: false,
         dataSaved: false,
+        saveRequested: true, // Par défaut, on suppose que l'intention était de sauvegarder
         roomCode: roomCode
       });
     }
@@ -707,7 +712,7 @@ function AdminPanelContent({ sessions, fetchSessions }) {
                               <AlertDialog.Title className="alert-title">
                                 Confirmation
                               </AlertDialog.Title>
-                              <AlertDialog.Description className="alert-description">
+                              <AlertDialog.Description className="dialog-description">
                                 {newScore === "" 
                                   ? `Êtes-vous sûr de vouloir supprimer l'entrée pour "${selectedPseudo}" ?`
                                   : `Confirmez-vous la modification de l'entrée pour "${selectedPseudo}" avec le nouveau score : ${newScore} ?`

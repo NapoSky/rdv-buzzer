@@ -39,7 +39,7 @@ function isSpotifyEnabledForRoom(roomCode) {
  */
 function attachSpotifyIntegration(socket, io) {
   if (!isSpotifyAvailable()) {
-    logger.debug('SPOTIFY_INTEGRATION', 'Service Spotify non disponible, événements ignorés');
+    logger.info('SPOTIFY_INTEGRATION', 'Service Spotify non disponible, événements ignorés');
     return;
   }
 

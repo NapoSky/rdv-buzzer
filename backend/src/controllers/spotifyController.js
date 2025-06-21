@@ -60,25 +60,25 @@ async function handleCallback(req, res) {
     // --- AJOUT : Récupération et Initialisation de l'État Spotify ---
     try {
         logger.info('SPOTIFY_INIT', `Tentative de récupération de l'état initial pour ${roomCode}`);
-        const initialPlayback = await spotifyService.getCurrentPlayback(roomCode); // Utilise la fonction existante qui gère le refresh si besoin
+        const initialPlayback = await spotifyService.getCurrentPlayback(roomCode); // Maintenant enrichi !
         const initialTrack = initialPlayback?.item ? {
             id: initialPlayback.item.id,
             artist: initialPlayback.item.artists.map(a => a.name).join(', '),
             title: initialPlayback.item.name,
-            artworkUrl: initialPlayback.item.album.images?.[0]?.url
+            artworkUrl: initialPlayback.item.album.images?.[0]?.url,
+            // NOUVEAU : Inclure les infos de playlist dès l'initialisation
+            playlistInfo: initialPlayback.playlistInfo || null
         } : null;
 
         // Mettre à jour l'état initial dans la Room
-        Room.resetSpotifyState(roomCode, initialTrack); // Utilise resetSpotifyState pour initialiser currentTrack et reset les flags found/buzzed
+        Room.resetSpotifyState(roomCode, initialTrack);
 
         if (initialTrack) {
-            logger.info('SPOTIFY_INIT', `État initial défini pour ${roomCode} avec piste: ${initialTrack.id}`);
-            // Optionnel: Émettre immédiatement l'état initial si nécessaire (peut être redondant avec join_room)
-            // const io = getIO();
-            // io.to(roomCode).emit('spotify_track_changed', { newTrack: initialTrack });
-            // io.to(roomCode).emit('update_players', room.players); // Car resetSpotifyState a reset les buzzers
-        } else {
-            logger.info('SPOTIFY_INIT', `Aucune piste chargée initialement pour ${roomCode}`);
+            logger.info('SPOTIFY_INIT', `État initial avec piste défini pour ${roomCode}`, {
+                track: `${initialTrack.artist} - ${initialTrack.title}`,
+                hasPlaylist: !!initialTrack.playlistInfo,
+                playlistPosition: initialTrack.playlistInfo ? `${initialTrack.playlistInfo.position}/${initialTrack.playlistInfo.total}` : 'N/A'
+            });
         }
     } catch (initError) {
         logger.error('SPOTIFY_INIT', `Erreur lors de la récupération de l'état initial pour ${roomCode}`, initError);

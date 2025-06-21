@@ -60,9 +60,16 @@ const SpotifyDisplay = ({ trackInfo, roomType = 'Standard', foundArtist = false,
   const displayTitle = showTitle ? trackInfo.title : 'Titre manquant';
   const artworkUrl = showArtwork && trackInfo.artworkUrl ? trackInfo.artworkUrl : defaultAlbumArt;
   const artworkVisibleClass = showArtwork ? 'visibleArtwork' : 'hiddenArtwork';
+  const hasPlaylistInfo = trackInfo.playlistInfo && trackInfo.playlistInfo.total > 0;
 
   return (
     <div className={`spotifyDisplayContainer ${showArtwork ? 'revealed' : ''}`}>
+      {/* Badge en coin supérieur droit */}
+      {hasPlaylistInfo && (
+        <div className="playlist-badge">
+          🎵 {trackInfo.playlistInfo.position}/{trackInfo.playlistInfo.total}
+        </div>
+      )}
       <div className="artworkContainer">
         <img
           src={artworkUrl}
