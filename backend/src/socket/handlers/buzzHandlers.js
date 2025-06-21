@@ -1,7 +1,6 @@
 // src/socket/handlers/buzzHandlers.js
 const { Room, defaultRoomOptions } = require('../../models/Room'); // Importer defaultRoomOptions
 const logger = require('../../utils/logger');
-const spotifyService = require('../../services/spotifyService');
 
 // Stockage des périodes de grâce pour les buzzers
 const buzzerGracePeriods = {};
@@ -40,12 +39,12 @@ function handleBuzz(socket, io, data, callback) {
       return callback({ error: 'Salle inexistante' });
     }
 
-    // --- Vérification Ajoutée pour Spotify ---
-    // Vérifier si Spotify est activé ET si la piste est déjà trouvée
-    if (room.options?.spotifyEnabled && room.trackIsFullyFound) {
-        logger.info('BUZZ', `Buzz rejeté pour ${socket.id} dans ${roomCode}: piste déjà trouvée.`);
-        const firstBuzzerPseudo = room.players[room.firstBuzz]?.pseudo; // Utiliser room.firstBuzz
-        return callback({ error: 'La piste a déjà été trouvée.', lateAttempt: true, buzzedBy: firstBuzzerPseudo });
+    // --- LOGIQUE GÉNÉRIQUE : Vérifier si la piste/question est déjà résolue ---
+    // Cette logique fonctionne avec ou sans Spotify
+    if (room.trackIsFullyFound) {
+        logger.info('BUZZ', `Buzz rejeté pour ${socket.id} dans ${roomCode}: piste/question déjà résolue.`);
+        const firstBuzzerPseudo = room.players[room.firstBuzz]?.pseudo;
+        return callback({ error: 'La piste/question a déjà été trouvée.', lateAttempt: true, buzzedBy: firstBuzzerPseudo });
     }
     // --- Fin Vérification ---
 
@@ -56,12 +55,25 @@ function handleBuzz(socket, io, data, callback) {
 
     // Si un buzz est déjà validé, traiter normalement
     if (room.firstBuzz) {
-      const buzzingPlayer = room.players[room.firstBuzz]?.pseudo || 'Quelqu\'un';
-      return callback({
-        error: `${buzzingPlayer} a été plus rapide !`,
-        buzzedBy: buzzingPlayer,
-        lateAttempt: true
-      });
+      // *** VÉRIFIER que le joueur qui a firstBuzz n'est pas en pénalité ***
+      const firstBuzzer = room.players[room.firstBuzz];
+      if (firstBuzzer && firstBuzzer.buzzed) {
+        // Le premier buzzer est toujours actif (pas encore jugé ou en pénalité)
+        const buzzingPlayer = firstBuzzer.pseudo || 'Quelqu\'un';
+        return callback({
+          error: `${buzzingPlayer} a été plus rapide !`,
+          buzzedBy: buzzingPlayer,
+          lateAttempt: true
+        });
+      } else {
+        // Le premier buzzer n'est plus actif, réinitialiser firstBuzz
+        logger.info('BUZZ', 'Premier buzzer inactif, réinitialisation', { 
+          roomCode, 
+          previousFirstBuzz: room.firstBuzz 
+        });
+        Room.resetBuzz(roomCode);
+        // Continuer le traitement normal du buzz
+      }
     }
 
     // Vérification du joueur
@@ -192,8 +204,12 @@ function processBuzzers(roomCode, io) {
     Room.setLastBuzz(roomCode, buzzData);
     io.to(roomCode).emit('buzzed', buzzData);
 
-    // Ajouter la pause Spotify ici
-    pauseSpotifyIfConnected(roomCode, io);
+    // --- NOUVEAU : Émettre un événement générique pour les intégrations externes ---
+    io.to(roomCode).emit('player_buzzed', {
+      roomCode,
+      playerId: winner.socketId,
+      pseudo: winner.pseudo
+    });
 
     logger.info('BUZZ_PROCESS', 'Gagnant désigné après période de grâce', {
       roomCode,
@@ -212,29 +228,6 @@ function processBuzzers(roomCode, io) {
     if (buzzerGracePeriods[roomCode]) {
       delete buzzerGracePeriods[roomCode];
     }
-  }
-}
-
-/**
- * Met en pause Spotify si connecté pour la salle
- */
-function pauseSpotifyIfConnected(roomCode, io) {
-  if (spotifyService.isRoomConnected(roomCode)) {
-    spotifyService.pausePlayback(roomCode)
-      .then(result => {
-        if (result.success) {
-          logger.info('SPOTIFY', 'Lecture mise en pause automatiquement', { roomCode });
-          io.to(roomCode).emit('spotify_status', { action: 'paused' });
-        } else {
-          logger.error('SPOTIFY', 'Échec de la pause', { 
-            roomCode, 
-            error: result.error 
-          });
-        }
-      })
-      .catch(error => {
-        logger.error('SPOTIFY', 'Erreur lors de la pause', error);
-      });
   }
 }
 

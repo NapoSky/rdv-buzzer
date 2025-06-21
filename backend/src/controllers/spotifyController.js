@@ -48,6 +48,11 @@ async function handleCallback(req, res) {
     if (room.options) { // Vérification de sécurité
         room.options.spotifyEnabled = true;
         logger.info('SPOTIFY', `Option spotifyEnabled mise à true pour ${roomCode} après callback.`);
+        
+        // *** AJOUTER : Notifier tous les clients de la mise à jour des options ***
+        const io = getIO();
+        io.to(roomCode).emit('room_options_updated', room.options);
+        logger.info('SPOTIFY', `Options mises à jour émises pour ${roomCode}`, room.options);
     } else {
         logger.warn('SPOTIFY', `Impossible de mettre à jour spotifyEnabled pour ${roomCode}: options non trouvées.`);
     }
@@ -116,13 +121,26 @@ function disconnectSpotify(req, res) {
   if (!Room.get(roomCode)) {
     return res.status(404).json({ error: 'Salle inexistante' });
   }
-  
+
   // Supprimer les tokens
   spotifyService.removeTokenForRoom(roomCode);
   
+  // *** AJOUTER : Mettre à jour l'option de la salle ***
+  const room = Room.get(roomCode);
+  if (room && room.options) {
+    room.options.spotifyEnabled = false;
+    logger.info('SPOTIFY', `Option spotifyEnabled mise à false pour ${roomCode} après déconnexion.`);
+  }
+  
   // Notifier les clients
-  const io = require('../socket').getIO();
-  io.to(roomCode).emit('spotify_connected', { connected: false });
+  const io = getIO();
+  io.to(roomCode).emit('spotify_disconnected', { roomCode });
+  
+  // *** AJOUTER : Notifier aussi la mise à jour des options ***
+  if (room && room.options) {
+    io.to(roomCode).emit('room_options_updated', room.options);
+    logger.info('SPOTIFY', `Options mises à jour émises après déconnexion pour ${roomCode}`, room.options);
+  }
   
   res.json({ success: true });
 }

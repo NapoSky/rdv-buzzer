@@ -129,7 +129,7 @@ function ClientView({ setActiveRoomCode }) {
 
         let initialArtistFound = false;
         let initialTitleFound = false;
-        if (response.currentTrack) {
+        if (receivedOptions?.spotifyEnabled && response.currentTrack) {
           console.log("[ClientView] Piste actuelle reçue à l'init:", response.currentTrack);
           setSpotifyTrackInfo(response.currentTrack);
           initialArtistFound = response.artistFound || false;
@@ -314,7 +314,7 @@ const handleBuzz = () => {
 
           let initialArtistFound = false;
           let initialTitleFound = false;
-          if (response.currentTrack) {
+          if (receivedOptions?.spotifyEnabled && response.currentTrack) {
             console.log("[ClientView] Piste actuelle reçue à l'init:", response.currentTrack);
             setSpotifyTrackInfo(response.currentTrack);
             initialArtistFound = response.artistFound || false;
@@ -511,9 +511,7 @@ const handleBuzz = () => {
     };
 
     const handleJudgeAnswer = (data) => {
-      // ---> AJOUTER CE LOG <---
       console.log('[ClientView] Événement judge_answer REÇU:', JSON.stringify(data));
-      // ------------------------
       const { trackInfo, artistFound: serverArtistFound, titleFound: serverTitleFound } = data;
       const currentRoomType = roomOptions?.roomType || 'Standard';
     
@@ -521,30 +519,33 @@ const handleBuzz = () => {
       setBuzzedBy('');
       setShowBuzzedDialog(false);
     
-      // Mettre à jour l'info piste si fournie (important !)
-      if (trackInfo) {
-        setSpotifyTrackInfo(trackInfo);
-         // ---> AJOUTER CE LOG <---
-         console.log('[ClientView] judge_answer - setSpotifyTrackInfo AVEC:', trackInfo);
-         // ------------------------
+      // CORRECTION : Gérer trackInfo seulement si Spotify est activé pour la salle
+      if (roomOptions?.spotifyEnabled) {
+        // Mettre à jour l'info piste si fournie ET si Spotify est activé
+        if (trackInfo) {
+          setSpotifyTrackInfo(trackInfo);
+          console.log('[ClientView] judge_answer - setSpotifyTrackInfo AVEC:', trackInfo);
+        } else {
+          console.warn('[ClientView] judge_answer - trackInfo MANQUANT pour une salle Spotify !');
+        }
       } else {
-         // ---> AJOUTER CE LOG <---
-         console.warn('[ClientView] judge_answer - trackInfo MANQUANT dans les données reçues !');
-         // ------------------------
+        // Pour les salles sans Spotify, on s'assure que spotifyTrackInfo reste null
+        setSpotifyTrackInfo(null);
+        console.log('[ClientView] judge_answer - Salle sans Spotify, trackInfo ignoré');
       }
     
       // Mettre à jour l'état trouvé EXACTEMENT comme reçu du serveur
       setFoundArtist(serverArtistFound);
       setFoundTitle(serverTitleFound);
        
-      // Calculer si piste trouvée selon le serveur
+      // Calculer si piste/question trouvée selon le serveur
       const trackFullyFoundServer = 
         (currentRoomType === 'Standard' && (serverArtistFound || serverTitleFound)) ||
         (currentRoomType === 'Titre/Artiste' && serverArtistFound && serverTitleFound);
       
-      // Désactiver le buzzer si piste trouvée ou réactiver si nécessaire
+      // Désactiver le buzzer si piste/question trouvée ou réactiver si nécessaire
       if (trackFullyFoundServer) {
-        console.log("Piste entièrement trouvée (selon serveur), désactivation du buzzer.");
+        console.log("Piste/question entièrement trouvée (selon serveur), désactivation du buzzer.");
         setIsDisabled(true);
       } else if (!gamePaused) {
         // Introduire un délai avant de réactiver le buzzer
@@ -553,22 +554,25 @@ const handleBuzz = () => {
         setTimeout(() => {
           // Re-vérifier les conditions au moment de la réactivation
           const currentTrackFullyFoundAfterDelay = 
-            (roomOptions?.roomType === 'Standard' && (foundArtist || foundTitle)) || // Utiliser les états actuels
+            (roomOptions?.roomType === 'Standard' && (foundArtist || foundTitle)) ||
             (roomOptions?.roomType === 'Titre/Artiste' && foundArtist && foundTitle);
-
+    
           if (!currentTrackFullyFoundAfterDelay && !gamePaused) {
             setIsDisabled(false);
             console.log("Buzzer réactivé après délai post-jugement.");
-            info('Le buzzer est à nouveau disponible.'); // Notification optionnelle
+            info('Le buzzer est à nouveau disponible.');
           } else {
-            console.log("Buzzer reste désactivé après délai post-jugement (piste trouvée ou jeu en pause).");
+            console.log("Buzzer reste désactivé après délai post-jugement (piste/question trouvée ou jeu en pause).");
           }
-        }, 1000); // Délai de 1 seconde (1000 ms)
+        }, 1000); // Délai de 1 seconde
       }
-      // Si gamePaused est true, isDisabled restera true ou deviendra true, ce qui est correct.
     };
     
     const handleSpotifyTrackChanged = (data) => {
+      if (!roomOptions?.spotifyEnabled) {
+        console.warn('[ClientView] spotify_track_changed reçu mais Spotify non activé pour cette salle');
+        return;
+      }
       const newTrack = data.newTrack || null; // Récupérer les infos de la nouvelle piste
     
       // Mettre à jour l'état Spotify : nouvelle piste et reset du statut trouvé
@@ -683,6 +687,19 @@ const handleBuzz = () => {
     on('judge_answer', handleJudgeAnswer);
     on('spotify_track_changed', handleSpotifyTrackChanged);
     on('room_options_updated', handleRoomOptionsUpdated);
+
+    // NOUVEAU : Réinitialisation pour question suivante
+    on('next_question', () => {
+      console.log("[ClientView] Question suivante - réinitialisation");
+      setFoundArtist(false);
+      setFoundTitle(false);
+      setBuzzedBy('');
+      setFirstBuzzer(null);
+      setIsDisabled(false); // Réactiver le buzzer
+      if (roomOptions?.spotifyEnabled) {
+        setSpotifyTrackInfo(null);
+      }
+    });
   
     // Nettoyage à la destruction du composant
     return () => {
@@ -702,6 +719,7 @@ const handleBuzz = () => {
       off('judge_answer');
       off('spotify_track_changed');
       off('room_options_updated');
+      off('next_question');
     };
   }, [socket, roomCode, pseudo, setActiveRoomCode, navigate, joined, gamePaused, buzzedBy, roomOptions, firstBuzzer, foundArtist, foundTitle, resetSpotifyDisplay, resetLocalBuzzerState]);
 

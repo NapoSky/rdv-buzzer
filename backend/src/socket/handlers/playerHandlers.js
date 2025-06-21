@@ -168,6 +168,7 @@ console.log('Envoi judge_answer avec:', {
       // Appliquer la pénalité seulement si incorrect ET piste non trouvée
       logger.info('PLAYERS', 'Réponse incorrecte et piste non trouvée, application de la pénalité', { roomCode });
       // handleDisableBuzzer met le joueur fautif à buzzed=true, émet update_players et buzzer_disabled
+      Room.resetBuzz(roomCode);
       handleDisableBuzzer(socket, io, { roomCode, playerId });
       // Note: handleResetBuzzer n'est PAS appelé ici pour que les autres puissent buzzer
     }
@@ -350,6 +351,39 @@ function handleForceHideArtist(socket, io, data) {
   }
 }
 
+// ---> NOUVELLE FONCTION HANDLER POUR NEXT_QUESTION <---
+/**
+ * Gère le passage à la question suivante (mode manuel sans Spotify)
+ */
+function handleNextQuestion(socket, io, data) {
+  try {
+    const { roomCode } = data;
+    const room = Room.get(roomCode);
+
+    if (!room) {
+      return logger.warn('PLAYERS', 'Salle non trouvée pour next_question', { roomCode });
+    }
+
+    if (room.adminId !== socket.id) {
+      return logger.warn('PLAYERS', 'Tentative non-admin de next_question', { roomCode, socketId: socket.id });
+    }
+
+    logger.info('PLAYERS', 'Admin passe à la question suivante', { roomCode });
+
+    // Réinitialiser complètement l'état de la question/piste
+    Room.resetQuestionState(roomCode, null); // null = pas de piste Spotify
+    
+    // Informer tous les clients du changement
+    io.to(roomCode).emit('next_question', { roomCode });
+    io.to(roomCode).emit('update_players', room.players);
+
+    logger.info('PLAYERS', 'Question suivante activée', { roomCode });
+
+  } catch (error) {
+    logger.error('PLAYERS', 'Erreur lors du passage à la question suivante', error);
+  }
+}
+
 /**
  * Attache les événements de joueur au socket
  * @param {Socket} socket - Socket client
@@ -367,6 +401,7 @@ function attachEvents(socket, io) {
   socket.on('force_show_artist', (data) => handleForceShowArtist(socket, io, data));
   socket.on('force_hide_title', (data) => handleForceHideTitle(socket, io, data));
   socket.on('force_hide_artist', (data) => handleForceHideArtist(socket, io, data));
+  socket.on('next_question', (data) => handleNextQuestion(socket, io, data));
   // ------------------------------------
 
   // Garder l'ancien 'update_score' commenté ou le supprimer
@@ -375,4 +410,5 @@ function attachEvents(socket, io) {
 
 module.exports = {
   attachEvents,
+  handleNextQuestion
 };

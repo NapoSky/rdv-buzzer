@@ -15,17 +15,14 @@ const defaultRoomOptions = {
 
 class Room {
   static create(roomCode, adminId, options = {}) {
-    // Fusionner les options fournies avec les options par défaut
-    // Assurer que spotifyEnabled est bien pris en compte
     const roomOptions = {
-        ...defaultRoomOptions,
-        ...options,
-        spotifyEnabled: typeof options?.spotifyEnabled === 'boolean' ? options.spotifyEnabled : defaultRoomOptions.spotifyEnabled,
-        // Assurer que roomType est bien 'roomType' si c'est le cas dans les options reçues
-        roomType: ['Standard', 'Titre/Artiste'].includes(options?.roomType || options?.roomType)
-                  ? (options.roomType || options.roomType)
-                  : defaultRoomOptions.roomType,
-     };
+      ...defaultRoomOptions,
+      ...options,
+      spotifyEnabled: typeof options?.spotifyEnabled === 'boolean' ? options.spotifyEnabled : defaultRoomOptions.spotifyEnabled,
+      roomType: ['Standard', 'Titre/Artiste'].includes(options?.roomType)
+                ? options.roomType
+                : defaultRoomOptions.roomType,
+    };
 
     rooms[roomCode] = {
       adminId,
@@ -35,13 +32,16 @@ class Room {
       lastBuzz: null,
       options: roomOptions, // Stocker les options ici
 
-      // --- Ajouts pour Spotify ---
-      currentTrack: null, // { artist, title, artworkUrl }
+      // --- LOGIQUE GÉNÉRIQUE (fonctionne avec ou sans Spotify) ---
+      currentTrack: null, // Peut être une piste Spotify ou une question manuelle
       artistFound: false,
       titleFound: false,
-      trackIsFullyFound: false, // Calculé
-      // --- Fin Ajouts ---
+      trackIsFullyFound: false, // Calculé selon le roomType et les états found
+
+      // --- OPTIONNEL : Métadonnées Spotify ---
+      spotifyConnected: roomOptions.spotifyEnabled,
     };
+
     return rooms[roomCode];
   }
 
@@ -127,42 +127,78 @@ class Room {
     return rooms[roomCode]?.options;
   }
 
-  // --- Méthodes ajoutées pour Spotify ---
+  // --- Méthodes ajoutées pour Spotify et logique générique ---
 
   /**
-   * Met à jour l'état trouvé de la piste et recalcule trackIsFullyFound.
+   * Met à jour l'état trouvé de la piste/question de manière générique
    * @param {string} roomCode
    * @param {boolean} artistFound
    * @param {boolean} titleFound
    */
   static updateTrackFoundStatus(roomCode, artistFound, titleFound) {
-      const room = this.get(roomCode);
-      if (!room) return false;
-      room.artistFound = artistFound;
-      room.titleFound = titleFound;
-      const roomType = room.options?.roomType || 'Standard';
-      room.trackIsFullyFound = (roomType === 'Standard' && (room.artistFound || room.titleFound)) ||
-                               (roomType === 'Titre/Artiste' && room.artistFound && room.titleFound);
-      return true;
+    const room = this.get(roomCode);
+    if (!room) return false;
+
+    room.artistFound = artistFound;
+    room.titleFound = titleFound;
+
+    const roomType = room.options?.roomType || 'Standard';
+    room.trackIsFullyFound = (roomType === 'Standard' && (room.artistFound || room.titleFound)) ||
+                             (roomType === 'Titre/Artiste' && room.artistFound && room.titleFound);
+    return true;
   }
 
   /**
-   * Réinitialise l'état Spotify et buzzer lors d'un changement de piste.
+   * Réinitialise l'état pour une nouvelle piste/question (générique)
    * @param {string} roomCode
-   * @param {object | null} newTrackInfo - { artist, title, artworkUrl } ou null
+   * @param {object | null} newQuestionInfo - Peut être null pour une question manuelle
    */
-  static resetSpotifyState(roomCode, newTrackInfo) {
-      const room = this.get(roomCode);
-      if (!room) return false;
-      room.currentTrack = newTrackInfo;
-      room.artistFound = false;
-      room.titleFound = false;
-      room.trackIsFullyFound = false;
-      room.firstBuzz = null; // Réinitialiser qui a buzzé
-      room.lastBuzz = null;
-      // Réinitialiser l'état buzzed de tous les joueurs
-      Object.values(room.players).forEach(p => p.buzzed = false);
-      return true;
+  static resetQuestionState(roomCode, newQuestionInfo = null) {
+    const room = this.get(roomCode);
+    if (!room) return false;
+
+    room.currentTrack = newQuestionInfo;
+    room.artistFound = false;
+    room.titleFound = false;
+    room.trackIsFullyFound = false;
+    room.firstBuzz = null;
+    room.lastBuzz = null;
+
+    // Réinitialiser l'état buzzed de tous les joueurs
+    Object.values(room.players).forEach(p => p.buzzed = false);
+    return true;
+  }
+
+  /**
+   * Réinitialise l'état Spotify pour une nouvelle piste
+   * @param {string} roomCode 
+   * @param {object|null} newTrack - Nouvelle piste Spotify ou null
+   * @returns {boolean}
+   */
+  static resetSpotifyState(roomCode, newTrack = null) {
+    const room = this.get(roomCode);
+    if (!room) return false;
+    
+    // Mettre à jour la piste actuelle
+    room.currentTrack = newTrack;
+    
+    // Réinitialiser les états de découverte
+    room.artistFound = false;
+    room.titleFound = false;
+    room.trackIsFullyFound = false;
+    
+    // Réinitialiser les buzzers
+    room.firstBuzz = null;
+    room.lastBuzz = null;
+    
+    // Réinitialiser l'état buzzed de tous les joueurs
+    Object.values(room.players).forEach(player => {
+      if (player.buzzed) {
+        player.buzzed = false;
+      }
+    });
+    
+    return true;
   }
 
   /**
@@ -171,22 +207,22 @@ class Room {
    * @returns {object | null}
    */
   static getClientState(roomCode) {
-      const room = this.get(roomCode);
-      if (!room) return null;
-      return {
-        options: room.options,
-        paused: room.paused,
-        players: room.players,
-        adminPresent: !!Object.values(room.players).find(p => p.isAdmin && !p.disconnected),
-        // --- Champs Buzz ---
-        firstBuzzPlayer: room.players[room.firstBuzz]?.pseudo || null, // Envoyer pseudo basé sur firstBuzz (socketId)
-        // lastBuzz: room.lastBuzz, // Envoyer si le client en a besoin
-        // --- Champs Spotify ---
-        currentTrack: room.currentTrack,
-        artistFound: room.artistFound,
-        titleFound: room.titleFound,
-        // trackIsFullyFound: room.trackIsFullyFound, // Le client le recalcule ? Non, envoyons-le.
-      };
+    const room = this.get(roomCode);
+    if (!room) return null;
+    return {
+      options: room.options,
+      paused: room.paused,
+      players: room.players,
+      adminPresent: !!Object.values(room.players).find(p => p.isAdmin && !p.disconnected),
+      // --- Champs Buzz ---
+      firstBuzzPlayer: room.players[room.firstBuzz]?.pseudo || null, // Envoyer pseudo basé sur firstBuzz (socketId)
+      // lastBuzz: room.lastBuzz, // Envoyer si le client en a besoin
+      // --- Champs Spotify ---
+      currentTrack: room.currentTrack,
+      artistFound: room.artistFound,
+      titleFound: room.titleFound,
+      // trackIsFullyFound: room.trackIsFullyFound, // Le client le recalcule ? Non, envoyons-le.
+    };
   }
   // --- Fin Méthodes ajoutées ---
 }

@@ -254,6 +254,15 @@ function AdminRoomView() {
       }
     };
 
+    // NOUVEAU : Gestion du passage à la question suivante
+    const handleNextQuestionEvent = () => {
+      console.log("[AdminRoomView] Question suivante - réinitialisation des états");
+      setFoundArtist(false);
+      setFoundTitle(false);
+      setBuzzedPlayer(null);
+      // Réinitialiser d'autres états si nécessaire
+    };
+
     // Abonnement aux événements
     on('update_players', handleUpdatePlayers);
     on('game_paused', handleGamePaused);
@@ -264,6 +273,7 @@ function AdminRoomView() {
     on('room_options_updated', handleRoomOptionsUpdated);
     on('spotify_track_changed', handleSpotifyTrackChanged); 
     on('judge_answer', handleJudgeAnswerUpdate);
+    on('next_question', handleNextQuestionEvent);
 
     // Nettoyage des abonnements
     return () => {
@@ -276,6 +286,7 @@ function AdminRoomView() {
       off('room_options_updated', handleRoomOptionsUpdated); 
       off('spotify_track_changed', handleSpotifyTrackChanged);
       off('judge_answer', handleJudgeAnswerUpdate);
+      off('next_question', handleNextQuestionEvent);
     };
   }, [roomCode, refreshStatus, spotifyConnected]);
 
@@ -501,12 +512,27 @@ function AdminRoomView() {
     
     // Authentification Spotify avec le roomCode
     authenticateSpotify(roomCode);
+    
+    // *** AJOUTER : Mise à jour optimiste locale ***
+    setCurrentRoomOptions(prev => ({
+      ...prev,
+      spotifyEnabled: true
+    }));
+    console.log('[AdminRoomView] Mise à jour optimiste: Spotify activé localement');
   };
+
   const handleDisconnectSpotify = async () => {
     try {
       const result = await disconnectSpotify(roomCode);
       if (result.success) {
         await refreshStatus();
+        
+        // *** AJOUTER : Mise à jour locale ***
+        setCurrentRoomOptions(prev => ({
+          ...prev,
+          spotifyEnabled: false
+        }));
+        console.log('[AdminRoomView] Spotify désactivé localement');
       }
     } catch (error) {
       console.error('Erreur déconnexion Spotify:', error);
@@ -713,6 +739,11 @@ const handleIncrementScore = (playerId, adjustment) => { // Renommer 'increment'
     }
   };
 
+  const handleNextQuestion = () => {
+    const socket = getSocket();
+    socket.emit('next_question', { roomCode });
+  };
+
   return (
     <div className={`admin-container ${isDarkMode ? 'dark-mode' : ''}`}>
       <div className="admin-header">
@@ -866,6 +897,17 @@ const handleIncrementScore = (playerId, adjustment) => { // Renommer 'increment'
         >
           {paused ? 'Reprendre' : 'Pause'}
         </button>
+        
+        {/* NOUVEAU : Bouton Question suivante intégré */}
+        {((foundArtist || foundTitle) && !spotifyConnected) && (
+          <button 
+            onClick={handleNextQuestion}
+            className="btn btn-primary fixed-width-button"
+            title="Passer à la question suivante"
+          >
+            Question suivante
+          </button>
+        )}
       </div>
       <div className="button-container">
         <button

@@ -5,6 +5,14 @@ const logger = require('../../utils/logger');
 const roomService = require('../../services/roomService'); // Assurez-vous que c'est importé
 const { startSpotifyPolling, stopSpotifyPolling } = require('../../services/spotifyService'); // Importer les fonctions de polling
 
+// Importer l'intégration Spotify seulement quand nécessaire
+let spotifyIntegrationHandler;
+try {
+  spotifyIntegrationHandler = require('./spotifyIntegrationHandler');
+} catch (error) {
+  logger.warn('ROOM', 'Intégration Spotify non disponible', { error: error.message });
+}
+
 /**
  * Attache les événements de salle au socket
  * @param {Socket} socket - Socket client
@@ -28,6 +36,11 @@ function attachEvents(socket, io) {
   
   // Déconnexion
   socket.on('disconnect', (reason) => handleDisconnect(socket, io, reason));
+
+  // Attacher l'intégration Spotify uniquement si disponible
+  if (spotifyIntegrationHandler) {
+    spotifyIntegrationHandler.attachSpotifyIntegration(socket, io);
+  }
 }
 
 /**
