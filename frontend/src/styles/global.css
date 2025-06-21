@@ -42,9 +42,22 @@ span.theme-text {
 
 /* Styles de base pour le body */
 body {
-  background-color: var(--background-light);
+  min-height: 100vh;
+  position: relative;
+  background-attachment: fixed;
+  transition: all 0.3s ease;
+}
+
+/* Mode clair */
+body:not(.dark-mode) {
+  background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
   color: var(--text-light);
-  transition: background-color var(--transition-speed), color var(--transition-speed);
+}
+
+/* Mode sombre */
+body.dark-mode {
+  background: linear-gradient(135deg, #141e30 0%, #243b55 100%);
+  color: var(--text-dark);
 }
 
 /* Utilisation des variables pour le bouton grey */
@@ -53,6 +66,7 @@ body {
     border-color: var(--btn-grey-border);
     color: #fff;
     transition: background-color var(--transition-speed) ease;
+    
 }
 
 .btn-grey:hover {
@@ -220,4 +234,97 @@ body {
   padding: 0.5rem 0;  /* Réduit aussi le padding */
   z-index: 1000;
   font-size: 0.8rem;  /* Ajout de cette ligne */
+}
+
+/* Styles communs pour les animations et transitions */
+.animation-slideUp {
+  animation: slideUp 0.5s forwards cubic-bezier(0.19, 1, 0.22, 1);
+  opacity: 0;
+}
+
+@keyframes slideUp {
+  from { opacity: 0; transform: translateY(30px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+/* Système de carte moderne réutilisable */
+.modern-card {
+  background: rgba(255, 255, 255, 0.7);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+  border-radius: 24px;
+  overflow: hidden;
+  padding: clamp(1.5rem, 4vw, 2.5rem);
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.04), 0 1px 1px rgba(0, 0, 0, 0.02);
+  transition: all 0.4s cubic-bezier(0.165, 0.84, 0.44, 1);
+  border: none;
+  position: relative;
+}
+
+.modern-card:hover {
+  transform: translateY(-6px);
+  box-shadow: 0 20px 40px rgba(0, 0, 0, 0.08), 0 1px 3px rgba(0, 0, 0, 0.1);
+}
+
+/* Style de bouton amélioré pour toutes les pages */
+.btn {
+  padding: 0.9rem 1.8rem;
+  border-radius: 14px;
+  font-weight: 600;
+  font-size: 1rem;
+  letter-spacing: 0.01em;
+  transition: all 0.3s cubic-bezier(0.165, 0.84, 0.44, 1);
+  border: none;
+  position: relative;
+  overflow: hidden;
+}
+
+/* Styles de base des boutons */
+/*.btn-primary {
+  background: linear-gradient(135deg, #007bff, #0056b3);
+  color: white;
+  box-shadow: 0 4px 12px rgba(0, 123, 255, 0.2);
+}*/
+
+.btn-primary:hover {
+  background: linear-gradient(135deg, #0056b3, #004494);
+  box-shadow: 0 8px 20px rgba(0, 123, 255, 0.3);
+  transform: translateY(-3px);
+}
+
+.btn-secondary {
+  background: linear-gradient(135deg, #6c757d, #5a6268);
+  color: white;
+  box-shadow: 0 4px 12px rgba(108, 117, 125, 0.2);
+}
+
+.btn-secondary:hover {
+  background: linear-gradient(135deg, #5a6268, #4e555b);
+  box-shadow: 0 8px 20px rgba(108, 117, 125, 0.3);
+  transform: translateY(-3px);
+}
+
+/* Animation d'apparition globale */
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+/* Animation standard d'entrée pour les éléments */
+.fade-in {
+  animation: fadeIn 0.5s forwards;
+  opacity: 0;
+}
+
+/* Style du header adapté au fond */
+.navbar {
+  background: rgba(255, 255, 255, 0.8);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+  border: none;
+  transition: all 0.3s ease;
+}
+
+body.dark-mode .navbar {
+  background: rgba(20, 30, 48, 0.8);
 }

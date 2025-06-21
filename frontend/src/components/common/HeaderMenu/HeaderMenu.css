@@ -1,0 +1,463 @@
+/* Base styles */
+.modern-header {
+ position: sticky;
+ top: 0;
+ z-index: 1000;
+
+ -webkit-backdrop-filter: blur(10px);
+ backdrop-filter: blur(10px);
+ padding: 1rem 0;
+ transition: all .3s ease;
+}
+
+body:not(.dark-mode) .modern-header {
+ background: rgba(255, 255, 255, .8);
+
+ box-shadow: 0 4px 30px rgba(0, 0, 0, .03);
+}
+
+body.dark-mode .modern-header {
+ background: rgba(20, 30, 48, .8);
+
+ box-shadow: 0 4px 30px rgba(0, 0, 0, .2);
+}
+
+/* Ajustement du container principal */
+.header-container {
+ display: flex;
+
+ align-items: center;
+ flex-wrap: nowrap; /* S'assurer que rien ne passe à la ligne */
+ justify-content: space-between;
+ margin: 0 auto;
+ max-width: 1200px;
+ padding: 0 1.5rem;
+ width: 100%; /* Assure que le conteneur prend toute la largeur */
+}
+
+/* Brand styling */
+.brand {
+ display: flex;
+ color: inherit;
+
+ align-items: center;
+ font-size: 1.25rem;
+ font-weight: 600;
+ gap: .5rem;
+ text-decoration: none;
+}
+
+.brand-emoji {
+ font-size: 1.5rem;
+}
+
+/* Brand et navigation principale */
+.brand-nav-group {
+ display: flex;
+
+ align-items: center;
+ flex-shrink: 0; /* Empêche la compression */
+ gap: .75rem;
+}
+
+/* Desktop navigation */
+.desktop-nav {
+ display: flex;
+ align-items: center; /* Centre verticalement tous les éléments */
+ gap: 1rem;
+ height: 40px; /* Hauteur fixe pour assurer l'alignement */
+}
+
+.nav-item {
+ display: inline-flex; /* Change pour inline-flex */
+ align-items: center; /* Centre verticalement */
+ position: relative;
+ color: inherit;
+
+ font-weight: 500;
+ padding: .5rem 0;
+ text-decoration: none;
+ height: 100%; /* Assure une hauteur uniforme */
+}
+
+.nav-item::after {
+ position: absolute;
+ bottom: 0;
+ left: 0;
+ background: var(--primary);
+
+ content: '';
+ height: 2px;
+ transition: width .3s ease;
+ width: 0;
+}
+
+.nav-item:hover::after {
+ width: 100%;
+}
+
+/* Desktop actions */
+.desktop-actions {
+ position: relative !important; /* Force la position relative */
+ display: flex;
+ align-items: center;
+ margin-left: auto;
+ flex-shrink: 0;
+ right: auto !important; /* Annule toute position absolute */
+ top: auto !important; /* Annule toute position absolute */
+}
+
+/* Theme toggle */
+.theme-toggle-wrapper {
+ position: relative !important; /* Force la position relative */
+ display: inline-flex;
+ align-items: center;
+ gap: 0.25rem;
+ padding: 0.5rem 0.75rem;
+ border-radius: 8px;
+ background: rgba(var(--primary-rgb), 0.1);
+ transition: all 0.3s ease;
+ white-space: nowrap;
+ flex-shrink: 0;
+ right: auto !important; /* Annule toute position absolute */
+ top: auto !important; /* Annule toute position absolute */
+}
+
+.theme-toggle-wrapper:hover {
+ background: rgba(var(--primary-rgb), .15);
+}
+
+.theme-label {
+ display: none; /* Par défaut caché sur mobile */
+
+ font-size: .95rem;
+ font-weight: 500;
+ line-height: 1; /* Hauteur de ligne réduite */
+}
+
+.theme-toggle {
+ position: relative !important; /* Force la position relative */
+ background: none;
+ border: none;
+ padding: 0;
+ margin: 0;
+ cursor: pointer;
+ display: inline-flex;
+ align-items: center;
+ right: auto !important; /* Annule toute position absolute */
+ top: auto !important; /* Annule toute position absolute */
+}
+
+.theme-icon {
+ display: inline-block;
+
+ font-size: 1rem;
+ line-height: 1;
+ vertical-align: middle;
+}
+
+.logout-btn {
+ display: none;
+}
+
+/* Mobile menu */
+.mobile-menu-trigger {
+ display: none;
+ background: none;
+
+ border: none;
+ cursor: pointer;
+ padding: .5rem;
+}
+
+.hamburger {
+ position: relative;
+ display: block;
+ background: currentColor;
+
+ height: 2px;
+ transition: all .3s ease;
+ width: 24px;
+}
+
+.hamburger::before,
+  .hamburger::after {
+ position: absolute;
+ background: currentColor;
+
+ content: '';
+ height: 2px;
+ transition: all .3s ease;
+ width: 100%;
+}
+
+.hamburger::before {
+ top: -6px;
+}
+
+.hamburger::after {
+ bottom: -6px;
+}
+
+.dark-mode .hamburger,
+  .dark-mode .hamburger::before,
+  .dark-mode .hamburger::after {
+ background: rgba(255, 255, 255, .9);
+}
+
+/* Dropdown menu styles */
+.mobile-menu-content {
+ z-index: 1000;
+ background: rgba(255, 255, 255, .8);
+
+ animation: slideIn .2s ease;
+ -webkit-backdrop-filter: blur(10px);
+ backdrop-filter: blur(10px);
+ border-radius: 12px;
+ box-shadow: 0 10px 30px rgba(0, 0, 0, .1);
+ min-width: 220px;
+ padding: .5rem;
+}
+
+.dark-mode .mobile-menu-content {
+ background: rgba(30, 30, 35, .8);
+}
+
+.mobile-menu-item {
+ border-radius: 8px;
+ cursor: pointer;
+ margin: .25rem 0;
+ padding: .75rem 1rem;
+ transition: all .2s ease;
+}
+
+.mobile-menu-item:hover {
+ background: rgba(var(--primary-rgb), .1);
+}
+
+.mobile-menu-item a,
+  .mobile-menu-item button {
+ color: inherit;
+ background: none;
+
+ border: none;
+ cursor: pointer;
+ font: inherit;
+ text-align: left;
+ text-decoration: none;
+ width: 100%;
+}
+
+.mobile-menu-separator {
+ background: rgba(0, 0, 0, .1);
+
+ height: 1px;
+ margin: .5rem 0;
+}
+
+.dark-mode .mobile-menu-separator {
+ background: rgba(255, 255, 255, .1);
+}
+
+@keyframes slideIn {
+ from {
+  opacity: 0;
+  transform: translateY(-10px);
+ }
+ to {
+  opacity: 1;
+  transform: translateY(0);
+ }
+}
+
+/* RESPONSIVE BREAKPOINTS - Nettoyés et optimisés */
+
+/* Mobile standard (jusqu'à 479px) */
+@media (max-width: 479px) {
+ .desktop-nav,
+ .desktop-actions {
+  display: none;
+ }
+
+ .mobile-menu-trigger {
+  display: block;
+
+  margin-left: auto;
+ }
+
+ .header-container {
+  padding: 0 1rem;
+ }
+}
+
+/* Grand smartphone et petites tablettes (480px à 767px) */
+@media (min-width: 480px) and (max-width: 767px) {
+ .desktop-nav,
+ .desktop-actions {
+  display: none;
+ }
+
+ .mobile-menu-trigger {
+  display: block;
+
+  margin-left: auto;
+ }
+
+ .header-container {
+  padding: 0 1.25rem;
+ }
+}
+
+/* Tablette classique (768px à 1023px) - CONSERVER CE BLOC ET REMPLACER PAR CECI */
+@media (min-width: 768px) and (max-width: 1023px) {
+ .mobile-menu-trigger {
+  display: none;
+ }
+
+ .header-container {
+  justify-content: flex-start;
+  padding: 0 1rem;
+ }
+
+ /* Style du toggle theme sur tablette */
+ .theme-toggle-wrapper {
+  display: flex;
+  flex-direction: row;
+  background: rgba(var(--primary-rgb), .1);
+
+  align-items: center;
+  border-radius: 8px;
+  gap: .15rem; /* Plus petit écart entre le texte et l'icône */
+  padding: .5rem .75rem;
+ }
+
+ .theme-label {
+  display: inline-block;
+
+  font-size: .95rem;
+  margin-right: 0; /* Supprime la marge à droite */
+  white-space: nowrap;
+ }
+
+ /* Pas de flèche sur tablette */
+ .theme-label::after {
+  content: ' →';
+ }
+
+ .theme-toggle {
+  display: flex;
+
+  align-items: center;
+  margin: 0;
+  padding: 0;
+ }
+
+ .theme-icon {
+  display: inline-block;
+
+  font-size: 1rem;
+  line-height: 1;
+ }
+}
+
+/* Desktop (1024px et plus) */
+@media (min-width: 1024px) {
+ .mobile-menu-trigger {
+  display: none;
+ }
+
+ .header-container {
+  justify-content: flex-start;
+  padding: 0 .5rem;
+ }
+
+ .brand-nav-group {
+  gap: 1.5rem;
+ }
+
+ .desktop-nav {
+  gap: 1.5rem;
+ }
+
+ .desktop-actions {
+  margin-left: auto;
+ }
+
+ /* Style du toggle theme sur desktop */
+ .theme-toggle-wrapper {
+  display: flex;
+
+  align-items: center;
+  gap: .35rem;
+ }
+
+ .theme-label {
+  display: inline-block;
+
+  font-size: .95rem;
+ }
+
+ .theme-label::after {
+  display: inline-block;
+
+  content: ' →';
+  margin-left: 2px;
+  transition: transform .3s ease;
+ }
+
+ .theme-toggle-wrapper:hover .theme-label::after {
+  transform: translateX(4px);
+ }
+}
+
+/* Style du bouton de déconnexion dans la navigation */
+.nav-logout-btn {
+  /* Copie exacte des styles de nav-item */
+  display: inline-flex;
+  align-items: center;
+  position: relative;
+  color: inherit;
+  font-weight: 500;
+  padding: 0.5rem 0;
+  text-decoration: none;
+  height: 100%;
+  
+  /* Ajouts spécifiques pour le bouton de déconnexion */
+  border: none;
+  background: none;
+  cursor: pointer;
+  color: var(--danger); /* Rouge pour le texte */
+  transition: all 0.3s ease;
+}
+
+/* Hover effect semblable au nav-item mais en rouge */
+.nav-logout-btn::after {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  background: var(--danger); /* Barre rouge au lieu de primary */
+  content: '';
+  height: 2px;
+  transition: width 0.3s ease;
+  width: 0;
+}
+
+.nav-logout-btn:hover::after {
+  width: 100%;
+}
+
+/* Support du mode sombre */
+body:not(.dark-mode) .nav-logout-btn {
+  color: var(--danger);
+}
+
+body.dark-mode .nav-logout-btn {
+  color: var(--danger); /* Rouge pour le texte */
+}
+
+/* Supprimer les styles précédents pour .nav-logout-btn:hover */
+.nav-logout-btn:hover {
+  transform: none;
+  box-shadow: none;
+  background: none;
+}

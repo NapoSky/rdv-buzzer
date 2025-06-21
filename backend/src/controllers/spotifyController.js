@@ -2,6 +2,9 @@
 const spotifyService = require('../services/spotifyService');
 const { Room } = require('../models/Room');
 const logger = require('../utils/logger');
+const SpotifyWebApi = require('spotify-web-api-node'); // Assurez-vous que c'est importé
+const spotifyConfig = require('../config/spotify').config; // Assurez-vous que c'est importé
+const { getIO } = require('../socket/index'); // Assurez-vous que c'est importé
 
 function getAuthUrl(req, res) {
   const { roomCode } = req.params;
@@ -18,14 +21,12 @@ async function handleCallback(req, res) {
   const { code, state } = req.query;
   const roomCode = state; // Le roomCode est passé dans state
   
-  if (!code || !roomCode || !Room.get(roomCode)) {
+  const room = Room.get(roomCode); // Récupérer la salle
+  if (!code || !roomCode || !room) { // Vérifier aussi l'existence de la salle ici
     return res.status(400).json({ error: 'Paramètres invalides ou salle inexistante' });
   }
   
   try {
-    const SpotifyWebApi = require('spotify-web-api-node');
-    const spotifyConfig = require('../config/spotify').config;
-    
     // Créer une instance pour cette requête spécifique
     const spotifyApi = new SpotifyWebApi({
       clientId: spotifyConfig.clientId,
@@ -38,14 +39,60 @@ async function handleCallback(req, res) {
     const { access_token, refresh_token } = data.body;
     
     // Stocker les tokens pour cette salle
-    spotifyService.storeTokenForRoom(roomCode, {
+    await spotifyService.storeTokenForRoom(roomCode, { // Assurez-vous que c'est await si storeTokenForRoom est async
       accessToken: access_token,
-      refreshToken: refresh_token
+      RefreshToken: refresh_token
     });
+
+    // Mettre à jour l'option de la salle pour indiquer que Spotify est activé
+    if (room.options) { // Vérification de sécurité
+        room.options.spotifyEnabled = true;
+        logger.info('SPOTIFY', `Option spotifyEnabled mise à true pour ${roomCode} après callback.`);
+        
+        // *** AJOUTER : Notifier tous les clients de la mise à jour des options ***
+        const io = getIO();
+        io.to(roomCode).emit('room_options_updated', room.options);
+        logger.info('SPOTIFY', `Options mises à jour émises pour ${roomCode}`, room.options);
+    } else {
+        logger.warn('SPOTIFY', `Impossible de mettre à jour spotifyEnabled pour ${roomCode}: options non trouvées.`);
+    }
+
+    // --- AJOUT : Récupération et Initialisation de l'État Spotify ---
+    try {
+        logger.info('SPOTIFY_INIT', `Tentative de récupération de l'état initial pour ${roomCode}`);
+        const initialPlayback = await spotifyService.getCurrentPlayback(roomCode); // Maintenant enrichi !
+        const initialTrack = initialPlayback?.item ? {
+            id: initialPlayback.item.id,
+            artist: initialPlayback.item.artists.map(a => a.name).join(', '),
+            title: initialPlayback.item.name,
+            artworkUrl: initialPlayback.item.album.images?.[0]?.url,
+            // NOUVEAU : Inclure les infos de playlist dès l'initialisation
+            playlistInfo: initialPlayback.playlistInfo || null
+        } : null;
+
+        // Mettre à jour l'état initial dans la Room
+        Room.resetSpotifyState(roomCode, initialTrack);
+
+        if (initialTrack) {
+            logger.info('SPOTIFY_INIT', `État initial avec piste défini pour ${roomCode}`, {
+                track: `${initialTrack.artist} - ${initialTrack.title}`,
+                hasPlaylist: !!initialTrack.playlistInfo,
+                playlistPosition: initialTrack.playlistInfo ? `${initialTrack.playlistInfo.position}/${initialTrack.playlistInfo.total}` : 'N/A'
+            });
+        }
+    } catch (initError) {
+        logger.error('SPOTIFY_INIT', `Erreur lors de la récupération de l'état initial pour ${roomCode}`, initError);
+        // Continuer même si l'état initial échoue, le polling prendra le relais
+    }
+    // --- FIN AJOUT ---
+
+    spotifyService.startSpotifyPolling(roomCode);
     
     // Notifier les clients de la salle
-    const io = require('../socket').getIO();
+    const io = getIO();
     io.to(roomCode).emit('spotify_connected', { connected: true });
+    // Envoyer aussi la mise à jour des options si le client en a besoin
+    io.to(roomCode).emit('room_options_updated', room.options); 
     
     // Rediriger vers le frontend avec le roomCode
     const frontendURL = process.env.FRONTEND_URL || 'http://localhost';
@@ -74,13 +121,26 @@ function disconnectSpotify(req, res) {
   if (!Room.get(roomCode)) {
     return res.status(404).json({ error: 'Salle inexistante' });
   }
-  
+
   // Supprimer les tokens
   spotifyService.removeTokenForRoom(roomCode);
   
+  // *** AJOUTER : Mettre à jour l'option de la salle ***
+  const room = Room.get(roomCode);
+  if (room && room.options) {
+    room.options.spotifyEnabled = false;
+    logger.info('SPOTIFY', `Option spotifyEnabled mise à false pour ${roomCode} après déconnexion.`);
+  }
+  
   // Notifier les clients
-  const io = require('../socket').getIO();
-  io.to(roomCode).emit('spotify_connected', { connected: false });
+  const io = getIO();
+  io.to(roomCode).emit('spotify_disconnected', { roomCode });
+  
+  // *** AJOUTER : Notifier aussi la mise à jour des options ***
+  if (room && room.options) {
+    io.to(roomCode).emit('room_options_updated', room.options);
+    logger.info('SPOTIFY', `Options mises à jour émises après déconnexion pour ${roomCode}`, room.options);
+  }
   
   res.json({ success: true });
 }

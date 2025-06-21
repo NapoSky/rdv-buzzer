@@ -1,7 +1,7 @@
 // frontend/src/services/api/spotifyService.js
 
-const BASE_URL = process.env.REACT_APP_BACKEND_URL;
-const APP_SECRET = process.env.REACT_APP_APP_SECRET;
+const BASE_URL = import.meta.env.VITE_BACKEND_URL;
+const APP_SECRET = import.meta.env.VITE_APP_SECRET;
 
 // Remplacer les anciennes méthodes par une approche cohérente
 const getAuthHeaders = () => {

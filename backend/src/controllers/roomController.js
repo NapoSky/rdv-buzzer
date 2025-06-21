@@ -1,7 +1,7 @@
 // src/controllers/roomController.js
 const { Room } = require('../models/Room');
 const logger = require('../utils/logger');
-const { getIO } = require('../socket');
+const { getIO } = require('../socket/index');
 const roomService = require('../services/roomService');
 
 async function listAllRooms(req, res) {
@@ -18,17 +18,35 @@ async function closeRoom(req, res) {
   const { roomCode } = req.body;
   
   try {
-    // Utiliser le service commun avec l'instance io
-    const result = await roomService.closeRoom(roomCode, getIO());
-    
-    if (!result.success) {
-      return res.status(404).json({ error: result.error });
+    // CORRECTION : Récupérer l'option saveRoom de la salle
+    const room = Room.get(roomCode);
+    if (!room) {
+      return res.status(404).json({ error: 'Salle inexistante' });
     }
     
-    res.json({ success: true });
+    // Respecter l'option saveRoom de la salle
+    const shouldSave = room.options?.saveRoom ?? true;
+    
+    // Utiliser le service commun avec l'option correcte
+    const result = await roomService.closeRoom(roomCode, getIO(), shouldSave);
+    
+    if (!result.success) {
+      return res.status(404).json({ 
+        error: result.error,
+        dataSaved: result.dataSaved 
+      });
+    }
+    
+    res.json({ 
+      success: true,
+      dataSaved: result.dataSaved // Indiquer si les données ont été sauvegardées
+    });
   } catch (err) {
     logger.error('ROOMS', 'Erreur lors de la fermeture de la salle', err);
-    res.status(500).json({ error: 'Erreur interne du serveur' });
+    res.status(500).json({ 
+      error: 'Erreur interne du serveur',
+      dataSaved: false 
+    });
   }
 }
 

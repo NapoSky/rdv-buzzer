@@ -44,10 +44,10 @@ frontend/
 │   │   ├── common/            # Composants partagés
 │   │   └── shared/            # Composants réutilisables et modaux
 │   ├── contexts/              # Contextes React
-│   │   ├── AdminAuthContext.js    # Authentification admin
-│   │   ├── SocketContext.js       # Gestion des websockets
-│   │   ├── SpotifyContext.js      # Intégration Spotify
-│   │   └── ThemeContext.js        # Gestion thème clair/sombre
+│   │   ├── AdminAuthContext.jsx   # Authentification admin
+│   │   ├── SocketContext.jsx      # Gestion des websockets
+│   │   ├── SpotifyContext.jsx     # Intégration Spotify
+│   │   └── ThemeContext.jsx       # Gestion thème clair/sombre
 │   ├── hooks/                 # Hooks personnalisés
 │   ├── pages/                 # Pages principales
 │   ├── services/              # Services d'API et socket
@@ -58,8 +58,8 @@ frontend/
 │   │   ├── variables.css      # Variables CSS
 │   │   └── themes/            # Thèmes clair/sombre
 │   ├── utils/                 # Utilitaires
-│   ├── index.js               # Point d'entrée JS
-│   └── App.js                 # Composant racine
+│   ├── index.jsx              # Point d'entrée JS
+│   └── App.jsx                # Composant racine
 │── package.json               # Dépendances et scripts
 │── .env.example               # Variables d'environnement exemples
 │── Dockerfile                 # Configuration Docker
@@ -69,12 +69,12 @@ frontend/
 
 ## ⚙️ Variables d'environnement
 
-| Variable                    | Description                          | Valeur par défaut         | Obligatoire |
-|-----------------------------|--------------------------------------|---------------------------|-------------|
-| REACT_APP_BACKEND_URL       | URL du serveur rdv-end               | `http://localhost:3001`   | ✅ Oui      |
-| REACT_APP_APP_SECRET        | Clé secrète pour l'API/rdv-backend   | -                         | ✅ Oui      |
-| REACT_APP_ADMIN_PASSWORD    | Mot de passe administrateur          | `secret`                  | ✅ Oui      |
-| REACT_APP_SPOTIFY_CLIENT_ID | ID client Spotify pour l'intégration | -                         | ➖ Si activé|
+| Variable               | Description                          | Valeur par défaut         | Obligatoire |
+|------------------------|--------------------------------------|---------------------------|-------------|
+| VITE_BACKEND_URL       | URL du serveur backend               | `http://localhost:3001`   | ✅ Oui      |
+| VITE_APP_SECRET        | Clé secrète pour l'API/rdv-backend   | -                         | ✅ Oui      |
+| VITE_ADMIN_PASSWORD    | Mot de passe administrateur          | `secret`                  | ✅ Oui      |
+| VITE_SPOTIFY_CLIENT_ID | ID client Spotify pour l'intégration | -                         | ➖ Si activé|
 
 ---
 
@@ -110,9 +110,9 @@ npm start
 ```bash
 # Construction de l'image
 docker build -t rdv-buzzer-frontend \
-  --build-arg REACT_APP_BACKEND_URL=http://localhost:3001 \
-  --build-arg REACT_APP_ADMIN_PASSWORD=your_admin_password \
-  --build-arg REACT_APP_APP_SECRET=your_backend_app_secret \
+  --build-arg VITE_BACKEND_URL=http://localhost:3001 \
+  --build-arg VITE_ADMIN_PASSWORD=your_admin_password \
+  --build-arg VITE_APP_SECRET=your_backend_app_secret \
   .
 
 # Exécution du conteneur
@@ -123,4 +123,4 @@ docker run -p 80:80 rdv-buzzer-frontend
 
 ## ℹ️ Note
 
-Cette application frontend doit être connectée à un backend compatible (rdv-backend) pour fonctionner correctement. Assurez-vous que le backend est en cours d'exécution et accessible via l'URL spécifiée dans `REACT_APP_BACKEND_URL` et que les deux applications partagent bien le même `REACT_APP_APP_SECRET`.
+Cette application frontend doit être connectée à un backend compatible (rdv-backend) pour fonctionner correctement. Assurez-vous que le backend est en cours d'exécution et accessible via l'URL spécifiée dans `VITE_BACKEND_URL` et que les deux applications partagent bien le même `VITE_APP_SECRET`.

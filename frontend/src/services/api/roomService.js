@@ -1,10 +1,10 @@
 //// filepath: /d:/foxhole_work/rdv-buzzer/frontend/src/services/roomService.js
 export const closeRoomRequest = async (roomCode) => {
-  const response = await fetch(`${process.env.REACT_APP_BACKEND_URL}/api/rooms/close`, {
+  const response = await fetch(`${import.meta.env.VITE_BACKEND_URL}/api/rooms/close`, {
     method: 'POST',
     headers: {
       'Content-Type': 'application/json',
-      'Authorization': `Bearer ${process.env.REACT_APP_APP_SECRET}`
+      'Authorization': `Bearer ${import.meta.env.VITE_APP_SECRET}`
     },
     body: JSON.stringify({ roomCode })
   });

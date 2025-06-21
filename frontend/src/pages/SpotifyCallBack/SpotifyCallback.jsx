@@ -3,8 +3,8 @@ import React, { useEffect } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 
 // Importation de la constante APP_SECRET pour les appels API sécurisés
-const APP_SECRET = process.env.REACT_APP_APP_SECRET;
-const BASE_URL = process.env.REACT_APP_BACKEND_URL;
+const APP_SECRET = import.meta.env.VITE_APP_SECRET;
+const BASE_URL = import.meta.env.VITE_BACKEND_URL;
 
 function SpotifyCallback() {
   const navigate = useNavigate();

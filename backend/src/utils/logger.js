@@ -8,6 +8,18 @@ function info(category, message, data = {}) {
       ...data
     };
     console.log(JSON.stringify(logEntry));
+}
+  
+function warn(category, message, data = {}) {
+    const timestamp = new Date().toISOString();
+    const logEntry = {
+      timestamp,
+      level: 'WARN',
+      category,
+      message,
+      ...data
+    };
+    console.warn(JSON.stringify(logEntry));
   }
   
   function error(category, message, err) {
@@ -44,6 +56,7 @@ function info(category, message, data = {}) {
   
   module.exports = {
     info,
+    warn,
     error,
     clientActivity
   };

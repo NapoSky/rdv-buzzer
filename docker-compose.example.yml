@@ -19,11 +19,11 @@ services:
     build:
       context: ./frontend
       args:
-        - REACT_APP_BACKEND_URL=http://localhost:3001
-        - REACT_APP_ADMIN_PASSWORD=secret
-        - REACT_APP_APP_SECRET=a1b2c3d4e5f67890123456789abcdef0123456789abcdef0123456789abcdef
+        - VITE_BACKEND_URL=http://localhost:3001
+        - VITE_ADMIN_PASSWORD=secret
+        - VITE_APP_SECRET=a1b2c3d4e5f67890123456789abcdef0123456789abcdef0123456789abcdef
         # Optionnel
-        # - REACT_APP_SPOTIFY_CLIENT_ID=1913b438f5034f918481be9b9f3d319e
+        # - VITE_SPOTIFY_CLIENT_ID=2157f438f5034a325481be9b9f3f215a
     ports:
       - "80:80"
 

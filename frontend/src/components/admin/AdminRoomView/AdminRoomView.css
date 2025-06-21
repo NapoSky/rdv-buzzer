@@ -1,326 +1,501 @@
+/* Style 2025 pour AdminRoomView */
 .admin-container {
- display: flex;
- flex-direction: column;
- color: var(--text-light);
- background: var(--background-light);
+  display: flex;
+  flex-direction: column;
+  color: var(--text-light);
+  background: rgba(255, 255, 255, 0.8);
+  
+  backdrop-filter: blur(15px);
+  -webkit-backdrop-filter: blur(15px);
+  border-radius: 24px;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.05), 0 1px 2px rgba(0, 0, 0, 0.03);
+  box-sizing: border-box;
+  height: 85vh;
+  margin: 10px auto;
+  max-width: 1200px;
+  overflow: hidden;
+  padding: 1.5rem;
+  transition: all 0.3s ease;
+}
 
- box-sizing: border-box;
- height: 85vh;
- margin-top: -15px;
- overflow: hidden; /* le scroll sera géré par le conteneur interne */
- padding-bottom: 5px;
+/* Version dark mode */
+body.dark-mode .admin-container {
+  color: var(--text-dark);
+  background: rgba(30, 30, 40, 0.75);
+  
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2), 0 1px 2px rgba(255, 255, 255, 0.03);
+}
+
+/* En-tête admin modernisé */
+.admin-header {
+  border-radius: 16px;
+  background: rgba(248, 249, 250, 0.7);
+  margin-bottom: 1.5rem;
+  padding: 1.25rem;
+  position: relative;
+  transition: all 0.3s ease;
+}
+
+/* Effet de ligne d'accent sur l'en-tête */
+.admin-header::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  height: 4px;
+  width: 100%;
+  background: linear-gradient(90deg, #007bff, rgba(0, 123, 255, 0.4));
+  border-radius: 4px 4px 0 0;
+}
+
+body.dark-mode .admin-header {
+  background: rgba(30, 30, 40, 0.7);
+}
+
+body.dark-mode .admin-header::before {
+  background: linear-gradient(90deg, #40c9ff, rgba(64, 201, 255, 0.4));
+}
+
+/* Container de liste des joueurs avec style moderne */
+.player-list-container {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  
+  background: rgba(255, 255, 255, 0.5);
+  border-radius: 16px;
+  min-height: 0;
+  overflow: hidden;
+  padding: 1rem;
+  transition: all 0.3s ease;
+}
+
+body.dark-mode .player-list-container {
+  background: rgba(30, 30, 40, 0.5);
+}
+
+/* Tableau stylisé */
+.ranking-scroll {
+  flex: 1 1 auto;
+  
+  background: rgba(255, 255, 255, 0.7);
+  border-radius: 12px;
+  min-height: 0;
+  overflow-y: auto;
+  padding: 0.5rem;
+  scrollbar-width: thin;
+}
+
+body.dark-mode .ranking-scroll {
+  background: rgba(30, 30, 40, 0.7);
+}
+
+/* Personnalisation de la scrollbar */
+.ranking-scroll::-webkit-scrollbar {
+  width: 6px;
+}
+
+.ranking-scroll::-webkit-scrollbar-track {
+  background: rgba(0, 0, 0, 0.05);
+  border-radius: 10px;
+}
+
+.ranking-scroll::-webkit-scrollbar-thumb {
+  background: rgba(0, 123, 255, 0.3);
+  border-radius: 10px;
+}
+
+body.dark-mode .ranking-scroll::-webkit-scrollbar-thumb {
+  background: rgba(64, 201, 255, 0.5);
+  background: rgba(64, 201, 255, 0.5);
+}
+
+body.dark-mode .ranking-scroll::-webkit-scrollbar-track {
+  background: rgba(30, 30, 40, 0.5);
+}
+
+/* Tableau moderne */
+.table {
+  border-collapse: separate;
+  border-spacing: 0;
+  color: var(--text-light);
+  
+  width: 100%;
+}
+
+body.dark-mode .table {
+  color: #e0e0e0 !important;
+  background-color: rgba(30, 30, 40, 0.5) !important;
+}
+
+.table th {
+  background: rgba(0, 123, 255, 0.05);
+  
+  border-bottom: 2px solid rgba(0, 123, 255, 0.1);
+  font-weight: 600;
+  padding: 1rem;
+  position: sticky;
+  text-transform: uppercase;
+  top: 0;
+  z-index: 10;
+}
+
+body.dark-mode .table th {
+  background: rgba(64, 201, 255, 0.15);
+  border-bottom: 2px solid rgba(64, 201, 255, 0.2);
+  color: #e0e0e0;
+}
+
+.table td {
+  border-bottom: 1px solid rgba(0, 0, 0, 0.05);
+  padding: 0.75rem 1rem;
+  vertical-align: middle;
+}
+
+body.dark-mode .table td {
+  border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+}
+
+/* Alternance de lignes plus subtile */
+.table-striped tbody tr:nth-of-type(odd) {
+  background-color: rgba(0, 0, 0, 0.02);
+}
+
+body.dark-mode .table-striped tbody tr:nth-of-type(odd) {
+  background-color: rgba(64, 201, 255, 0.03) !important;
+}
+
+/* Effet de survol amélioré */
+.table-hover tbody tr:hover {
+  background-color: rgba(0, 123, 255, 0.05);
+  transform: translateY(-1px);
+  transition: all 0.2s ease;
+}
+
+body.dark-mode .table-hover tbody tr:hover {
+  background-color: rgba(64, 201, 255, 0.1) !important;
+}
+
+/* Zone des boutons stylisée */
+.button-container {
+  position: sticky;
+  bottom: 0;
+  z-index: 10;
+  
+  background: rgba(255, 255, 255, 0.8);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+  border-top: 1px solid rgba(0, 0, 0, 0.05);
+  display: flex;
+  flex-shrink: 0;
+  gap: 1rem;
+  justify-content: center;
+  margin-top: 1rem;
+  padding: 1rem;
+  transition: all 0.3s ease;
+  width: 100%;
+}
+
+body.dark-mode .button-container {
+  background: rgba(30, 30, 40, 0.8);
+  border-top: 1px solid rgba(64, 201, 255, 0.1);
 }
 
 /* Si vous souhaitez forcer le thème dark sur certains composants : */
 body.dark-mode .admin-container {
- color: var(--text-dark);
- background: var(--background-dark);
-}
-
-.player-list-container {
- display: flex;
- flex: 1;
- flex-direction: column;
-
- min-height: 0;
- overflow: hidden;
+  color: var(--text-dark);
+  background: var(--background-dark);
 }
 
 .kick-list-container,
 .update-score-list-container {
- flex: 1 1 auto;
- background: var(--background-light);
-
- min-height: 0; /* permet le scroll dans flexbox */
- overflow-y: auto;
- padding: 5px;
-}
-
-.ranking-scroll {
- flex: 1 1 auto;      /* occupe l'espace restant dans son container flex */
-
- min-height: 0;       /* nécessaire pour que le scroll fonctionne en flexbox */
- overflow-y: auto;    /* active le scroll vertical */
+  flex: 1 1 auto;
+  background: var(--background-light);
+  
+  min-height: 0; /* permet le scroll dans flexbox */
+  overflow-y: auto;
+  padding: 5px;
 }
 
 body.dark-mode .player-list-container,
 body.dark-mode .kick-list-container,
 body.dark-mode .update-score-list-container {
- background: #222;
+  background: #222;
 }
 
 .fixed-bottom {
- position: fixed;
- bottom: 0;
- left: 0;
- z-index: 10;
- display: flex;
-
- background-color: #e9ecef;
- gap: 10px;
- justify-content: center;
- padding: 10px;
- width: 100%;
+  position: fixed;
+  bottom: 0;
+  left: 0;
+  z-index: 10;
+  display: flex;
+  
+  background-color: #e9ecef;
+  gap: 10px;
+  justify-content: center;
+  padding: 10px;
+  width: 100%;
 }
 
 body.dark-mode .fixed-bottom {
- background-color: #1e1e1e;
+  background-color: #1e1e1e;
 }
 
 .fixed-width-button {
- display: flex;
- color: white;
- background: var(--btn-danger-bg);
-
- align-items: center;
- border: none;
- border-radius: 5px;
- cursor: pointer;
- height: 100px;
- justify-content: center;
- overflow: hidden;
- text-align: center;
- transition: background var(--transition-speed) ease;
- white-space: normal;
- width: 150px;
+  display: flex;
+  color: white;
+  background: var(--btn-danger-bg);
+  
+  align-items: center;
+  border: none;
+  border-radius: 8px;
+  cursor: pointer;
+  height: 100px;
+  justify-content: center;
+  overflow: hidden;
+  text-align: center;
+  transition: all 0.2s ease;
+  white-space: normal;
+  width: 150px;
+  box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
 }
 
 body.dark-mode .fixed-width-button {
- background: var(--btn-danger-dark-hover-bg);
+  background: var(--btn-danger-dark-hover-bg);
+  box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2);
 }
 
 .fixed-width-button:hover {
- background: var(--btn-danger-hover-bg);
+  background: var(--btn-danger-hover-bg);
+  transform: translateY(-2px);
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.15);
 }
 
 body.dark-mode .fixed-width-button:hover {
- background: var(--btn-danger-dark-hover-bg);
+  background: var(--btn-danger-dark-hover-bg);
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.3);
 }
 
 /* Styles pour l'overlay */
 .overlay-container {
- position: absolute;
- top: 0;
- left: 0;
- z-index: 1000;
- display: flex;
-
- align-items: center;
- background-color: rgba(0, 0, 0, .8);  /* Pensez à définir une variable si besoin */
- height: 100%;
- justify-content: center;
- width: 100%;
+  position: absolute;
+  top: 0;
+  left: 0;
+  z-index: 1000;
+  display: flex;
+  
+  align-items: center;
+  background-color: rgba(0, 0, 0, .8);  /* Pensez à définir une variable si besoin */
+  height: 100%;
+  justify-content: center;
+  width: 100%;
 }
 
 body.dark-mode .overlay-container {
- background-color: rgba(0, 0, 0, .9);
+  background-color: rgba(0, 0, 0, .9);
 }
 
 .overlay-content {
- color: var(--text-light);
-
- background-color: var(--background-light);
- border-radius: 8px;
- max-height: 80vh;
- max-width: 500px;
- overflow-y: auto;
- padding: 20px;
- width: 100%;
+  color: var(--text-light);
+  
+  background-color: var(--background-light);
+  border-radius: 8px;
+  max-height: 80vh;
+  max-width: 500px;
+  overflow-y: auto;
+  padding: 20px;
+  width: 100%;
 }
 
 body.dark-mode .overlay-content {
- color: var(--text-dark);
-
- background-color: #222;
+  color: var(--text-dark);
+  
+  background-color: #222;
 }
 
 .overlay-content h3 {
- top: 0;
- z-index: 1;
-
- background-color: var(--background-light);
- padding-bottom: 10px;
- padding-top: 10px;
+  top: 0;
+  z-index: 1;
+  
+  background-color: var(--background-light);
+  padding-bottom: 10px;
+  padding-top: 10px;
 }
 
 body.dark-mode .overlay-content h3 {
- background-color: #222;
+  background-color: #222;
 }
 
 .overlay-content .list-group {
- padding-top: 10px;
+  padding-top: 10px;
 }
 
 /* Insertion d'un style pour le tableau en reprenant l'esprit de ClientView */
 .table-responsive {
- overflow-x: auto;
-}
-
-.table {
- color: var(--text-light);
-
- background-color: var(--background-light);
- margin-bottom: 1rem;
- width: 100%;
+  overflow-x: auto;
 }
 
 /* Application du style DarkMode via .admin-container.dark-mode et !important */
 .admin-container.dark-mode .table {
- color: var(--text-dark) !important;
-
- background-color: #222 !important;
+  color: var(--text-dark) !important;
+  
+  background-color: #222 !important;
 }
 
 .table th,
 .table td {
- border-top: 1px solid #dee2e6;
- padding: .75rem;
- vertical-align: middle;
+  border-top: 1px solid #dee2e6;
+  padding: .75rem;
+  vertical-align: middle;
 }
 
 .table-striped tbody tr:nth-of-type(odd) {
- background-color: rgba(0, 0, 0, .05);
+  background-color: rgba(0, 0, 0, .05);
 }
 
 body.dark-mode .table-striped tbody tr:nth-of-type(odd) {
- background-color: rgba(255, 255, 255, .05);
+  background-color: rgba(255, 255, 255, .05);
 }
 
 .admin-container.dark-mode .table-striped tbody tr:nth-of-type(odd) {
- background-color: rgba(255, 255, 255, .05) !important;
+  background-color: rgba(255, 255, 255, .05) !important;
 }
 
 .table-hover tbody tr:hover {
- background-color: rgba(0, 0, 0, .075);
+  background-color: rgba(0, 0, 0, .075);
 }
 
 body.dark-mode .table-hover tbody tr:hover {
- background-color: rgba(255, 255, 255, .075);
+  background-color: rgba(255, 255, 255, .075);
 }
 
 .admin-container.dark-mode .table-hover tbody tr:hover {
- background-color: rgba(255, 255, 255, .075) !important;
+  background-color: rgba(255, 255, 255, .075) !important;
 }
 
 /* ------------------------------------------------------- */
 /* Réintégration du fond gris pour l'en-tête               */
 /* ------------------------------------------------------- */
 .admin-header {
- background-color: #e9ecef;
- margin-bottom: -20px;
- padding: 10px;
+  background-color: #e9ecef;
+  margin-bottom: -20px;
+  padding: 10px;
 }
 
 body.dark-mode .admin-header {
- color: var(--text-dark);
-
- background-color: #1e1e1e;
+  color: var(--text-dark);
+  
+  background-color: #1e1e1e;
 }
 
 /* ------------------------------------------------------- */
 /* Style pour le tableau en s'inspirant de ClientView       */
 /* ------------------------------------------------------- */
 .table-responsive {
- overflow-x: auto;
+  overflow-x: auto;
 }
 
 .table {
- color: var(--text-light);
-
- background-color: var(--background-light);
- margin-bottom: 1rem;
- width: 100%;
+  color: var(--text-light);
+  
+  background-color: var(--background-light);
+  margin-bottom: 1rem;
+  width: 100%;
 }
 
 /* Application du style DarkMode en ciblant body.dark-mode .admin-container */
 body.dark-mode .admin-container .table {
- color: var(--text-dark) !important;
-
- background-color: #222 !important;
+  color: var(--text-dark) !important;
+  
+  background-color: #222 !important;
 }
 
 .table th,
 .table td {
- border-top: 1px solid #dee2e6;
- padding: .75rem;
- vertical-align: middle;
+  border-top: 1px solid #dee2e6;
+  padding: .75rem;
+  vertical-align: middle;
 }
 
 .table-striped tbody tr:nth-of-type(odd) {
- background-color: rgba(0, 0, 0, .05);
+  background-color: rgba(0, 0, 0, .05);
 }
 
 /* Override pour DarkMode */
 body.dark-mode .admin-container .table-striped tbody tr:nth-of-type(odd) {
- background-color: rgba(255, 255, 255, .05) !important;
+  background-color: rgba(255, 255, 255, .05) !important;
 }
 
 .table-hover tbody tr:hover {
- background-color: rgba(0, 0, 0, .075);
+  background-color: rgba(0, 0, 0, .075);
 }
 
 body.dark-mode .admin-container .table-hover tbody tr:hover {
- background-color: rgba(255, 255, 255, .075) !important;
+  background-color: rgba(255, 255, 255, .075) !important;
 }
 
 /* Le conteneur des boutons est en sticky pour rester collé en bas du viewport */
 .button-container {
- position: sticky;
- bottom: 0;
- z-index: 10;
- display: flex;
- background: var(--background-light);
-
- flex-shrink: 0; /* Empêche la contraction */
- gap: 1rem; /* équivalent de gap-3 */
- justify-content: center;
- padding: 1rem; /* équivalent de p-3 */
- width: 100%;
+  position: sticky;
+  bottom: 0;
+  z-index: 10;
+  display: flex;
+  background: var(--background-light);
+  
+  flex-shrink: 0; /* Empêche la contraction */
+  gap: 1rem; /* équivalent de gap-3 */
+  justify-content: center;
+  padding: 1rem; /* équivalent de p-3 */
+  width: 100%;
 }
 
 body.dark-mode .button-container {
- background: var(--background-dark);
+  background: var(--background-dark);
 }
 
 /* La colonne de pseudo est limitée en largeur et affiche les points de suspension en cas de dépassement */
 .pseudo-column {
- max-width: 150px;
- overflow: hidden;
- text-overflow: ellipsis;
- white-space: nowrap;
+  max-width: 150px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
-
 .btn-closeroom {
- display: flex;
- flex: 1;
- color: white;
- background: var(--btn-danger-bg);
-
- align-items: center;
- border: none;
- border-radius: 5px;
- cursor: pointer;
- justify-content: center;
- margin: -25px 0 auto 0;
- overflow: hidden;
- padding: 15px; /* Contrôle de la hauteur verticale */
- text-align: center;
- transition: background var(--transition-speed) ease;
- white-space: normal;
- width: 100%;
+  display: flex;
+  flex: 1;
+  color: white;
+  background: linear-gradient(135deg, #dc3545, #c82333);
+  
+  align-items: center;
+  border: none;
+  border-radius: 5px;
+  cursor: pointer;
+  justify-content: center;
+  margin: -25px 0 auto 0;
+  overflow: hidden;
+  padding: 15px; /* Contrôle de la hauteur verticale */
+  text-align: center;
+  transition: background var(--transition-speed) ease;
+  white-space: normal;
+  width: 100%;
+  box-shadow: 0 4px 12px rgba(220, 53, 69, 0.3);
 }
 
 body.dark-mode .btn-closeroom {
- background: var(--btn-danger-dark-hover-bg);
+  background: linear-gradient(135deg, #e74c3c, #c0392b);
+  box-shadow: 0 4px 12px rgba(231, 76, 60, 0.3);
 }
 
 .btn-closeroom:hover {
- background: var(--btn-danger-hover-bg);
+  background: linear-gradient(135deg, #c82333, #bd2130);
+  transform: translateY(-2px);
+  box-shadow: 0 6px 16px rgba(220, 53, 69, 0.4);
 }
 
 body.dark-mode .btn-closeroom:hover {
- background: var(--btn-danger-dark-hover-bg);
+  background: linear-gradient(135deg, #c0392b, #a93226);
+  box-shadow: 0 6px 16px rgba(231, 76, 60, 0.4);
 }
 
 /* --- Personnalisation de la modal en dark mode --- */
@@ -328,64 +503,680 @@ body.dark-mode .btn-closeroom:hover {
 /* Harmonisation des couleurs dans le header et le footer de la modal */
 body.dark-mode .modal-header,
 body.dark-mode .modal-footer {
- color: var(--text-dark);
-
- background-color: var(--background-dark);
- border-color: rgba(255, 255, 255, .2);
+  color: var(--text-dark);
+  
+  background-color: var(--background-dark);
+  border-color: rgba(255, 255, 255, .2);
 }
 
 /* Amélioration de l'encadrement et de la lisibilité du contenu de la modal */
 body.dark-mode .modal-content {
- color: var(--text-dark);
-
- background-color: var(--background-dark);
- border: 1px solid rgba(255, 255, 255, .2);
+  color: var(--text-dark);
+  
+  background-color: #2a2a35 !important;
+  border: 1px solid rgba(64, 201, 255, 0.2);
 }
 
 /* Pour s'assurer que le titre reste lisible */
 body.dark-mode .modal-title {
- color: var(--text-dark);
+  color: var(--text-dark);
 }
 
 /* Si besoin, ajuster l'overlay de la modal en dark mode */
 body.dark-mode .modal {
- background-color: rgba(0, 0, 0, .6); /* Légèrement moins opaque pour le dark mode */
+  background-color: rgba(0, 0, 0, .6); /* Légèrement moins opaque pour le dark mode */
 }
 
 /* Correction du fond et des textes des modales en Dark Mode */
 body.dark-mode .modal-content {
- color: var(--text-dark) !important;
-
- background-color: var(--background-dark) !important;
- border: 1px solid rgba(255, 255, 255, .2);
+  color: var(--text-dark) !important;
+  
+  background-color: #2a2a35 !important;
+  border: 1px solid rgba(64, 201, 255, 0.2);
 }
 
 body.dark-mode .modal-header,
 body.dark-mode .modal-footer {
- color: var(--text-dark) !important;
-
- background-color: var(--background-dark) !important;
- border-color: rgba(255, 255, 255, .2);
+  color: var(--text-dark) !important;
+  
+  background-color: #2a2a35 !important;
+  border-color: rgba(64, 201, 255, 0.2);
 }
 
 body.dark-mode .modal-title {
- color: var(--text-dark) !important;
+  color: var(--text-dark) !important;
 }
 
 body.dark-mode .modal-body {
- color: var(--text-dark) !important;
+  color: var(--text-dark) !important;
 }
 
 /* Optionnel : ajuster les alertes dans les modales */
 body.dark-mode .modal .alert {
- color: var(--text-dark) !important;
-
- background-color: rgba(255, 255, 255, .1);
- border-color: rgba(255, 255, 255, .2);
+  color: var(--text-dark) !important;
+  
+  background-color: rgba(64, 201, 255, 0.1);
+  border-color: rgba(64, 201, 255, 0.2);
 }
 
 /* Correction pour le texte text-muted dans les modales en dark mode */
 body.dark-mode .modal-body .text-muted,
 body.dark-mode .modal-body p.text-muted {
- color: #ccc !important;  /* Ajustez cette valeur si nécessaire */
+  color: #aaa !important;  /* Ajustez cette valeur si nécessaire */
 }
+
+.spotify-button {
+  width: 44px;
+  height: 44px;
+  min-width: 44px;
+  min-height: 44px;
+  border-radius: 50%;
+  background-color: transparent;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0 !important;
+  position: relative;
+  touch-action: manipulation;
+  transition: all 0.2s ease;
+}
+
+/* Pour tablettes et mobiles, augmentez la zone tactile */
+@media (max-width: 992px) {
+  .spotify-button {
+    width: 50px;
+    height: 50px;
+    min-width: 50px;
+    min-height: 50px;
+  }
+  
+  .spotify-button::before {
+    content: '';
+    position: absolute;
+    width: 100%;
+    height: 100%;
+    top: 0;
+    left: 0;
+    border-radius: 50%;
+    background-color: rgba(var(--primary-rgb), 0.1);
+    opacity: 0;
+    transition: opacity 0.2s ease;
+  }
+  
+  .spotify-button:hover::before {
+    opacity: 1;
+  }
+}
+
+/* Effet de pression sur appareils tactiles */
+.spotify-button:active {
+  transform: scale(0.95);
+  background-color: rgba(0, 123, 255, 0.15);
+}
+
+body.dark-mode .spotify-button:hover {
+  background: rgba(64, 201, 255, 0.2);
+}
+
+body.dark-mode .spotify-button:active {
+  background-color: rgba(64, 201, 255, 0.3);
+}
+
+/* Harmonisation des couleurs avec PublicRanking - accent sur les bleus en mode sombre */
+
+/* Arrière-plans et conteneurs */
+body.dark-mode .admin-container {
+  background: rgba(30, 30, 40, 0.75);
+  color: var(--text-dark);
+}
+
+body.dark-mode .admin-header {
+  background: rgba(30, 30, 40, 0.7);
+}
+
+body.dark-mode .player-list-container {
+  background: rgba(30, 30, 40, 0.5);
+}
+
+body.dark-mode .ranking-scroll {
+  background: rgba(30, 30, 40, 0.7);
+}
+
+/* Tableau */
+body.dark-mode .table {
+  color: #e0e0e0 !important;
+  background-color: rgba(30, 30, 40, 0.5) !important;
+}
+
+body.dark-mode .table th {
+  background: rgba(64, 201, 255, 0.15);
+  border-bottom: 2px solid rgba(64, 201, 255, 0.2);
+  color: #e0e0e0;
+}
+
+body.dark-mode .table td {
+  border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+}
+
+body.dark-mode .table-striped tbody tr:nth-of-type(odd) {
+  background-color: rgba(64, 201, 255, 0.03) !important;
+}
+
+body.dark-mode .table-hover tbody tr:hover {
+  background-color: rgba(64, 201, 255, 0.1) !important;
+}
+
+/* Actions et boutons */
+body.dark-mode .btn-success {
+  background-color: rgba(64, 201, 255, 0.8);
+  border-color: rgba(64, 201, 255, 0.9);
+}
+
+body.dark-mode .btn-success:hover {
+  background-color: rgba(64, 201, 255, 0.9);
+  border-color: rgba(64, 201, 255, 1);
+}
+
+body.dark-mode .btn-danger {
+  background-color: #e74c3c;
+  border-color: #c0392b;
+}
+
+body.dark-mode .btn-outline-secondary {
+  color: #40c9ff;
+  border-color: rgba(64, 201, 255, 0.5);
+}
+
+body.dark-mode .btn-outline-secondary:hover {
+  background-color: rgba(64, 201, 255, 0.1);
+  border-color: rgba(64, 201, 255, 0.8);
+  color: #40c9ff;
+}
+
+/* Zone des boutons */
+body.dark-mode .button-container {
+  background: rgba(30, 30, 40, 0.8);
+  border-top: 1px solid rgba(64, 201, 255, 0.1);
+}
+
+/* Scrollbar */
+body.dark-mode .ranking-scroll::-webkit-scrollbar-thumb {
+  background: rgba(64, 201, 255, 0.5);
+}
+
+body.dark-mode .ranking-scroll::-webkit-scrollbar-track {
+  background: rgba(30, 30, 40, 0.5);
+}
+
+/* Bouton Spotify */
+body.dark-mode .spotify-button:hover {
+  background: rgba(64, 201, 255, 0.2);
+}
+
+body.dark-mode .spotify-button:active {
+  background-color: rgba(64, 201, 255, 0.3);
+}
+
+/* Modales */
+body.dark-mode .modal-content {
+  background-color: #2a2a35 !important;
+  border: 1px solid rgba(64, 201, 255, 0.2);
+}
+
+body.dark-mode .modal-header,
+body.dark-mode .modal-footer {
+  background-color: #2a2a35 !important;
+  border-color: rgba(64, 201, 255, 0.2);
+}
+
+/* Bouton de fermeture de salle */
+body.dark-mode .btn-closeroom {
+  background: linear-gradient(135deg, #e74c3c, #c0392b);
+  box-shadow: 0 4px 12px rgba(231, 76, 60, 0.3);
+}
+
+body.dark-mode .btn-closeroom:hover {
+  background: linear-gradient(135deg, #c0392b, #a93226);
+  box-shadow: 0 6px 16px rgba(231, 76, 60, 0.4);
+}
+
+/* Statuts des joueurs */
+body.dark-mode td .badge-connected {
+  background-color: rgba(64, 201, 255, 0.2);
+  color: #40c9ff;
+}
+
+/* Remplacer Bootstrap avec notre palette de couleurs */
+body.dark-mode .btn-warning {
+  background-color: #f39c12;
+  border-color: #e67e22;
+}
+
+body.dark-mode .btn-warning:hover {
+  background-color: #e67e22;
+  border-color: #d35400;
+}
+
+body.dark-mode .btn-grey {
+  background-color: #34495e;
+  border-color: #2c3e50;
+  color: #ecf0f1;
+}
+
+body.dark-mode .btn-grey:hover {
+  background-color: #2c3e50;
+  border-color: #1a252f;
+  color: #ffffff;
+}
+
+/* Ligne d'accent sur l'en-tête */
+body.dark-mode .admin-header::before {
+  background: linear-gradient(90deg, #40c9ff, rgba(64, 201, 255, 0.4));
+}
+
+/* Statut de pause */
+body.dark-mode .fixed-width-button.btn-success {
+  background: linear-gradient(135deg, #40c9ff, #2b86c5);
+  border: none;
+}
+
+body.dark-mode .fixed-width-button.btn-success:hover {
+  background: linear-gradient(135deg, #2b86c5, #1a5a88);
+}
+
+body.dark-mode .fixed-width-button.btn-danger {
+  background: linear-gradient(135deg, #e74c3c, #c0392b);
+  border: none;
+}
+
+body.dark-mode .fixed-width-button.btn-danger:hover {
+  background: linear-gradient(135deg, #c0392b, #a93226);
+}
+
+/* Ajout d'optimisation pour les appareils mobiles */
+
+@media (max-width: 768px) {
+  /* Réduction de la taille du texte dans le tableau pour mobile */
+  .table {
+    font-size: 0.85rem;
+  }
+  
+  /* Réduction du padding dans les cellules du tableau pour gagner de l'espace */
+  .table th,
+  .table td {
+    padding: 0.5rem;
+  }
+  
+  /* Optimisation de l'affichage du pseudo */
+  .pseudo-column {
+    max-width: 100px;
+  }
+  
+  /* Réduction de la hauteur des lignes */
+  .table tr {
+    line-height: 1.2;
+  }
+  
+  /* Ajustement du player-list-container pour mobile */
+  .player-list-container {
+    padding: 0.75rem;
+  }
+  
+  /* Optimisation de la zone de défilement */
+  .ranking-scroll {
+    padding: 0.25rem;
+  }
+  
+  /* Boutons plus compacts sur mobile */
+  .button-container {
+    padding: 0.75rem;
+    gap: 0.5rem;
+  }
+  
+  /* Augmentation de la hauteur du conteneur pour voir plus de contenu */
+  .admin-container {
+    height: 90vh;
+    padding: 1rem;
+  }
+  
+  /* Optimisation des boutons d'action dans le tableau pour mobile */
+  .table .btn-sm {
+    padding: 0.2rem 0.4rem;
+    font-size: 0.7rem;
+    line-height: 1;
+    margin-right: 0.2rem !important;
+    min-width: 25px;
+    height: 100%; /* Utiliser toute la hauteur disponible */
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+  }
+  
+  /* Amélioration de l'alignement des boutons */
+  .table td:last-child {
+    white-space: nowrap;
+    display: flex;
+    justify-content: flex-start;
+    align-items: stretch; /* Étirer les enfants pour prendre toute la hauteur */
+    gap: 0.2rem;
+    padding: 0.3rem 0.5rem;
+    height: 100%;
+  }
+}
+
+/* Pour les très petits écrans */
+@media (max-width: 480px) {
+  .table {
+    font-size: 0.75rem;
+  }
+  
+  .table th,
+  .table td {
+    padding: 0.4rem;
+  }
+  
+  .pseudo-column {
+    max-width: 80px;
+  }
+  
+  /* Réduction des marges pour maximiser l'espace de contenu */
+  .admin-header {
+    margin-bottom: 0.75rem;
+    padding: 0.75rem;
+  }
+  
+  /* Ajustement supplémentaire pour les boutons sur très petits écrans */
+  .table .btn-sm {
+    padding: 0.25rem 0.45rem; /* Augmentation légère du padding pour une meilleure zone tactile */
+    font-size: 0.8rem; /* Police légèrement plus grande */
+    min-width: 30px; /* Largeur minimale plus grande pour une meilleure cible */
+    height: 30px; /* Hauteur fixe pour garantir une bonne zone tactile */
+    margin: 0 0.2rem; /* Espacement horizontal entre les boutons */
+    border-radius: 4px; /* Coins légèrement arrondis */
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.2); /* Légère ombre pour effet 3D */
+  }
+  
+  /* Réduction maximale de l'espace entre les boutons - tout en maintenant la hauteur complète */
+  .table td:last-child {
+    padding: 0.35rem;
+    display: flex;
+    flex-direction: row; /* Forcer l'alignement horizontal */
+    justify-content: flex-start;
+    align-items: center; /* Centrer verticalement */
+    gap: 0.3rem; /* Plus d'espace entre les boutons */
+    height: auto; /* Hauteur automatique */
+  }
+}
+
+/* Styles de base pour le tableau (Desktop et fallback) */
+.table {
+  border-collapse: separate; /* Assure que border-spacing fonctionne */
+  border-spacing: 0;
+  width: 100%;
+  /* La couleur est gérée par les thèmes globaux/dark */
+}
+
+.table th,
+.table td {
+  padding: 0.65rem 1rem; /* Augmenter légèrement le padding vertical */
+  vertical-align: middle;
+  border-bottom: 1px solid rgba(0, 0, 0, 0.05); /* Bordure light mode */
+}
+
+body.dark-mode .table th,
+body.dark-mode .table td {
+  border-bottom: 1px solid rgba(255, 255, 255, 0.05); /* Bordure dark mode plus visible */
+}
+
+.table th {
+  font-weight: 600;
+  text-transform: uppercase;
+  position: sticky;
+  top: 0;
+  z-index: 10;
+  /* Les couleurs de fond sont gérées par les thèmes */
+  background: rgba(0, 123, 255, 0.05); /* Fond léger pour light mode */
+}
+
+body.dark-mode .table th {
+  background: rgba(64, 201, 255, 0.15); /* Fond bleu accentué dark mode */
+  color: #e0e0e0;
+}
+
+/* Colonne Pseudo */
+.pseudo-column {
+  max-width: 180px; /* Un peu plus de place par défaut */
+  min-width: 100px; /* Empêche d'être trop écrasé */
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/* Colonne Statut */
+.status-column { /* Ajoutez cette classe au <td> correspondant dans le JSX */
+  width: 80px; /* Donner une largeur fixe */
+  text-align: center;
+}
+
+/* Style pour les icônes de statut (emojis) */
+.status-icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 28px; /* Taille du cercle */
+  height: 28px;
+  border-radius: 50%;
+  font-size: 1rem; /* Taille de l'emoji */
+}
+
+.status-icon.connected {
+  background-color: rgba(40, 167, 69, 0.1); /* Vert léger (comme ClientView) */
+  color: #28a745; /* Vert */
+}
+
+.status-icon.disconnected {
+  background-color: rgba(220, 53, 69, 0.1); /* Rouge léger (comme ClientView) */
+  color: #dc3545; /* Rouge */
+}
+
+body.dark-mode .status-icon.connected {
+  /* Bleu/vert en dark mode, cohérent avec PublicRanking/ClientView */
+  background-color: rgba(64, 201, 255, 0.15);
+  color: #40c9ff;
+}
+
+body.dark-mode .status-icon.disconnected {
+  /* Rouge plus visible en dark mode */
+  background-color: rgba(231, 76, 60, 0.2);
+  color: #e74c3c;
+}
+
+/* Colonne Actions */
+.table td:last-child {
+  text-align: right; /* Aligner les boutons à droite par défaut */
+  white-space: nowrap; /* Empêcher le retour à la ligne des boutons */
+}
+
+/* Styles des boutons d'action dans le tableau */
+.table .btn-sm {
+  padding: 0.35rem 0.7rem; /* Taille de base confortable */
+  font-size: 0.85rem;
+  margin-left: 0.4rem; /* Espacement entre boutons */
+  min-width: 38px; /* Largeur minimale */
+  line-height: 1.2; /* Assurer un bon alignement vertical du texte */
+}
+
+/* Alternance de lignes */
+.table-striped tbody tr:nth-of-type(odd) {
+  background-color: rgba(0, 0, 0, 0.02); /* Très subtil en light mode */
+}
+
+body.dark-mode .table-striped tbody tr:nth-of-type(odd) {
+  background-color: rgba(64, 201, 255, 0.03) !important; /* Bleu très subtil en dark mode */
+}
+
+/* Survol */
+.table-hover tbody tr:hover {
+  background-color: rgba(0, 123, 255, 0.06); /* Léger bleu au survol light */
+  transform: none; /* Désactiver le petit saut au survol si non désiré */
+  transition: background-color 0.2s ease;
+}
+
+body.dark-mode .table-hover tbody tr:hover {
+  background-color: rgba(64, 201, 255, 0.1) !important; /* Bleu plus prononcé au survol dark */
+}
+
+/* --- Optimisations pour Tablettes (cible principale: 683x1024) --- */
+@media (max-width: 992px) { /* Cible les tablettes et en dessous */
+  .table {
+    font-size: 0.9rem; /* Légère réduction de la police */
+  }
+
+  .table th,
+  .table td {
+    padding: 0.55rem 0.75rem; /* Réduire le padding */
+  }
+
+  .pseudo-column {
+    max-width: 140px; /* Réduire la largeur max du pseudo */
+    min-width: 80px;
+  }
+
+  .status-column {
+    width: 65px; /* Réduire largeur statut */
+  }
+
+  .status-icon {
+    width: 26px;
+    height: 26px;
+    font-size: 0.9rem;
+  }
+
+  /* Colonne Actions sur tablette */
+  .table td:last-child {
+    /* Utiliser flex pour mieux contrôler l'alignement et l'espacement */
+    display: flex;
+    justify-content: flex-end; /* Garder les boutons à droite */
+    align-items: center; /* Centrer verticalement */
+    gap: 0.4rem; /* Espacement entre les boutons */
+    padding: 0.45rem 0.75rem; /* Ajuster le padding */
+  }
+
+  .table .btn-sm {
+    padding: 0.3rem 0.6rem; /* Boutons légèrement plus petits */
+    font-size: 0.8rem;
+    margin-left: 0; /* Le gap gère l'espacement */
+    min-width: 32px;
+  }
+}
+
+/* --- Optimisations pour Mobiles --- */
+@media (max-width: 767px) { /* Cible les mobiles */
+  .table {
+    font-size: 0.85rem;
+  }
+
+  .table th,
+  .table td {
+    padding: 0.45rem 0.5rem; /* Padding encore réduit */
+  }
+
+  .pseudo-column {
+    max-width: 100px; /* Encore plus court */
+    min-width: 60px;
+  }
+
+  .status-column {
+    width: 55px;
+  }
+
+  .status-icon {
+    width: 24px;
+    height: 24px;
+    font-size: 0.8rem;
+  }
+
+  /* Colonne Actions sur mobile */
+  .table td:last-child {
+    justify-content: flex-start; /* Aligner à gauche pour gagner de la place */
+    gap: 0.3rem;
+    padding: 0.35rem 0.5rem;
+  }
+
+  .table .btn-sm {
+    padding: 0.25rem 0.45rem; /* Boutons plus compacts */
+    font-size: 0.75rem;
+    min-width: 28px; /* Assurer une zone cliquable minimale */
+    height: 26px; /* Hauteur fixe pour cohérence */
+    display: inline-flex; /* Pour aligner le contenu */
+    align-items: center;
+    justify-content: center;
+  }
+}
+
+/* --- Optimisations pour Très Petits Écrans --- */
+@media (max-width: 480px) {
+  .admin-container {
+    padding: 0.75rem; /* Moins de padding global */
+  }
+
+  .table {
+    font-size: 0.8rem;
+  }
+
+  .table th,
+  .table td {
+    padding: 0.35rem 0.3rem; /* Padding minimal */
+  }
+
+  .pseudo-column {
+    max-width: 80px;
+    min-width: 50px;
+  }
+
+  .status-column {
+    width: 45px;
+  }
+
+  .status-icon {
+    width: 22px;
+    height: 22px;
+    font-size: 0.75rem;
+  }
+
+  /* Colonne Actions sur très petits écrans */
+  .table td:last-child {
+    gap: 0.2rem; /* Espacement minimal */
+    padding: 0.3rem;
+  }
+
+  .table .btn-sm {
+    padding: 0.2rem 0.35rem;
+    font-size: 0.7rem;
+    min-width: 26px;
+    height: 24px;
+  }
+
+  /* Ajustement des boutons principaux en bas */
+  .button-container {
+    padding: 0.5rem;
+    gap: 0.5rem;
+  }
+  .fixed-width-button {
+      width: auto; /* Permettre aux boutons de s'adapter */
+      flex: 1; /* Prendre l'espace disponible */
+      height: 60px; /* Réduire la hauteur */
+      font-size: 0.8rem; /* Réduire la police */
+      padding: 0.2rem;
+  }
+  .btn-closeroom {
+      padding: 0.6rem; /* Réduire le padding */
+      font-size: 0.9rem;
+      margin-top: 0.5rem; /* Réduire la marge négative */
+  }
+}
+
+

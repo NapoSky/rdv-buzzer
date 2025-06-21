@@ -1,61 +1,447 @@
-/* Styles spécifiques pour la page d'accueil */
+/* Styles modernisés pour la page d'accueil - Design 2024 */
+
+/* Container principal avec effet de fond subtil et gradient */
 .home-container {
- padding: 20px;
-}
-
-.card {
- background-color: var(--background-light);
- border: 1px solid rgba(0,0,0,.125);
- border-radius: var(--border-radius);
- box-shadow: 0 4px 6px rgba(0,0,0,.1);
- margin-bottom: 20px;
- padding: 15px;
-}
-
-.admin-card {
- border-top: 1px solid #eee;
- margin-top: 20px;
- padding-top: 20px;
-}
-
-.home-title {
- margin-bottom: 20px;
- text-align: center;
-}
-
-.form-group {
- margin-bottom: 15px;
-}
-
-.form-label {
- display: block;
-
- font-weight: 500;
- margin-bottom: 5px;
-}
-
-.form-control {
- border: 1px solid #ced4da;
- border-radius: var(--border-radius);
- padding: 10px;
- width: 100%;
-}
-
-.form-error {
- color: var(--danger);
-
- font-size: .875rem;
- margin-top: 5px;
-}
-
-.action-buttons {
- display: flex;
-
- justify-content: space-between;
- margin-top: 15px;
-}
-
-.rejoin-btn {
- margin-top: 10px;
- width: 100%;
-}
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: clamp(1.5rem, 5vw, 3rem);
+    display: flex;
+    flex-direction: column;
+    gap: clamp(1.5rem, 3vw, 2.5rem);
+    position: relative;
+  }
+  
+  /* Arrière-plan avec gradient doux */
+  .home-container::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 30vh;
+    z-index: -1;
+    pointer-events: none;
+  }
+  
+  body:not(.dark-mode) .home-container::before {
+    background: radial-gradient(circle at top center, rgba(var(--primary-rgb), 0.07), transparent 70%);
+  }
+  
+  body.dark-mode .home-container::before {
+    background: radial-gradient(circle at top center, rgba(var(--primary-rgb), 0.1), transparent 70%);
+  }
+  
+  /* Titre principal avec typographie moderne et animation subtile */
+  .home-title {
+    font-size: clamp(2rem, 5vw, 3.2rem);
+    margin-bottom: 2.5rem;
+    text-align: center;
+    position: relative;
+    font-weight: 700;
+    letter-spacing: -0.02em;
+    color: var(--text-light);
+    line-height: 1.1;
+  }
+  
+  .home-title::after {
+    content: '';
+    position: absolute;
+    bottom: -12px;
+    left: 50%;
+    width: clamp(60px, 10vw, 100px);
+    height: 4px;
+    transform: translateX(-50%);
+    background: linear-gradient(90deg, var(--primary), rgba(var(--primary-rgb), 0.4));
+    border-radius: 4px;
+  }
+  
+  /* Style de carte repensé - design flottant avec fond translucide */
+  .card {
+    background: rgba(255, 255, 255, 0.7);
+    backdrop-filter: blur(10px);
+    -webkit-backdrop-filter: blur(10px);
+    border-radius: 24px;
+    overflow: hidden;
+    padding: clamp(1.5rem, 4vw, 2.5rem);
+    box-shadow: 
+      0 10px 30px rgba(0, 0, 0, 0.04),
+      0 1px 1px rgba(0, 0, 0, 0.02);
+    transition: all 0.4s cubic-bezier(0.165, 0.84, 0.44, 1);
+    border: none;
+    position: relative;
+  }
+  
+  .card:hover {
+    transform: translateY(-6px);
+    box-shadow: 
+      0 20px 40px rgba(0, 0, 0, 0.08),
+      0 1px 3px rgba(0, 0, 0, 0.1);
+  }
+  
+  /* Effet de ligne d'accent sur les cartes */
+  .card::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    height: 4px;
+    width: 100%;
+    background: linear-gradient(90deg, var(--primary), rgba(var(--primary-rgb), 0.4));
+    opacity: 0;
+    transition: opacity 0.3s ease;
+  }
+  
+  .card:hover::before {
+    opacity: 1;
+  }
+  
+  /* Carte admin avec style distinctif */
+  .admin-card {
+    background: linear-gradient(135deg, 
+      rgba(255, 255, 255, 0.8), 
+      rgba(240, 240, 250, 0.6)
+    );
+    position: relative;
+  }
+  
+  .admin-card::after {
+    content: "👤";
+    position: absolute;
+    top: 20px;
+    right: 20px; /* Déplacé à droite */
+    background: linear-gradient(135deg, var(--primary), rgba(var(--primary-rgb), 0.8));
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: white;
+    font-size: 16px;
+    box-shadow: 0 4px 12px rgba(var(--primary-rgb), 0.3);
+    border: 2px solid rgba(255, 255, 255, 0.7);
+  }
+  
+  /* Groupes de formulaire avec design épuré */
+  .form-group {
+    margin-bottom: 1.8rem;
+    position: relative;
+  }
+  
+  /* Labels modernisés */
+  .form-label {
+    display: block;
+    font-weight: 600;
+    margin-bottom: 0.6rem;
+    color: var(--text-light);
+    transition: color 0.2s ease;
+    font-size: 0.95rem;
+    letter-spacing: 0.01em;
+  }
+  
+  /* Inputs avec design flottant */
+  .form-control {
+    width: 100%;
+    padding: 1rem 1.2rem;
+    border: 1px solid rgba(0, 0, 0, 0.06);
+    border-radius: 14px;
+    background: rgba(255, 255, 255, 0.9);
+    transition: all 0.3s ease;
+    font-size: 1.05rem;
+    box-shadow: 0 1px 2px rgba(0, 0, 0, 0.02);
+  }
+  
+  .form-control:focus {
+    outline: none;
+    border-color: var(--primary);
+    box-shadow: 0 0 0 3px rgba(var(--primary-rgb), 0.15);
+    background: white;
+  }
+  
+  /* Boutons avec design moderne et dynamique */
+  .btn {
+    padding: 0.9rem 1.8rem;
+    border-radius: 14px;
+    font-weight: 600;
+    font-size: 1rem;
+    letter-spacing: 0.01em;
+    transition: all 0.3s cubic-bezier(0.165, 0.84, 0.44, 1);
+    border: none;
+    position: relative;
+    overflow: hidden;
+    z-index: 1;
+  }
+  
+  .btn::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(255, 255, 255, 0.1);
+    transform: translateY(100%);
+    transition: transform 0.3s ease;
+    z-index: -1;
+  }
+  
+  .btn:hover::before {
+    transform: translateY(0);
+  }
+  
+  .btn-primary {
+    background: linear-gradient(135deg, #007bff, #0056b3);
+    color: white;
+    box-shadow: 0 4px 12px rgba(0, 123, 255, 0.2);
+  }
+  
+  .btn-primary:hover {
+    background: linear-gradient(135deg, #0056b3, #004494);
+    box-shadow: 0 8px 20px rgba(0, 123, 255, 0.3);
+    transform: translateY(-3px);
+  }
+  
+  .btn-secondary {
+    background: linear-gradient(135deg, #6c757d, #5a6268);
+    color: white;
+    box-shadow: 0 4px 12px rgba(108, 117, 125, 0.2);
+  }
+  
+  .btn-secondary:hover {
+    background: linear-gradient(135deg, #5a6268, #4e555b);
+    box-shadow: 0 8px 20px rgba(108, 117, 125, 0.3);
+    transform: translateY(-3px);
+  }
+  
+  /* Bouton de reconnexion avec animation */
+  .rejoin-btn {
+    width: 100%;
+    margin-top: 1.2rem;
+    position: relative;
+    padding-left: 3rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    text-align: center;
+    background: linear-gradient(135deg, #6c757d, #5a6268);
+    color: white;
+    box-shadow: 0 4px 12px rgba(108, 117, 125, 0.2);
+  }
+  
+  .rejoin-btn::before {
+    content: "↻";
+    position: absolute;
+    left: 1.5rem;
+    font-size: 1.3rem;
+    transition: transform 0.6s cubic-bezier(0.19, 1, 0.22, 1);
+  }
+  
+  .rejoin-btn:hover {
+    background: linear-gradient(135deg, #5a6268, #4e555b);
+    box-shadow: 0 8px 20px rgba(108, 117, 125, 0.3);
+  }
+  
+  .rejoin-btn:hover::before {
+    transform: rotate(360deg);
+  }
+  
+  /* Layout des cartes en grille adaptative */
+  .card-container {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+    gap: 2rem;
+  }
+  
+  /* Adaptations pour le mode sombre */
+  .dark-mode .card {
+    background: rgba(30, 30, 35, 0.7);
+    backdrop-filter: blur(10px);
+    -webkit-backdrop-filter: blur(10px);
+    box-shadow: 
+      0 10px 30px rgba(0, 0, 0, 0.2),
+      0 1px 1px rgba(255, 255, 255, 0.03);
+  }
+  
+  .dark-mode .admin-card {
+    background: linear-gradient(135deg, 
+      rgba(40, 40, 50, 0.8), 
+      rgba(30, 30, 40, 0.6)
+    );
+  }
+  
+  .dark-mode .form-control {
+    background: rgba(20, 20, 25, 0.7);
+    border-color: rgba(255, 255, 255, 0.08);
+    color: var(--text-dark);
+  }
+  
+  .dark-mode .form-control:focus {
+    border-color: var(--primary);
+    box-shadow: 0 0 0 3px rgba(var(--primary-rgb), 0.25);
+    background: rgba(25, 25, 30, 0.9);
+  }
+  
+  .dark-mode .btn-primary {
+    background: linear-gradient(135deg, #0056b3, rgba(0, 86, 179, 0.8));
+  }
+  
+  .dark-mode .btn-secondary,
+  .dark-mode .rejoin-btn {
+    background: linear-gradient(135deg, #4a4a4a, rgba(74, 74, 74, 0.9));
+  }
+  
+  .dark-mode .form-label {
+    color: var(--text-dark);
+  }
+  
+  .dark-mode .home-title {
+    color: var(--text-dark);
+  }
+  
+  /* Styles des boutons pour le mode clair */
+  body:not(.dark-mode) .btn-primary {
+    background: linear-gradient(135deg, #007bff, #0056b3);
+    color: white;
+    box-shadow: 0 4px 12px rgba(0, 123, 255, 0.2);
+  }
+  
+  body:not(.dark-mode) .btn-primary:hover {
+    background: linear-gradient(135deg, #0056b3, #004494);
+    box-shadow: 0 8px 20px rgba(0, 123, 255, 0.3);
+  }
+  
+  body:not(.dark-mode) .btn-secondary {
+    background: linear-gradient(135deg, #6c757d, #5a6268);
+    color: white;
+    box-shadow: 0 4px 12px rgba(108, 117, 125, 0.2);
+  }
+  
+  body:not(.dark-mode) .btn-secondary:hover {
+    background: linear-gradient(135deg, #5a6268, #4e555b);
+    box-shadow: 0 8px 20px rgba(108, 117, 125, 0.3);
+  }
+  
+  /* Style spécifique pour le bouton de reconnexion en mode clair */
+  body:not(.dark-mode) .rejoin-btn {
+    background: linear-gradient(135deg, #6c757d, #5a6268);
+    color: white;
+    box-shadow: 0 4px 12px rgba(108, 117, 125, 0.2);
+  }
+  
+  body:not(.dark-mode) .rejoin-btn:hover {
+    background: linear-gradient(135deg, #5a6268, #4e555b);
+    box-shadow: 0 8px 20px rgba(108, 117, 125, 0.3);
+  }
+  
+  /* Footer stylisé */
+  .page-footer {
+    margin-top: 3rem;
+    padding: 2rem 0;
+    text-align: center;
+    position: relative;
+  }
+  
+  .page-footer::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 60px;
+    height: 3px;
+    background: rgba(var(--primary-rgb), 0.3);
+    border-radius: 3px;
+  }
+  
+  .footer-link {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    transition: transform 0.3s ease;
+  }
+  
+  .footer-link:hover {
+    transform: translateY(-2px);
+  }
+  
+  /* Media queries pour la réactivité */
+  @media (max-width: 767px) {
+    .btn {
+      width: 100%;
+      justify-content: center;
+      margin-bottom: 0.8rem;
+    }
+    
+    .action-buttons {
+      flex-direction: column;
+    }
+    
+    .card {
+      border-radius: 18px;
+      padding: 1.5rem;
+    }
+  }
+  
+  /* Animation d'apparition des éléments */
+  @keyframes slideUp {
+    from { opacity: 0; transform: translateY(30px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+  
+  .home-container > * {
+    animation: slideUp 0.5s forwards cubic-bezier(0.19, 1, 0.22, 1);
+    opacity: 0;
+  }
+  
+  .home-container > *:nth-child(1) { animation-delay: 0.1s; }
+  .home-container > *:nth-child(2) { animation-delay: 0.2s; }
+  .home-container > *:nth-child(3) { animation-delay: 0.3s; }
+  .home-container > *:nth-child(4) { animation-delay: 0.4s; }
+  
+  /* Supprimer les styles en double et ajouter une spécificité plus forte */
+  .home-container .btn {
+    padding: 0.9rem 1.8rem;
+    border-radius: 14px;
+    font-weight: 600;
+    font-size: 1rem;
+    letter-spacing: 0.01em;
+    transition: all 0.3s cubic-bezier(0.165, 0.84, 0.44, 1);
+    border: none;
+    position: relative;
+    overflow: hidden;
+  }
+  
+  .home-container .btn-primary {
+    background: linear-gradient(135deg, #007bff, #0056b3) !important;
+    color: white !important;
+    box-shadow: 0 4px 12px rgba(0, 123, 255, 0.2);
+  }
+  
+  .home-container .btn-primary:hover {
+    background: linear-gradient(135deg, #0056b3, #004494) !important;
+    box-shadow: 0 8px 20px rgba(0, 123, 255, 0.3);
+    transform: translateY(-3px);
+  }
+  
+  .home-container .btn-secondary {
+    background: linear-gradient(135deg, #6c757d, #5a6268) !important;
+    color: white !important;
+    box-shadow: 0 4px 12px rgba(108, 117, 125, 0.2);
+  }
+  
+  .home-container .btn-secondary:hover {
+    background: linear-gradient(135deg, #5a6268, #4e555b) !important;
+    box-shadow: 0 8px 20px rgba(108, 117, 125, 0.3);
+    transform: translateY(-3px);
+  }
+  
+  .home-container .rejoin-btn {
+    background: linear-gradient(135deg, #6c757d, #5a6268) !important;
+    color: white !important;
+    box-shadow: 0 4px 12px rgba(108, 117, 125, 0.2);
+  }
+  
+  .home-container .rejoin-btn:hover {
+    background: linear-gradient(135deg, #5a6268, #4e555b) !important;
+    box-shadow: 0 8px 20px rgba(108, 117, 125, 0.3);
+  }

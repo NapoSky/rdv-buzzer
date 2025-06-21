@@ -1,125 +1,866 @@
-/* Styles spécifiques pour AdminPanel */
+/* AdminPanel.css - Refonte moderne 2024 */
 
-/* Styles pour les tableaux en dark mode */
-.dark-mode .table {
-    color: var(--text-dark);
-    background-color: var(--background-dark);
+/* Container principal avec fond subtil */
+.admin-panel-container {
+ position: relative;
+
+ min-height: calc(100vh - 80px); /* Hauteur totale moins header */
+ padding: clamp(1rem, 5vw, 2rem);
 }
 
-.dark-mode .table thead th {
-    background-color: #2c3034;
-    color: var(--text-dark);
-    border-color: #404040;
+/* Contenu principal */
+.admin-panel-content {
+ display: flex;
+ flex-direction: column;
+
+ gap: 2rem;
+ margin: 0 auto;
+ max-width: 1200px;
 }
 
-.dark-mode .table-striped tbody tr:nth-of-type(odd) {
-    background-color: #2c3034;
+/* Titre principal avec style moderne */
+.panel-title {
+ position: relative;
+
+ font-size: clamp(1.8rem, 3vw, 2.4rem);
+ font-weight: 700;
+ letter-spacing: -.02em;
+ margin-bottom: 1.5rem;
 }
 
-.dark-mode .table-striped tbody tr:nth-of-type(even) {
-    background-color: #212529;
+.panel-title::after {
+ position: absolute;
+ bottom: -10px;
+ left: 0;
+ background: linear-gradient(90deg, var(--primary), rgba(var(--primary-rgb), .4));
+
+ border-radius: 3px;
+ content: '';
+ height: 3px;
+ width: 80px;
 }
 
-.dark-mode .table-hover tbody tr:hover {
-    background-color: #343a40;
-    color: var(--text-dark);
+/* Styles pour les onglets Radix UI */
+.admin-tabs {
+ width: 100%;
 }
 
-/* Styles pour les éléments de la liste en dark mode */
-.dark-mode .list-group-item {
-    background-color: var(--background-dark);
-    border-color: #404040;
-    color: var(--text-dark);
+.tabs-list {
+ display: flex;
+
+ border-bottom: 1px solid rgba(var(--primary-rgb), .2);
+ gap: .5rem;
+ margin-bottom: 2rem;
+ padding-bottom: .5rem;
 }
 
-/* Cible l'icône native du sélecteur de date sous WebKit */
-input[type="date"]::-webkit-calendar-picker-indicator {
-    cursor: pointer;
+.tab-trigger {
+ position: relative;
+ color: inherit;
+ background: none;
+
+ border: none;
+ border-bottom: 3px solid transparent;
+ border-radius: 8px 8px 0 0;
+ cursor: pointer;
+ font-size: 1rem;
+ font-weight: 600;
+ padding: .75rem 1.5rem;
+ transition: all .2s ease;
 }
 
-/* En mode light, pas de modification (on affiche l’icône par défaut) */
-body:not(.dark-mode) input[type="date"]::-webkit-calendar-picker-indicator {
-    filter: none;
+.tab-trigger[data-state="active"] {
+ background: rgba(var(--primary-rgb), .1);
+
+ border-bottom: 3px solid var(--primary);
 }
 
-/* En mode dark, on inverse les couleurs de l’icône */
-body.dark-mode input[type="date"]::-webkit-calendar-picker-indicator {
-    filter: invert(1);
+.tab-trigger:hover {
+ background: rgba(var(--primary-rgb), .05);
 }
 
-/* ===== MODAL DE CONFIRMATION ===== */
+.tab-content {
+ animation: fadeIn .3s ease;
+}
 
-/* Overlay de la modal */
-.modal-overlay {
-    position: fixed;
-    top: 0;
-    left: 0;
+/* Liste des sessions */
+.session-list {
+ display: flex;
+ flex-direction: column;
+
+ gap: 1.5rem;
+ list-style: none;
+ padding: 0;
+}
+
+.session-item {
+ position: relative;
+ background: rgba(255, 255, 255, .7);
+
+ -webkit-backdrop-filter: blur(10px);
+ backdrop-filter: blur(10px);
+ border: none;
+ border-radius: 16px;
+ box-shadow: 0 10px 25px rgba(0, 0, 0, .04), 0 1px 1px rgba(0, 0, 0, .02);
+ overflow: hidden;
+ padding: 1.5rem;
+ transition: all .3s cubic-bezier(.165, .84, .44, 1);
+}
+
+.session-item:hover {
+ box-shadow: 0 14px 30px rgba(0, 0, 0, .07), 0 1px 3px rgba(0, 0, 0, .03);
+ transform: translateY(-4px);
+}
+
+/* En-tête de session */
+.session-header {
+ display: flex;
+
+ align-items: center;
+ flex-wrap: wrap;
+ gap: 1rem;
+ justify-content: space-between;
+}
+
+.room-code {
+ font-size: 1.4rem;
+ font-weight: 600;
+ margin: 0;
+}
+
+.session-actions {
+ display: flex;
+
+ flex-wrap: wrap;
+ gap: .75rem;
+}
+
+/* Indicateur de statut de la salle */
+.status-indicator {
+ display: inline-block;
+
+ border-radius: 50%;
+ height: 10px;
+ margin-right: 8px;
+ width: 10px;
+}
+
+.status-indicator.active {
+ background: #28a745;
+
+ box-shadow: 0 0 8px rgba(40, 167, 69, .6);
+}
+
+.status-indicator.paused {
+ background: #ffc107;
+
+ box-shadow: 0 0 8px rgba(255, 193, 7, .6);
+}
+
+/* Détails de session */
+.session-details {
+ animation: fadeIn .3s ease;
+ border-top: 1px solid rgba(0, 0, 0, .06);
+ margin-top: 1.5rem;
+ padding-top: 1.5rem;
+}
+
+.session-status {
+ display: flex;
+
+ align-items: center;
+ font-weight: 500;
+ margin-bottom: 1rem;
+}
+
+/* Table des joueurs */
+.players-table-container {
+ border-radius: 8px;
+ box-shadow: 0 2px 8px rgba(0, 0, 0, .05);
+ margin-top: 1rem;
+ overflow-x: auto;
+}
+
+.players-table {
+ border-collapse: collapse;
+ font-size: .95rem;
+ width: 100%;
+}
+
+.players-table th,
+  .players-table td {
+ border-bottom: 1px solid rgba(0, 0, 0, .05);
+ padding: .75rem 1rem;
+}
+
+.players-table th {
+ background: rgba(0, 0, 0, .02);
+
+ font-weight: 600;
+ text-align: left;
+}
+
+.players-table tr:last-child td {
+ border-bottom: none;
+}
+
+/* Indicateurs pour le statut de buzz et connexion */
+.buzz-indicator {
+ display: inline-block;
+
+ border-radius: 4px;
+ font-weight: 500;
+ padding: .25rem;
+}
+
+.buzz-indicator.active {
+ color: #fd7e14;
+}
+
+.connection-status {
+ display: inline-block;
+
+ border-radius: 4px;
+ font-size: .85rem;
+ font-weight: 500;
+ padding: .25rem .5rem;
+}
+
+.connection-status.connected {
+ color: #28a745;
+
+ background-color: rgba(40, 167, 69, .15);
+}
+
+.connection-status.disconnected {
+ color: #e0a800;
+
+ background-color: rgba(255, 193, 7, .15);
+}
+
+/* Gestion du classement */
+.ranking-management {
+ display: flex;
+ flex-direction: column;
+
+ gap: 1.5rem;
+}
+
+.warning-notice {
+ display: flex;
+ background: rgba(255, 193, 7, .1);
+
+ align-items: center;
+ border-left: 4px solid #ffc107;
+ border-radius: 8px;
+ gap: .75rem;
+ padding: 1rem;
+}
+
+.warning-icon {
+ font-size: 1.5rem;
+}
+
+.ranking-actions {
+ display: flex;
+
+ flex-wrap: wrap;
+ gap: 1rem;
+ margin-top: 2rem;
+}
+
+.actions-group {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 2rem;
+  margin-bottom: 1.5rem;
+}
+
+.actions-category {
+  background: rgba(255, 255, 255, 0.6);
+  border-radius: 12px;
+  padding: 1.25rem;
+  min-width: 300px;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.05);
+  transition: all 0.3s ease;
+  border: 1px solid rgba(0, 0, 0, 0.05);
+}
+
+.dark-mode .actions-category {
+  background: rgba(40, 40, 50, 0.4);
+  border: 1px solid rgba(255, 255, 255, 0.05);
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.2);
+}
+
+.danger-category {
+  border-left: 4px solid var(--danger);
+}
+
+.actions-title {
+  font-size: 1rem;
+  margin-top: 0;
+  margin-bottom: 1rem;
+  color: var(--text-light);
+  font-weight: 600;
+}
+
+.dark-mode .actions-title {
+  color: var(--text-dark);
+}
+
+.actions-buttons {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+.btn-action {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: flex-start;
+  padding: 0.85rem 1.25rem;
+  border-radius: 10px;
+  font-weight: 600;
+  font-size: 0.95rem;
+  cursor: pointer;
+  transition: all 0.2s cubic-bezier(0.165, 0.84, 0.44, 1);
+  border: none;
+  background: white;
+  color: var(--text-light);
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.05);
+  overflow: hidden;
+  width: 100%;
+  border: 1px solid rgba(0, 0, 0, 0.08);
+}
+
+.dark-mode .btn-action {
+  background: rgba(60, 60, 70, 0.4);
+  border: 1px solid rgba(255, 255, 255, 0.05);
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.2);
+  color: var(--text-dark);
+}
+
+.btn-action:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+}
+
+.dark-mode .btn-action:hover {
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+}
+
+.btn-action:active {
+  transform: translateY(0);
+}
+
+.btn-action .btn-icon {
+  font-size: 1.2rem;
+  margin-right: 0.75rem;
+  flex-shrink: 0;
+}
+
+.btn-action .btn-text {
+  flex-grow: 1;
+  text-align: left;
+}
+
+.btn-action .dropdown-indicator {
+  margin-left: 0.5rem;
+  font-size: 0.7rem;
+  opacity: 0.6;
+  transition: transform 0.2s ease;
+}
+
+.btn-action:hover .dropdown-indicator {
+  transform: translateY(2px);
+}
+
+.btn-edit {
+  border-left: 4px solid var(--info);
+}
+
+.btn-delete {
+  border-left: 4px solid var(--warning);
+}
+
+.btn-advanced {
+  border-left: 4px solid #8e44ad; /* couleur violette pour les actions avancées */
+}
+
+/* Dropdown Styles */
+.dropdown-content {
+  min-width: 220px;
+  background: white;
+  border-radius: 10px;
+  padding: 0.5rem;
+  box-shadow: 0 10px 25px rgba(0, 0, 0, 0.1);
+  animation: fadeIn 0.2s ease-out;
+  z-index: 1002;
+  border: 1px solid rgba(0, 0, 0, 0.08);
+}
+
+.dark-mode .dropdown-content {
+  background: #1e1e24;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  box-shadow: 0 10px 25px rgba(0, 0, 0, 0.3);
+}
+
+.dropdown-item {
+  display: flex;
+  align-items: center;
+  padding: 0.75rem 1rem;
+  border-radius: 6px;
+  cursor: pointer;
+  transition: all 0.15s ease;
+  color: var(--text-light);
+  user-select: none;
+}
+
+.dark-mode .dropdown-item {
+  color: var(--text-dark);
+}
+
+.dropdown-item:hover {
+  background: rgba(0, 0, 0, 0.04);
+}
+
+.dark-mode .dropdown-item:hover {
+  background: rgba(255, 255, 255, 0.04);
+}
+
+.dropdown-item .item-icon {
+  margin-right: 0.75rem;
+  font-size: 1.1rem;
+}
+
+.dropdown-separator {
+  height: 1px;
+  background: rgba(0, 0, 0, 0.1);
+  margin: 0.5rem 0;
+}
+
+.dark-mode .dropdown-separator {
+  background: rgba(255, 255, 255, 0.1);
+}
+
+.warning-item {
+  color: var(--warning);
+}
+
+.danger-item {
+  color: var(--danger);
+}
+
+.danger-item:hover {
+  background: rgba(var(--danger-rgb), 0.08);
+}
+
+/* Tooltip Styles */
+.tooltip-content {
+  background-color: #333;
+  color: white;
+  border-radius: 6px;
+  padding: 0.5rem 0.75rem;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+  max-width: 300px;
+  font-size: 0.85rem;
+  line-height: 1.4;
+  z-index: 1002;
+}
+
+.tooltip-arrow {
+  fill: #333;
+}
+
+/* Enhanced Dialog Styles */
+.danger-alert {
+  border-left: 4px solid var(--danger);
+}
+
+.danger-title {
+  color: var(--danger);
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.alert-icon {
+  font-size: 1.25rem;
+}
+
+.confirm-purge {
+  background: var(--danger);
+  color: white;
+  font-weight: 700;
+}
+
+.confirm-purge:hover {
+  background: rgb(220, 53, 69);
+}
+
+.hidden {
+  display: none;
+}
+
+/* Animation */
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: scale(0.95);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+/* Media Queries */
+@media (max-width: 768px) {
+  .actions-group {
+    flex-direction: column;
+  }
+  
+  .actions-category {
     width: 100%;
-    height: 100%;
-    background-color: rgba(0, 0, 0, 0.5); /* Overlay semi-transparent */
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    z-index: 2000;
+    min-width: 0;
+  }
 }
 
-/* Contenu spécifique de la modal de confirmation */
-.modal-content.confirmation {
-    background-color: var(--background-light);
-    color: var(--text-light);
-    border: none;
-    border-radius: 8px;
-    padding: 20px;
-    max-width: 400px;
-    width: 90%;
-    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
-    text-align: center;
+/* État vide */
+.empty-state {
+ background: rgba(0, 0, 0, .02);
+
+ border-radius: 16px;
+ padding: 3rem;
+ text-align: center;
 }
 
-/* Adaptation dark mode pour la modale */
-body.dark-mode .modal-content.confirmation {
-    background-color: var(--background-dark);
-    color: var(--text-dark);
-    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.5);
+.empty-state-icon {
+ font-size: 4rem;
+ margin: 1rem 0;
+ opacity: .5;
 }
 
-/* Conteneur des boutons dans la modal */
-.modal-buttons {
-    margin-top: 20px;
-    display: flex;
-    justify-content: center;
+/* Style pour les dialogues Radix */
+.dialog-overlay, 
+  .alert-overlay {
+ position: fixed;
+ z-index: 1000;
+ background: rgba(0, 0, 0, .5);
+
+ animation: fadeIn .15s ease-out;
+ -webkit-backdrop-filter: blur(4px);
+ backdrop-filter: blur(4px);
+ inset: 0;
 }
 
-/* Styles des boutons de la modal */
-.modal-buttons button {
-    margin: 0 10px;
-    padding: 8px 16px;
-    border: none;
-    border-radius: 4px;
-    cursor: pointer;
-    transition: background-color var(--transition-speed) ease;
+.dialog-content,
+  .alert-content {
+ position: fixed;
+ top: 50%;
+ left: 50%;
+ z-index: 1001;
+
+ animation: slideIn .2s ease-out;
+ background-color: white;
+ border-radius: 16px;
+ box-shadow: 0 10px 40px rgba(0, 0, 0, .1), 0 0 20px rgba(0, 0, 0, .1);
+ max-width: 500px;
+ padding: 2rem;
+ transform: translate(-50%, -50%);
+ width: 90%;
 }
 
-/* Bouton de confirmation */
-.modal-buttons .btn-success {
-    background-color: var(--btn-success-bg);
-    border-color: var(--btn-success-border);
-    color: #fff;
+.dialog-title,
+  .alert-title {
+ font-size: 1.5rem;
+ font-weight: 600;
+ margin: 0 0 1rem 0;
 }
 
-.modal-buttons .btn-success:hover {
-    background-color: var(--btn-success-hover-bg);
-    border-color: var(--btn-success-hover-border);
+.dialog-description,
+  .alert-description {
+ color: rgba(0, 0, 0, .7);
+
+ margin-bottom: 1.5rem;
 }
 
-/* Bouton d'annulation */
-.modal-buttons .btn-secondary {
-    background-color: var(--btn-grey-bg);
-    border-color: var(--btn-grey-border);
-    color: #fff;
+/* Champs de formulaire */
+.form-field {
+ margin-bottom: 1.5rem;
 }
 
-.modal-buttons .btn-secondary:hover {
-    background-color: var(--btn-grey-hover-bg);
-    border-color: var(--btn-grey-hover-border);
+.field-label {
+ display: block;
+
+ font-weight: 600;
+ margin-bottom: .5rem;
+}
+
+.field-select,
+  .field-input {
+ background: white;
+
+ border: 1px solid rgba(0, 0, 0, .1);
+ border-radius: 8px;
+ font-size: 1rem;
+ padding: .75rem 1rem;
+ width: 100%;
+}
+
+.field-select:focus,
+  .field-input:focus {
+ border-color: var(--primary);
+ box-shadow: 0 0 0 3px rgba(var(--primary-rgb), .15);
+ outline: none;
+}
+
+/* Boutons de dialogue */
+.dialog-buttons,
+  .alert-buttons {
+ display: flex;
+
+ gap: 1rem;
+ justify-content: flex-end;
+ margin-top: 2rem;
+}
+
+/* Icônes de bouton */
+.btn-icon {
+ margin-right: .5rem;
+}
+
+/* Résultats d'opération */
+.result-dialog {
+ text-align: center;
+}
+
+.result-details {
+ margin: 1.5rem 0;
+}
+
+.result-status {
+ border-radius: 8px;
+ font-weight: 500;
+ margin-bottom: .75rem;
+ padding: .75rem;
+}
+
+.result-status.success {
+ color: #28a745;
+
+ background-color: rgba(40, 167, 69, .1);
+}
+
+.result-status.error {
+ color: #dc3545;
+
+ background-color: rgba(220, 53, 69, .1);
+}
+
+/* Animations */
+@keyframes fadeIn {
+ from {
+  opacity: 0;
+ }
+ to {
+  opacity: 1;
+ }
+}
+
+@keyframes slideIn {
+ from {
+  opacity: 0;
+  transform: translate(-50%, -60%);
+ }
+ to {
+  opacity: 1;
+  transform: translate(-50%, -50%);
+ }
+}
+
+/* Adaptations pour le mode sombre */
+.dark-mode .session-item {
+ background: rgba(30, 30, 35, .7);
+
+ box-shadow: 0 10px 30px rgba(0, 0, 0, .2), 0 1px 1px rgba(255, 255, 255, .03);
+}
+
+.dark-mode .session-details {
+ border-top-color: rgba(255, 255, 255, .1);
+}
+
+.dark-mode .players-table th {
+ background: rgba(255, 255, 255, .05);
+}
+
+.dark-mode .players-table th,
+  .dark-mode .players-table td {
+ border-bottom-color: rgba(255, 255, 255, .05);
+}
+
+.dark-mode .empty-state {
+ background: rgba(255, 255, 255, .05);
+}
+
+.dark-mode .warning-notice {
+ background: rgba(255, 193, 7, .05);
+}
+
+.dark-mode .connection-status.connected {
+ color: #5bd778;
+
+ background-color: rgba(40, 167, 69, .2);
+}
+
+.dark-mode .connection-status.disconnected {
+ color: #ffda6a;
+
+ background-color: rgba(255, 193, 7, .2);
+}
+
+.dark-mode .dialog-content,
+  .dark-mode .alert-content {
+ background-color: #1e1e24;
+ box-shadow: 0 10px 40px rgba(0, 0, 0, .3), 0 0 20px rgba(0, 0, 0, .2);
+}
+
+.dark-mode .dialog-description,
+  .dark-mode .alert-description {
+ color: rgba(255, 255, 255, .7);
+}
+
+.dark-mode .field-select,
+  .dark-mode .field-input {
+ color: var(--text-dark);
+ background: rgba(20, 20, 25, .7);
+
+ border-color: rgba(255, 255, 255, .1);
+}
+
+.dark-mode .field-select:focus,
+  .dark-mode .field-input:focus {
+ border-color: var(--primary);
+ box-shadow: 0 0 0 3px rgba(var(--primary-rgb), .25);
+}
+
+/* Styles des boutons - ajout de styles spécifiques pour le mode clair */
+.btn {
+ display: inline-flex;
+
+ align-items: center;
+ border: none;
+ border-radius: 8px;
+ cursor: pointer;
+ font-size: .95rem;
+ font-weight: 600;
+ justify-content: center;
+ padding: .6rem 1.2rem;
+ transition: all .2s ease;
+ white-space: nowrap;
+}
+
+.btn-primary {
+ color: white;
+ background: rgba(var(--primary-rgb), .9);
+}
+
+.btn-primary:hover {
+ background: rgba(var(--primary-rgb), .9);
+
+ transform: translateY(-2px);
+}
+
+.btn-secondary {
+ color: var(--text-light);
+ background: rgba(0, 0, 0, .05);
+}
+
+.btn-secondary:hover {
+ background: rgba(0, 0, 0, .1);
+
+ transform: translateY(-2px);
+}
+
+.btn-danger {
+ color: white;
+ background: var(--danger);
+}
+
+.btn-danger:hover {
+ background: rgba(var(--danger-rgb), .9);
+
+ transform: translateY(-2px);
+}
+
+.btn-warning {
+ color: #212529;
+ background: var(--warning);
+}
+
+.btn-warning:hover {
+ background: rgba(var(--warning-rgb), .9);
+
+ transform: translateY(-2px);
+}
+
+.btn-info {
+ color: white;
+ background: var(--info);
+}
+
+.btn-info:hover {
+ background: rgba(var(--info-rgb), .9);
+
+ transform: translateY(-2px);
+}
+
+/* Adaptations pour le mode sombre qui reprennent les styles existants */
+.dark-mode .btn-secondary {
+ color: var(--text-dark);
+ background: rgba(255, 255, 255, .1);
+}
+
+.dark-mode .btn-secondary:hover {
+ background: rgba(255, 255, 255, .15);
+}
+/* Responsive adaptations */
+@media (max-width: 768px) {
+ .session-header {
+  flex-direction: column;
+
+  align-items: flex-start;
+ }
+
+ .session-actions {
+  justify-content: space-between;
+  width: 100%;
+ }
+
+ .dialog-content,
+ .alert-content {
+  padding: 1.5rem;
+  width: 95%;
+ }
+
+ .dialog-buttons,
+ .alert-buttons {
+  flex-direction: column-reverse;
+
+  gap: .75rem;
+ }
+
+ .dialog-buttons button,
+ .alert-buttons button {
+  width: 100%;
+ }
+
+ .ranking-actions {
+  flex-direction: column;
+ }
+
+ .ranking-actions button {
+  width: 100%;
+ }
 }
