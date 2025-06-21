@@ -104,12 +104,6 @@ function ClientView({ setActiveRoomCode }) {
         // Correction
         error(response.error);
       } else if (response) {
-        console.log("[ClientView] Entrée dans le bloc de succès joinRoom");
-        // ---> AJOUTER CE LOG <---
-        console.log("[ClientView] RAW response reçu par .then():", JSON.stringify(response));
-        // ------------------------
-
-        // --- Traiter TOUTE la réponse AVANT de marquer comme "joined" ---
 
         // Mettre à jour l'état de pause
         if (response.paused !== undefined) {
@@ -125,12 +119,12 @@ function ClientView({ setActiveRoomCode }) {
         // --- Initialisation Spotify à la connexion ---
         const receivedOptions = response.options || {};
         setRoomOptions(receivedOptions); // Met à jour l'état roomOptions
-        console.log("[ClientView] Options de salle reçues à l'init (stringifié):", JSON.stringify(receivedOptions));
+        //console.log("[ClientView] Options de salle reçues à l'init (stringifié):", JSON.stringify(receivedOptions));
 
         let initialArtistFound = false;
         let initialTitleFound = false;
         if (receivedOptions?.spotifyEnabled && response.currentTrack) {
-          console.log("[ClientView] Piste actuelle reçue à l'init:", response.currentTrack);
+          //console.log("[ClientView] Piste actuelle reçue à l'init:", response.currentTrack);
           setSpotifyTrackInfo(response.currentTrack);
           initialArtistFound = response.artistFound || false;
           initialTitleFound = response.titleFound || false;
@@ -310,12 +304,12 @@ const handleBuzz = () => {
           // --- Initialisation Spotify à la connexion ---
           const receivedOptions = response.options || {};
           setRoomOptions(receivedOptions);
-          console.log("[ClientView] Options de salle reçues à l'init:", receivedOptions);
+          //console.log("[ClientView] Options de salle reçues à l'init:", receivedOptions);
 
           let initialArtistFound = false;
           let initialTitleFound = false;
           if (receivedOptions?.spotifyEnabled && response.currentTrack) {
-            console.log("[ClientView] Piste actuelle reçue à l'init:", response.currentTrack);
+            //console.log("[ClientView] Piste actuelle reçue à l'init:", response.currentTrack);
             setSpotifyTrackInfo(response.currentTrack);
             initialArtistFound = response.artistFound || false;
             initialTitleFound = response.titleFound || false;
@@ -433,7 +427,7 @@ const handleBuzz = () => {
           setIsDisabled(false);
           success('Le buzzer est à nouveau disponible');
         } else {
-          console.log("Buzzer reste désactivé après pénalité car piste trouvée ou jeu en pause");
+          //console.log("Buzzer reste désactivé après pénalité car piste trouvée ou jeu en pause");
         }
       }, duration * 1000);
     };
@@ -511,7 +505,7 @@ const handleBuzz = () => {
     };
 
     const handleJudgeAnswer = (data) => {
-      console.log('[ClientView] Événement judge_answer REÇU:', JSON.stringify(data));
+      //console.log('[ClientView] Événement judge_answer REÇU:', JSON.stringify(data));
       const { trackInfo, artistFound: serverArtistFound, titleFound: serverTitleFound } = data;
       const currentRoomType = roomOptions?.roomType || 'Standard';
     
@@ -524,14 +518,14 @@ const handleBuzz = () => {
         // Mettre à jour l'info piste si fournie ET si Spotify est activé
         if (trackInfo) {
           setSpotifyTrackInfo(trackInfo);
-          console.log('[ClientView] judge_answer - setSpotifyTrackInfo AVEC:', trackInfo);
+          //console.log('[ClientView] judge_answer - setSpotifyTrackInfo AVEC:', trackInfo);
         } else {
           console.warn('[ClientView] judge_answer - trackInfo MANQUANT pour une salle Spotify !');
         }
       } else {
         // Pour les salles sans Spotify, on s'assure que spotifyTrackInfo reste null
         setSpotifyTrackInfo(null);
-        console.log('[ClientView] judge_answer - Salle sans Spotify, trackInfo ignoré');
+        //console.log('[ClientView] judge_answer - Salle sans Spotify, trackInfo ignoré');
       }
     
       // Mettre à jour l'état trouvé EXACTEMENT comme reçu du serveur
@@ -545,12 +539,12 @@ const handleBuzz = () => {
       
       // Désactiver le buzzer si piste/question trouvée ou réactiver si nécessaire
       if (trackFullyFoundServer) {
-        console.log("Piste/question entièrement trouvée (selon serveur), désactivation du buzzer.");
+        //console.log("Piste/question entièrement trouvée (selon serveur), désactivation du buzzer.");
         setIsDisabled(true);
       } else if (!gamePaused) {
         // Introduire un délai avant de réactiver le buzzer
         setIsDisabled(true); // Garder désactivé pendant le délai
-        console.log("Jugement reçu, application d'un délai avant réactivation du buzzer.");
+        //console.log("Jugement reçu, application d'un délai avant réactivation du buzzer.");
         setTimeout(() => {
           // Re-vérifier les conditions au moment de la réactivation
           const currentTrackFullyFoundAfterDelay = 
@@ -559,10 +553,10 @@ const handleBuzz = () => {
     
           if (!currentTrackFullyFoundAfterDelay && !gamePaused) {
             setIsDisabled(false);
-            console.log("Buzzer réactivé après délai post-jugement.");
+            //console.log("Buzzer réactivé après délai post-jugement.");
             info('Le buzzer est à nouveau disponible.');
           } else {
-            console.log("Buzzer reste désactivé après délai post-jugement (piste/question trouvée ou jeu en pause).");
+            //console.log("Buzzer reste désactivé après délai post-jugement (piste/question trouvée ou jeu en pause).");
           }
         }, 1000); // Délai de 1 seconde
       }
@@ -592,7 +586,7 @@ const handleBuzz = () => {
     };
 
     const handleRoomOptionsUpdated = (options) => {
-      console.log("[ClientView] Événement room_options_updated REÇU:", JSON.stringify(options));
+      //console.log("[ClientView] Événement room_options_updated REÇU:", JSON.stringify(options));
       setRoomOptions(options || { roomType: 'Standard', spotifyEnabled: false });
       // Potentiellement recalculer l'état du buzzer si le roomType change
       const trackFullyFound =
@@ -690,7 +684,7 @@ const handleBuzz = () => {
 
     // NOUVEAU : Réinitialisation pour question suivante
     on('next_question', () => {
-      console.log("[ClientView] Question suivante - réinitialisation");
+      //console.log("[ClientView] Question suivante - réinitialisation");
       setFoundArtist(false);
       setFoundTitle(false);
       setBuzzedBy('');
@@ -814,133 +808,123 @@ const handleBuzz = () => {
   // Effet simple pour le Wake Lock - empêche l'écran de s'éteindre
   useEffect(() => {
     let wakeLock = null;
-    let videoElement = null;
-    let isUsingVideoWakeLock = false;
+    let wakeLockInterval = null;
     
-    // Fonction pour gérer le wake lock selon la plateforme
     const enableWakeLock = async () => {
-      // Solution standard pour Chrome, Edge, etc.
+      // 1. Essayer l'API Wake Lock standard d'abord
       if ('wakeLock' in navigator) {
         try {
           wakeLock = await navigator.wakeLock.request('screen');
-          console.log('Wake Lock activé via API standard - écran maintenu allumé');
+          //console.log('Wake Lock activé via API standard');
           
-          // Si on utilisait précédemment la vidéo, on peut la nettoyer
-          if (isUsingVideoWakeLock && videoElement) {
-            videoElement.pause();
-            videoElement.remove();
-            videoElement = null;
-            isUsingVideoWakeLock = false;
-            console.log('Vidéo de Wake Lock supprimée car API standard disponible');
-          }
+          // Gérer la libération automatique (onglet caché, etc.)
+          wakeLock.addEventListener('release', () => {
+            //console.log('Wake Lock libéré automatiquement');
+          });
           
-          return true; // Signal que l'API standard fonctionne
+          return true;
         } catch (err) {
-          console.log('Wake Lock API non disponible, utilisation de l\'alternative vidéo');
-          return createVideoWakeLock();
+          //console.log('Wake Lock API échoué:', err.message);
+          // Continuer vers le fallback
         }
-      } 
-      // Solution alternative pour Safari iOS et autres navigateurs sans API Wake Lock
-      else {
-        return createVideoWakeLock();
       }
+      
+      // 2. Fallback pour Safari iOS - Méthode NoSleep améliorée
+      return enableNoSleepFallback();
     };
     
-    // Fonction pour créer un wake lock basé sur une vidéo
-    const createVideoWakeLock = () => {
-      try {
-        // Si un élément vidéo existe déjà et semble fonctionner, ne pas le recréer
-        if (videoElement && videoElement.parentNode) {
-          try {
-            videoElement.play().then(() => {
-              console.log('Wake Lock vidéo existant réactivé');
-              isUsingVideoWakeLock = true;
-              return true;
-            }).catch(err => {
-              console.log('Erreur lors de la relecture de la vidéo existante, création d\'un nouvel élément');
-              // Si la lecture échoue, on nettoie et on continue pour créer un nouveau
-              videoElement.pause();
-              videoElement.remove();
-              videoElement = null;
-            });
-          } catch (e) {
-            // En cas d'erreur, on nettoie et on continue
-            if (videoElement) {
-              videoElement.pause();
-              videoElement.remove();
-              videoElement = null;
+    const enableNoSleepFallback = () => {
+      // Créer une vidéo très courte et silencieuse - Version optimisée iOS 16+
+      const video = document.createElement('video');
+      video.style.cssText = 'position:fixed;top:-1px;left:-1px;width:1px;height:1px;opacity:0;pointer-events:none;';
+      video.muted = true;
+      video.loop = true;
+      video.playsInline = true;
+      
+      // Attributs optimisés pour iOS récent
+      video.setAttribute('webkit-playsinline', 'true');
+      video.setAttribute('preload', 'metadata');
+      video.setAttribute('autoplay', 'true');
+      video.setAttribute('playsinline', '');
+      video.setAttribute('controls', false);
+      
+      // WebM optimisé + ID pour éviter les doublons
+      video.id = 'wake-lock-video';
+      video.src = 'data:video/webm;base64,GkXfo0AgQoaBAUL3gQFC8oEEQvOBCEKCQAR3ZWJtQoeBAkKFgQIYU4BnQI0VSalmQCgq17FAAw9CQE2AQAZ3aGFtbXlXQ4BnQI4fVIEMAARCR0CDrAFCiAFCuAFCtwFCigFCjQFCnQFCmgFCnAFCfwFCrQFCuwFCvAFCpQFCiAFCnQFCvQFCuwFCfAFCsQFCwgFCsAFCrQFCugFCvwFCsAFCrAFCsAFCpQFCigFCpQFCbAFCtwFCsQFCsAFCvQFCvwFCuwFCsAFCrgFCrgFCsAFCqgFCsQFCqgFCsAFCsAFCsAFCsAFCsAFCsAFCsAFCsAFCsAFCsAFCsAFCsAFCsAFCsAFCsAFCsAFCsAFCsAFCsAFCsAFCsAFCsAFCsAFCsAFCsAFCsAFCsAFCsAFCsAFCsAFCsAFCsAFCsAFCsAFCsAFCsAFCsAFCsAFCsAFCsAFCsAFCsAFCsAFCsAFCsAFCsAFCsAFCsAFCsAFCsAFCsAFCsAFCsAFCsAFCsAFCsAFCsAFCsAFCsAFCsAFCsAFCsAFCsAFCsAFCsAFCsAFCsAFCsAFCsAFCsAFCsAFCsAFCsAFCsAFCsAFCsAFCsAFCsAFCsAFCsAFCsAFCsAFCsAFCsAFCsAFCsAFCsAFCsAFCsAFCsAFCsAFCsAFCsAFCsAFCsAFCsAFCsAFCsAFCsAFCsAFCsAFCsAFCsAFCsAFCsAFCsAFCsAFCsAFCsAFCsAFCsAFCsAFCsAFCsAFCsAFCsAFCsAFCsAFCsAFCsAFCsAFCsAFCsAFCsAFCsAFCsAFCsAFCsAFCsAFCsAFCsAFCsAFCsAFCsAFCsAFCsAFCsAFCsAFCsAFCsAFCsAFCsAFCsAFCsAFCsAFCsAFCsAFCsAFCsAFCsAFCsAFCsAFCsAFCsAFCsAFCsAFCsAFCsAFCsAFCsAFCsAFCsAFCsAFCsAFCsAFCsAFCsAFCsAFCsAFCsAFCsAFCsAFCsAFCsAFCsAFCsAFCsAFCsAFCsAFCsAFCsAFCsAFCsAFCsAFCsAFCsAFCsAFCsAFCsAFCsAFCsAFCsAFCsAFCsAFCsAFCsAFCsAFCsAFCsAFCsAFCsAFCsAFCsAFCsAFCsAFCsAFCsAFCsAFCsAFCsAFCsAFCsAFCsAFCsAFCsAFCsAFCsAFCsAFCsAFCsAFCsAFCsAFCsAFCsAFCsAFCsAFCsAFCsAFCsAFCsAFCsAFCsAFCsAFCsAFCsAFCsAFCsAFCsAFCsAFCsAFCsAFCsAFCsAFCsAFCsAFCsAFCsAFCsAFCsAFCsAFCsAFCsAFCsAFCsAFCsAFCsAFCsAFCsAFCsAFCsAFCsAFCsAFCsAFCsAFCsAFCsAFCsAFCsAFCsAFCsAFCsAFCsAFCsAFCsAFCsAFCsAFCsAFCsAFCsAFCsAFCsAFCsAFCsAFCsAFCsAFCsAFCsAFCsAFCsAFCsAFCsAFCsAFCsAFCsAFCsAFCsAFCsAFCsAFCsAFCsAFCsAFCsAFCsAFCsAFCsAFCsAFCsAFCsAFCsAFCsAFCsAFCsAFCsAFCsAFCsAFCsAFCsAFCsAFCsAFCsAFCsAFCsAFCsAFCsAFCsAFCsAFCsAFCsAFCsAFCsAFCsAFCsAFCsAFCsAFCsAFCsAFCsAFCsAFCsAFCsAFCsAFCsAFCsAFCsAFCsAFCsAFCsAFCsAFCsAFCsAFCsAFCsAFCsAFCsAFCsAFCsAFCsAFCsAFCsAFCsAFCsAFCsAFCsAFCsAFCsAFCsAFCsAFCsAFCsAFCsAFCsAFCsAFCsAFCsAFCsAFCsAFCsAFCsAFCsAFCsAFCsAFCsAFCsAFCsAFCsAFCsAFCsAFCsAFCsAFCsAFCsAFCsAFCsAFCsAFCsAFCsAFCsAFCsAFCsAFCsAFCsAFCsAFCsAFCsAFCsAFCsAFCsAFCsAFCsAFCsAFCsAFCsAFCsAFCsAFCsAFCsAFCsAFCsAFCsAFCsAFCsAFCsAFCsAFCsAFCsAFCsAFCsAFCsAFCsAFCsAFCsAFCsAFCsAFCsAFCsAFCsAFCsAFCsAFCsAFCsAFCsAFCsAFCsAFCsAFCsAFCsAFCsAFCsAFCsAFCsAFCsAFCsAFCsAFCsAFCsAFCsAFCsAFCsAFCsAFCsAFCsAFCsAFCsAFCsAFCsAFCsAFCsAFCsAFCsAFCsAFCsAFCsAFCsAFCsAFCsAFCsAFCsAFCsAFCsAFCsAFCsAFCsAFCsAFCsAFCsAFCsAFCsAFCsAFCsAFCsAFCsAFCsAFCsAFCsAFCsAFCsAFCsAFCsAFCsAFCsAFCsAFCsAFCsAFCsAFCsAFCsAFCsAFCsAFCsAFCsAFCsAFCsAFCsAFCsAFCsAFCsAFCsAFCsAFCsAFCsAFCsAFCsAFCsAFCsAFCsAFCsAFCsAFCsAFCsAFCsAFCsAFCsAFCsAFCsAFCsAFCsAFCsAFCsAFCsAFCsAFCsAFCsAFCsAFCsAFCsAFCsAFCsAFCsAFCsAFCsAFCsAFCsAFCsAFCsAFCsAFCsAFCsAFCs=';
+      
+      document.body.appendChild(video);
+    
+      const keepAwake = () => {
+        // Méthode 1: Redémarrer la vidéo (technique principale)
+        video.currentTime = 0;
+        video.play().catch(() => {
+          //console.log('Fallback vidéo: tentative de rechargement');
+        });
+        
+        // Méthode 2: Backup renforcé pour iOS 16+
+        if (Math.random() < 0.25) { // Augmenter à 25% pour iOS récent
+          // Technique A: CSS custom property avec timestamp
+          const timestamp = Date.now();
+          document.body.style.setProperty('--wake-lock-timestamp', timestamp.toString());
+          
+          // Technique B: Micro-animation CSS invisible renforcée
+          const helper = document.createElement('div');
+          helper.style.cssText = 'position:fixed;top:-9999px;left:-9999px;width:1px;height:1px;transform:translateZ(0);opacity:0.01;';
+          document.body.appendChild(helper);
+          
+          // Force un reflow multiple pour iOS récent
+          helper.offsetHeight;
+          helper.offsetWidth;
+          
+          // Technique C: Manipulation CSS supplémentaire
+          helper.style.transform = 'translateZ(0.01px)';
+          helper.offsetHeight; // Second reflow
+          
+          setTimeout(() => {
+            if (helper.parentNode) {
+              document.body.removeChild(helper);
             }
+          }, 150); // Légèrement plus long
+        }
+      };
+      
+      // Intervalle optimisé pour iOS récent (1.2 secondes)
+      wakeLockInterval = setInterval(keepAwake, 1200);
+      //console.log('Wake Lock fallback activé (WebM + backup renforcé pour iOS 16+)');
+      return true;
+    };
+   
+    const handleVisibilityChange = async () => {
+      if (document.visibilityState === 'visible' && joined) {
+        // Réactiver le wake lock quand on revient sur la page
+        if ('wakeLock' in navigator && (!wakeLock || wakeLock.released)) {
+          try {
+            wakeLock = await navigator.wakeLock.request('screen');
+            //console.log('Wake Lock réactivé après retour sur la page');
+          } catch (err) {
+            //console.log('Impossible de réactiver le Wake Lock:', err.message);
           }
         }
-        
-        // Création d'un nouvel élément vidéo
-        if (!videoElement) {
-          videoElement = document.createElement('video');
-          videoElement.setAttribute('playsinline', '');
-          videoElement.setAttribute('muted', '');
-          // Vidéo transparente, ultra-courte en base64
-          videoElement.setAttribute('src', 'data:video/mp4;base64,AAAAIGZ0eXBtcDQyAAAAAG1wNDJtcDQxaXNvbWF2YzEAAATKbW9vdgAAAGxtdmhkAAAAANLEP5XSxD+VAAB1MAAAdU4AAQAAAQAAAAAAAAAAAAAAAAEAAAAAAAAAAAAAAAAAAAABAAAAAAAAAAAAAAAAAABAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAgAAACFpb2RzAAAAABCAgIAHAE/////+/wAAAiF0cmFrAAAAXHRraGQAAAAP0sQ/ldLEP5UAAAABAAAAAAAAAHUyAAAAAAAAAAAAAAAAAAAAAAEAAAAAAAAAAAAAAAAAAAABAAAAAAAAAAAAAAAAAABAAAAAALAAAACQAAAAAAAkZWR0cwAAABxlbHN0AAAAAAAAAAEAAHUyAAAAAAABAAAAAAKobWRpYQAAACBtZGhkAAAAANLEP5XSxD+VAAB1MAAAdU5VxAAAAAAANmhkbHIAAAAAAAAAAHZpZGUAAAAAAAAAAAAAAABMLVNNQVNIIFZpZGVvIEhhbmRsZXIAAAACC21pbmYAAAAUdm1oZAAAAAEAAAAAAAAAAAAAACRkaW5mAAAAHGRyZWYAAAAAAAAAAQAAAAx1cmwgAAAAAQAAAcNzdGJsAAAAwXN0c2QAAAAAAAAAAQAAALFhdmMxAAAAAAAAAAEAAAAAAAAAAAAAAAAAAAAAALAAkABIAAAASAAAAAAAAAABCkFWQyBDb2RpbmcAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAP//AAAAOGF2Y0MBZAAf/+EAHGdkAB+s2UCgC/oAAAMADwABAAZAGBerEQAAABhzdHRzAAAAAAAAAAEAAAAeAAAB4AAAABRzdHNzAAAAAAAAAAEAAAABAAAAHHN0c2MAAAAAAAAAAQAAAAEAAAABAAAAAQAAAIxzdHN6AAAAAAAAAAAAAAAeAAADygAAAE8AAABPAAAATwAAAE8AAABOAAAATwAAAE8AAABPAAAATwAAAE8AAABPAAAATwAAAE8AAABPAAAA4HN0Y28AAAAAAAAAAQAAADAAAABidWR0YQAAAFptZXRhAAAAAAAAACFoZGxyAAAAAAAAAABtZGlyYXBwbAAAAAAAAAAAAAAAAC1pbHN0AAAAJal0b28AAAAdZGF0YQAAAAEAAAAATGF2ZjU2LjQwLjEwMQ==');
-          videoElement.setAttribute('loop', '');
-          videoElement.style.width = '1px';
-          videoElement.style.height = '1px';
-          videoElement.style.position = 'absolute';
-          videoElement.style.opacity = '0';
-          videoElement.style.pointerEvents = 'none';
-          document.body.appendChild(videoElement);
-          
-          videoElement.muted = true;
-          return videoElement.play().then(() => {
-            console.log('Wake Lock activé via vidéo en arrière-plan - écran maintenu allumé');
-            isUsingVideoWakeLock = true;
-            return true;
-          }).catch(err => {
-            console.error('Erreur lors de la lecture de la vidéo:', err);
-            return false;
-          });
-        }
-        return false;
-      } catch (err) {
-        console.error('Erreur lors de la création du wake lock vidéo:', err);
-        return false;
       }
     };
     
-    // Gérer les changements de visibilité pour réactiver le wake lock
-    const handleVisibilityChange = () => {
-      if (document.visibilityState === 'visible' && joined) {
-        // Réactiver le wake lock quand l'utilisateur revient sur la page
-        if ('wakeLock' in navigator && !wakeLock) {
-          enableWakeLock();
-        } else if (isUsingVideoWakeLock && videoElement) {
-          // Seulement tenter de relancer la vidéo si c'est la méthode qu'on utilise
-          videoElement.play().catch(err => {
-            console.error('Erreur lors de la reprise de la vidéo:', err);
-            // Si la reprise échoue, essayer de recréer complètement le mécanisme de wake lock
-            createVideoWakeLock();
-          });
-        }
-      }
-    };
-    
-    // Activer le wake lock uniquement quand l'utilisateur a rejoint la salle
+    // Activer le wake lock quand l'utilisateur rejoint
     if (joined) {
       enableWakeLock();
-      // Ajouter un gestionnaire d'événements pour réactiver le wake lock
       document.addEventListener('visibilitychange', handleVisibilityChange);
     }
     
-    // Fonction de nettoyage
+    // Nettoyage
     return () => {
-      if (wakeLock) {
+      if (wakeLock && !wakeLock.released) {
         wakeLock.release()
-          .then(() => console.log('Wake Lock libéré'))
-          .catch(e => console.log('Erreur lors de la libération du Wake Lock'));
+          .then(() => //console.log('Wake Lock libéré'))
+          .catch(e => //console.log('Erreur libération Wake Lock:', e));
       }
       
-      if (videoElement) {
-        videoElement.pause();
-        videoElement.remove();
-        console.log('Vidéo de Wake Lock supprimée');
+      if (wakeLockInterval) {
+        clearInterval(wakeLockInterval);
+        //console.log('Wake Lock fallback désactivé');
       }
       
       document.removeEventListener('visibilitychange', handleVisibilityChange);
