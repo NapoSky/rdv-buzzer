@@ -252,11 +252,11 @@ async function getCurrentPlayback(roomCode) {
                                 remaining: positionInfo.total - positionInfo.position
                             };
                             
-                            logger.info('SPOTIFY_PLAYLIST', `Position calculée pour ${roomCode}`, {
-                                track: data.body.item.name,
-                                position: positionInfo.position,
-                                total: positionInfo.total
-                            });
+                            //logger.info('SPOTIFY_PLAYLIST', `Position calculée pour ${roomCode}`, {
+                            //    track: data.body.item.name,
+                            //    position: positionInfo.position,
+                            //    total: positionInfo.total
+                            //});
                         }
                     }
                 } else {

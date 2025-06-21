@@ -33,6 +33,98 @@ function isSpotifyEnabledForRoom(roomCode) {
 }
 
 /**
+ * Vérifie les autorisations pour les actions Spotify
+ * @param {string} roomCode - Code de la salle
+ * @param {string} socketId - ID du socket
+ * @returns {{ authorized: boolean, room?: Room, error?: string }}
+ */
+function checkSpotifyAuthorization(roomCode, socketId) {
+  const room = Room.get(roomCode);
+  
+  if (!room) {
+    return { authorized: false, error: 'Salle non trouvée' };
+  }
+  
+  if (room.adminId !== socketId) {
+    return { authorized: false, error: 'Non autorisé' };
+  }
+  
+  return { authorized: true, room };
+}
+
+/**
+ * Wrapper générique pour les actions Spotify avec gestion d'erreurs
+ * @param {Function} action - Action à exécuter
+ * @param {string} logContext - Contexte pour les logs
+ * @param {Function} callback - Callback de réponse
+ */
+async function executeSpotifyAction(action, logContext, callback) {
+  try {
+    const result = await action();
+    
+    if (result.success) {
+      logger.info('SPOTIFY_INTEGRATION', `${logContext} réussie`, result.logData || {});
+      if (callback) callback({ success: true, ...result.data });
+    } else {
+      logger.error('SPOTIFY_INTEGRATION', `Échec ${logContext}`, result.logData || {});
+      if (callback) callback({ error: result.error || `Erreur ${logContext}` });
+    }
+  } catch (error) {
+    logger.error('SPOTIFY_INTEGRATION', `Erreur lors de ${logContext}`, error);
+    if (callback) callback({ error: 'Erreur interne' });
+  }
+}
+
+/**
+ * Gère les changements de piste (suivante/précédente)
+ * @param {Socket} socket - Socket client
+ * @param {Server} io - Instance Socket.IO
+ * @param {Object} data - Données de l'événement
+ * @param {Function} callback - Callback de réponse
+ * @param {Function} trackAction - Action de changement de piste
+ * @param {string} actionName - Nom de l'action pour les logs
+ */
+async function handleTrackChange(socket, io, data, callback, trackAction, actionName) {
+  const { roomCode } = data;
+  const authCheck = checkSpotifyAuthorization(roomCode, socket.id);
+  
+  if (!authCheck.authorized) {
+    return callback && callback({ error: authCheck.error });
+  }
+
+  await executeSpotifyAction(
+    async () => {
+      const result = await trackAction(roomCode);
+      
+      if (result.success) {
+        // Réinitialiser l'état de la salle pour la nouvelle piste
+        Room.resetQuestionState(roomCode, result.currentTrack);
+        
+        io.to(roomCode).emit('spotify_track_changed', { 
+          roomCode, 
+          track: result.currentTrack 
+        });
+        io.to(roomCode).emit('update_players', authCheck.room.players);
+        
+        return {
+          success: true,
+          data: { track: result.currentTrack },
+          logData: { roomCode }
+        };
+      }
+      
+      return {
+        success: false,
+        error: result.error || 'Erreur changement de piste',
+        logData: { roomCode, error: result.error }
+      };
+    },
+    actionName,
+    callback
+  );
+}
+
+/**
  * Attache les événements liés à l'intégration Spotify
  * @param {Socket} socket - Socket client
  * @param {Server} io - Instance Socket.IO
@@ -144,153 +236,116 @@ async function handleSpotifyDisconnect(socket, io, data, callback) {
  * Gère la lecture Spotify
  */
 async function handleSpotifyPlay(socket, io, data, callback) {
-  try {
-    const { roomCode } = data;
-    const room = Room.get(roomCode);
-
-    if (!room || room.adminId !== socket.id) {
-      return callback && callback({ error: 'Non autorisé' });
-    }
-
-    const result = await spotifyService.resumePlayback(roomCode);
-    
-    if (result.success) {
-      logger.info('SPOTIFY_INTEGRATION', 'Lecture Spotify reprise', { roomCode });
-      io.to(roomCode).emit('spotify_status', { action: 'playing' });
-      callback && callback({ success: true });
-    } else {
-      callback && callback({ error: result.error || 'Erreur de lecture' });
-    }
-  } catch (error) {
-    logger.error('SPOTIFY_INTEGRATION', 'Erreur lors de la lecture', error);
-    callback && callback({ error: 'Erreur interne' });
+  const { roomCode } = data;
+  const authCheck = checkSpotifyAuthorization(roomCode, socket.id);
+  
+  if (!authCheck.authorized) {
+    return callback && callback({ error: authCheck.error });
   }
+
+  await executeSpotifyAction(
+    async () => {
+      const result = await spotifyService.resumePlayback(roomCode);
+      
+      if (result.success) {
+        io.to(roomCode).emit('spotify_status', { action: 'playing' });
+        return {
+          success: true,
+          logData: { roomCode }
+        };
+      }
+      
+      return {
+        success: false,
+        error: result.error || 'Erreur de lecture',
+        logData: { roomCode, error: result.error }
+      };
+    },
+    'reprise de lecture',
+    callback
+  );
 }
 
 /**
  * Gère la pause Spotify
  */
 async function handleSpotifyPause(socket, io, data, callback) {
-  try {
-    const { roomCode } = data;
-    const room = Room.get(roomCode);
-
-    if (!room || room.adminId !== socket.id) {
-      return callback && callback({ error: 'Non autorisé' });
-    }
-
-    const result = await spotifyService.pausePlayback(roomCode);
-    
-    if (result.success) {
-      logger.info('SPOTIFY_INTEGRATION', 'Lecture Spotify mise en pause', { roomCode });
-      io.to(roomCode).emit('spotify_status', { action: 'paused' });
-      callback && callback({ success: true });
-    } else {
-      callback && callback({ error: result.error || 'Erreur de pause' });
-    }
-  } catch (error) {
-    logger.error('SPOTIFY_INTEGRATION', 'Erreur lors de la pause', error);
-    callback && callback({ error: 'Erreur interne' });
+  const { roomCode } = data;
+  const authCheck = checkSpotifyAuthorization(roomCode, socket.id);
+  
+  if (!authCheck.authorized) {
+    return callback && callback({ error: authCheck.error });
   }
+
+  await executeSpotifyAction(
+    async () => {
+      const result = await spotifyService.pausePlayback(roomCode);
+      
+      if (result.success) {
+        io.to(roomCode).emit('spotify_status', { action: 'paused' });
+        return {
+          success: true,
+          logData: { roomCode }
+        };
+      }
+      
+      return {
+        success: false,
+        error: result.error || 'Erreur de pause',
+        logData: { roomCode, error: result.error }
+      };
+    },
+    'mise en pause',
+    callback
+  );
 }
 
 /**
  * Gère le passage à la piste suivante
  */
 async function handleSpotifyNext(socket, io, data, callback) {
-  try {
-    const { roomCode } = data;
-    const room = Room.get(roomCode);
-
-    if (!room || room.adminId !== socket.id) {
-      return callback && callback({ error: 'Non autorisé' });
-    }
-
-    const result = await spotifyService.nextTrack(roomCode);
-    
-    if (result.success) {
-      logger.info('SPOTIFY_INTEGRATION', 'Piste suivante', { roomCode });
-      
-      // Réinitialiser l'état de la salle pour la nouvelle piste
-      Room.resetQuestionState(roomCode, result.currentTrack);
-      
-      io.to(roomCode).emit('spotify_track_changed', { 
-        roomCode, 
-        track: result.currentTrack 
-      });
-      io.to(roomCode).emit('update_players', room.players);
-      
-      callback && callback({ success: true, track: result.currentTrack });
-    } else {
-      callback && callback({ error: result.error || 'Erreur changement de piste' });
-    }
-  } catch (error) {
-    logger.error('SPOTIFY_INTEGRATION', 'Erreur lors du changement de piste', error);
-    callback && callback({ error: 'Erreur interne' });
-  }
+  await handleTrackChange(socket, io, data, callback, spotifyService.nextTrack, 'piste suivante');
 }
 
 /**
  * Gère le passage à la piste précédente
  */
 async function handleSpotifyPrevious(socket, io, data, callback) {
-  try {
-    const { roomCode } = data;
-    const room = Room.get(roomCode);
-
-    if (!room || room.adminId !== socket.id) {
-      return callback && callback({ error: 'Non autorisé' });
-    }
-
-    const result = await spotifyService.previousTrack(roomCode);
-    
-    if (result.success) {
-      logger.info('SPOTIFY_INTEGRATION', 'Piste précédente', { roomCode });
-      
-      // Réinitialiser l'état de la salle pour la nouvelle piste
-      Room.resetQuestionState(roomCode, result.currentTrack);
-      
-      io.to(roomCode).emit('spotify_track_changed', { 
-        roomCode, 
-        track: result.currentTrack 
-      });
-      io.to(roomCode).emit('update_players', room.players);
-      
-      callback && callback({ success: true, track: result.currentTrack });
-    } else {
-      callback && callback({ error: result.error || 'Erreur changement de piste' });
-    }
-  } catch (error) {
-    logger.error('SPOTIFY_INTEGRATION', 'Erreur lors du changement de piste', error);
-    callback && callback({ error: 'Erreur interne' });
-  }
+  await handleTrackChange(socket, io, data, callback, spotifyService.previousTrack, 'piste précédente');
 }
 
 /**
  * Gère le positionnement dans la piste
  */
 async function handleSpotifySeek(socket, io, data, callback) {
-  try {
-    const { roomCode, positionMs } = data;
-    const room = Room.get(roomCode);
-
-    if (!room || room.adminId !== socket.id) {
-      return callback && callback({ error: 'Non autorisé' });
-    }
-
-    const result = await spotifyService.seekToPosition(roomCode, positionMs);
-    
-    if (result.success) {
-      logger.info('SPOTIFY_INTEGRATION', 'Position changée', { roomCode, positionMs });
-      io.to(roomCode).emit('spotify_position_changed', { roomCode, positionMs });
-      callback && callback({ success: true });
-    } else {
-      callback && callback({ error: result.error || 'Erreur de positionnement' });
-    }
-  } catch (error) {
-    logger.error('SPOTIFY_INTEGRATION', 'Erreur lors du positionnement', error);
-    callback && callback({ error: 'Erreur interne' });
+  const { roomCode, positionMs } = data;
+  const authCheck = checkSpotifyAuthorization(roomCode, socket.id);
+  
+  if (!authCheck.authorized) {
+    return callback && callback({ error: authCheck.error });
   }
+
+  await executeSpotifyAction(
+    async () => {
+      const result = await spotifyService.seekToPosition(roomCode, positionMs);
+      
+      if (result.success) {
+        io.to(roomCode).emit('spotify_position_changed', { roomCode, positionMs });
+        return {
+          success: true,
+          logData: { roomCode, positionMs }
+        };
+      }
+      
+      return {
+        success: false,
+        error: result.error || 'Erreur de positionnement',
+        logData: { roomCode, positionMs, error: result.error }
+      };
+    },
+    'changement de position',
+    callback
+  );
 }
 
 /**

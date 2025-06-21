@@ -201,25 +201,15 @@ function handleJoinRoom(socket, io, data, callback) {
         // Renvoyer l'état complet, comme pour un nouveau joueur
         const clientState = Room.getClientState(roomCode);
         if (clientState) {
-            logger.info('JOIN_ROOM_DEBUG', `Préparation de la réponse pour client RECONNECTÉ ${socket.id} dans ${roomCode}`, {
-                clientStatePayload: JSON.stringify(clientState) // Logguer le payload complet
-            });
+            //logger.info('JOIN_ROOM_DEBUG', `Préparation de la réponse pour client RECONNECTÉ ${socket.id} dans ${roomCode}`, {
+            //    clientStatePayload: JSON.stringify(clientState) // Logguer le payload complet
+            //});
             return callback(clientState); // Envoyer l'état complet
         } else {
             // Sécurité : si getClientState échoue, renvoyer une erreur
             logger.error('JOIN_ROOM_DEBUG', `Erreur: clientState est null pour ${roomCode} lors de la RECONNEXION de ${socket.id}`);
             return callback({ error: 'Erreur interne lors de la récupération de l\'état de la salle après reconnexion' });
         }
-        // --- FIN MODIFICATION ---
-
-        /* ANCIEN CODE :
-        return callback({
-          success: true,
-          roomCode,
-          pseudo,
-          paused: room.paused
-        });
-        */
       }
 
       // Gérer le cas où le pseudo est pris par quelqu'un d'autre (logique inchangée)
@@ -254,9 +244,9 @@ function handleJoinRoom(socket, io, data, callback) {
     // La réponse pour un joueur normal (nouveau ou reconnecté) utilise getClientState
     const clientState = Room.getClientState(roomCode);
     if (clientState) {
-        logger.info('JOIN_ROOM_DEBUG', `Préparation de la réponse pour client standard ${socket.id} dans ${roomCode}`, {
-            clientStatePayload: JSON.stringify(clientState) // Logguer le payload complet
-        });
+        //logger.info('JOIN_ROOM_DEBUG', `Préparation de la réponse pour client standard ${socket.id} dans ${roomCode}`, {
+        //    clientStatePayload: JSON.stringify(clientState) // Logguer le payload complet
+        //});
         callback(clientState); // Envoyer l'état complet
     } else {
         logger.error('JOIN_ROOM_DEBUG', `Erreur: clientState est null pour ${roomCode} lors de la réponse à ${socket.id}`);

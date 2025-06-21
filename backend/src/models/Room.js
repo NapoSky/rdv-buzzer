@@ -255,7 +255,7 @@ function handleJoinRoom(socket, io, data, callback) {
         // --- MODIFICATION : Utiliser getClientState ---
         const clientState = Room.getClientState(roomCode);
         if (clientState) {
-            logger.info('JOIN_ROOM_DEBUG', `Préparation de la réponse pour ADMIN RECONNECTÉ ${socket.id} dans ${roomCode}`);
+            //logger.info('JOIN_ROOM_DEBUG', `Préparation de la réponse pour ADMIN RECONNECTÉ ${socket.id} dans ${roomCode}`);
             return callback(clientState); // Envoyer l'état complet
         } else {
             logger.error('JOIN_ROOM_DEBUG', `Erreur: clientState null pour ADMIN RECONNECTÉ ${socket.id}`);

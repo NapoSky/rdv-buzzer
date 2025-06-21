@@ -815,16 +815,16 @@ const handleBuzz = () => {
       if ('wakeLock' in navigator) {
         try {
           wakeLock = await navigator.wakeLock.request('screen');
-          //console.log('Wake Lock activé via API standard');
+          console.log('Wake Lock activé via API standard');
           
           // Gérer la libération automatique (onglet caché, etc.)
           wakeLock.addEventListener('release', () => {
-            //console.log('Wake Lock libéré automatiquement');
+            console.log('Wake Lock libéré automatiquement');
           });
           
           return true;
         } catch (err) {
-          //console.log('Wake Lock API échoué:', err.message);
+          console.log('Wake Lock API échoué:', err.message);
           // Continuer vers le fallback
         }
       }
@@ -890,7 +890,7 @@ const handleBuzz = () => {
       
       // Intervalle optimisé pour iOS récent (1.2 secondes)
       wakeLockInterval = setInterval(keepAwake, 1200);
-      //console.log('Wake Lock fallback activé (WebM + backup renforcé pour iOS 16+)');
+      console.log('Wake Lock fallback activé (WebM + backup renforcé pour iOS 16+)');
       return true;
     };
    
@@ -900,9 +900,9 @@ const handleBuzz = () => {
         if ('wakeLock' in navigator && (!wakeLock || wakeLock.released)) {
           try {
             wakeLock = await navigator.wakeLock.request('screen');
-            //console.log('Wake Lock réactivé après retour sur la page');
+            console.log('Wake Lock réactivé après retour sur la page');
           } catch (err) {
-            //console.log('Impossible de réactiver le Wake Lock:', err.message);
+            console.log('Impossible de réactiver le Wake Lock:', err.message);
           }
         }
       }
@@ -918,13 +918,13 @@ const handleBuzz = () => {
     return () => {
       if (wakeLock && !wakeLock.released) {
         wakeLock.release()
-          .then(() => //console.log('Wake Lock libéré'))
-          .catch(e => //console.log('Erreur libération Wake Lock:', e));
+          .then(() => console.log('Wake Lock libéré'))
+          .catch(e => console.log('Erreur libération Wake Lock:', e));
       }
       
       if (wakeLockInterval) {
         clearInterval(wakeLockInterval);
-        //console.log('Wake Lock fallback désactivé');
+        console.log('Wake Lock fallback désactivé');
       }
       
       document.removeEventListener('visibilitychange', handleVisibilityChange);
