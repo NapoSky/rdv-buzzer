@@ -72,8 +72,8 @@ Ce projet constitue le backend de l’application **RDV-Buzzer**, permettant de 
 ## ⚙️ **Variables d'environnement**
 Avant de lancer l’application, configurez vos variables d’environnement. Vous pouvez vous inspirer du fichier **`.env.example`**.
 
-| Variable                | Description                                 | Valeur par défaut     | Obligatoire  |
-|------------------------|--------------------------------------------|-------------------------|--------------|
+| Variable               | Description                                | Valeur par défaut       | Obligatoire  |
+|------------------------|--------------------------------------------|-------------------------|---------------|
 | `APP_SECRET`           | Clé secrète JWT                            | —                       | ✅ Oui       |
 | `PORT`                 | Port du serveur                            | `3001`                  | ❌ Optionnel |
 | `NODE_ENV`             | Mode (`development` / `production`)        | `development`           | ❌ Optionnel |

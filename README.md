@@ -59,4 +59,4 @@ docker-compose up -d --build
 1. **Frontend** gère l’interface utilisateur et communique avec le **Backend** via HTTP et WebSockets.  
 2. **Backend** assure la logique métier (buzzer, sessions de quiz, scores) et expose des routes API ainsi qu’un serveur WebSocket.
 
-Assurez-vous de configurer correctement les variables d’environnement pour que les deux parties puissent communiquer et partager la même clé de sécurité (`APP_SECRET` / `REACT_APP_APP_SECRET`).
+Assurez-vous de configurer correctement les variables d’environnement pour que les deux parties puissent communiquer et partager la même clé de sécurité (`APP_SECRET` / `VITE_APP_SECRET`).

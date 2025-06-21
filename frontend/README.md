@@ -44,10 +44,10 @@ frontend/
 │   │   ├── common/            # Composants partagés
 │   │   └── shared/            # Composants réutilisables et modaux
 │   ├── contexts/              # Contextes React
-│   │   ├── AdminAuthContext.js    # Authentification admin
-│   │   ├── SocketContext.js       # Gestion des websockets
-│   │   ├── SpotifyContext.js      # Intégration Spotify
-│   │   └── ThemeContext.js        # Gestion thème clair/sombre
+│   │   ├── AdminAuthContext.jsx   # Authentification admin
+│   │   ├── SocketContext.jsx      # Gestion des websockets
+│   │   ├── SpotifyContext.jsx     # Intégration Spotify
+│   │   └── ThemeContext.jsx       # Gestion thème clair/sombre
 │   ├── hooks/                 # Hooks personnalisés
 │   ├── pages/                 # Pages principales
 │   ├── services/              # Services d'API et socket
@@ -58,8 +58,8 @@ frontend/
 │   │   ├── variables.css      # Variables CSS
 │   │   └── themes/            # Thèmes clair/sombre
 │   ├── utils/                 # Utilitaires
-│   ├── index.js               # Point d'entrée JS
-│   └── App.js                 # Composant racine
+│   ├── index.jsx              # Point d'entrée JS
+│   └── App.jsx                # Composant racine
 │── package.json               # Dépendances et scripts
 │── .env.example               # Variables d'environnement exemples
 │── Dockerfile                 # Configuration Docker
@@ -69,9 +69,9 @@ frontend/
 
 ## ⚙️ Variables d'environnement
 
-| Variable                    | Description                          | Valeur par défaut         | Obligatoire |
-|-----------------------------|--------------------------------------|---------------------------|-------------|
-| VITE_BACKEND_URL       | URL du serveur rdv-end               | `http://localhost:3001`   | ✅ Oui      |
+| Variable               | Description                          | Valeur par défaut         | Obligatoire |
+|------------------------|--------------------------------------|---------------------------|-------------|
+| VITE_BACKEND_URL       | URL du serveur backend               | `http://localhost:3001`   | ✅ Oui      |
 | VITE_APP_SECRET        | Clé secrète pour l'API/rdv-backend   | -                         | ✅ Oui      |
 | VITE_ADMIN_PASSWORD    | Mot de passe administrateur          | `secret`                  | ✅ Oui      |
 | VITE_SPOTIFY_CLIENT_ID | ID client Spotify pour l'intégration | -                         | ➖ Si activé|
