@@ -5,6 +5,9 @@ const logger = require('../../utils/logger');
 // Stockage des périodes de grâce pour les buzzers
 const buzzerGracePeriods = {};
 
+// Stockage des latences moyennes par joueur
+const playerLatencies = {};
+
 /**
  * Attache les événements de buzz au socket
  * @param {Socket} socket - Socket client
@@ -19,6 +22,201 @@ function attachEvents(socket, io) {
 
   // Désactiver temporairement le buzzer pour un joueur
   socket.on('disable_buzzer', (data) => handleDisableBuzzer(socket, io, data));
+
+  // Ping pour mesurer la latence
+  socket.on('ping', (timestamp, callback) => handlePing(socket, timestamp, callback));
+
+  // Nettoyage lors de la déconnexion
+  socket.on('disconnect', () => {
+    cleanupPlayerData(socket.id);
+  });
+}
+
+/**
+ * Nettoyage complet des données d'un joueur déconnecté
+ */
+function cleanupPlayerData(socketId) {
+  // Nettoyer les données de latence
+  if (playerLatencies[socketId]) {
+    delete playerLatencies[socketId];
+  }
+
+  // Nettoyer des périodes de grâce en cours
+  for (const roomCode in buzzerGracePeriods) {
+    if (buzzerGracePeriods[roomCode] && buzzerGracePeriods[roomCode].candidates) {
+      buzzerGracePeriods[roomCode].candidates = buzzerGracePeriods[roomCode].candidates.filter(
+        candidate => candidate.socketId !== socketId
+      );
+      
+      // Si plus de candidats, nettoyer complètement
+      if (buzzerGracePeriods[roomCode].candidates.length === 0) {
+        delete buzzerGracePeriods[roomCode];
+        logger.info('CLEANUP', 'Période de grâce nettoyée après déconnexion', { socketId, roomCode });
+      }
+    }
+  }
+}
+
+/**
+ * Gère le ping pour mesurer la latence
+ */
+function handlePing(socket, clientTimestamp, callback) {
+  const serverTimestamp = Date.now();
+  const latency = Math.max(0, serverTimestamp - clientTimestamp);
+  
+  // 🚀 FILTRER LES PINGS ABERRANTS
+  // Ignorer les latences impossibles (>2000ms = connexion morte)
+  if (latency > 2000) {
+    logger.warn('PING', 'Latence aberrante ignorée', {
+      socketId: socket.id,
+      latency,
+      clientTimestamp,
+      serverTimestamp
+    });
+    callback({ serverTimestamp, latency, ignored: true });
+    return;
+  }
+  
+  // 🚀 AMÉLIORATION 7: Gestion des pics de latence temporaires
+  let shouldIgnoreSpike = false;
+  
+  // Si on a déjà des données de latence, vérifier les pics
+  if (playerLatencies[socket.id] && playerLatencies[socket.id].average) {
+    const currentAverage = playerLatencies[socket.id].average;
+    const deviation = Math.abs(latency - currentAverage);
+    const isSignificantSpike = deviation > (currentAverage * 1.5) && latency > 500;
+    
+    // Ignorer les pics isolés significatifs
+    if (isSignificantSpike) {
+      shouldIgnoreSpike = true;
+      logger.warn('PING', 'Pic de latence temporaire ignoré', {
+        socketId: socket.id,
+        latency,
+        currentAverage,
+        deviation,
+        spikeThreshold: currentAverage * 1.5
+      });
+      
+      callback({ serverTimestamp, latency, ignored: true, reason: 'spike' });
+      return;
+    }
+  }
+  
+  // Initialiser ou mettre à jour la latence moyenne (moyenne mobile sur 3 valeurs)
+  if (!playerLatencies[socket.id]) {
+    playerLatencies[socket.id] = {
+      values: [latency],
+      average: latency,
+      spikeCount: 0 // Compteur de pics pour statistiques
+    };
+  } else {
+    const values = playerLatencies[socket.id].values;
+    values.push(latency);
+    if (values.length > 3) values.shift(); // Garder seulement les 3 dernières
+    playerLatencies[socket.id].average = values.reduce((a, b) => a + b, 0) / values.length;
+    
+    // Incrémenter le compteur de pics si c'était un pic ignoré
+    if (shouldIgnoreSpike) {
+      playerLatencies[socket.id].spikeCount = (playerLatencies[socket.id].spikeCount || 0) + 1;
+    }
+  }
+
+  callback({ serverTimestamp, latency });
+}
+
+/**
+ * Calcule la période de grâce adaptative basée sur les latences de la salle
+ */
+function calculateGracePeriod(roomCode) {
+  const room = Room.get(roomCode);
+  if (!room) return 300; // Fallback par défaut
+
+  const roomLatencies = [];
+  
+  // Collecter les latences des joueurs de cette salle
+  for (const socketId in room.players) {
+    if (playerLatencies[socketId]) {
+      roomLatencies.push(playerLatencies[socketId].average);
+    }
+  }
+
+  if (roomLatencies.length === 0) return 300; // Pas de données de latence
+
+  // 🚀 FILTRAGE DES LATENCES ABERRANTES
+  // Éliminer les connexions non viables (> 1000ms) et négatives
+  const validLatencies = roomLatencies.filter(lat => lat >= 0 && lat <= 1000);
+  
+  // Si toutes les latences sont aberrantes, fallback
+  if (validLatencies.length === 0) {
+    logger.warn('GRACE_PERIOD', 'Toutes les latences sont aberrantes, fallback 300ms', {
+      roomCode,
+      originalLatencies: roomLatencies,
+      playerCount: roomLatencies.length
+    });
+    return 300;
+  }
+
+  // Si on a éliminé des latences aberrantes, le signaler
+  if (validLatencies.length < roomLatencies.length) {
+    const filteredOut = roomLatencies.filter(lat => lat < 0 || lat > 1000);
+    logger.info('GRACE_PERIOD', 'Latences aberrantes filtrées', {
+      roomCode,
+      filteredOut,
+      validCount: validLatencies.length,
+      totalCount: roomLatencies.length
+    });
+  }
+
+  const maxLatency = Math.max(...validLatencies);
+  const minLatency = Math.min(...validLatencies);
+  const spread = maxLatency - minLatency;
+
+  // 🚀 AMÉLIORATION 3: Période de grâce adaptée au nombre de joueurs
+  const playerCount = Object.keys(room.players).filter(id => !room.players[id].isAdmin).length;
+  
+  // Base adaptée au nombre de joueurs
+  let basePeriod;
+  if (playerCount <= 2) basePeriod = 150;      // Peu de joueurs = période courte
+  else if (playerCount <= 4) basePeriod = 200; // Nombre moyen
+  else if (playerCount <= 6) basePeriod = 250; // Beaucoup de joueurs
+  else basePeriod = 300;                       // Très grande salle
+
+  // Plafond adapté aussi
+  const maxPeriod = playerCount > 6 ? 600 : 500;
+  
+  // Calcul final : base + spread/2, plafonnée selon le nombre de joueurs
+  const gracePeriod = Math.min(basePeriod + (spread / 2), maxPeriod);
+  
+  logger.info('GRACE_PERIOD', 'Période de grâce calculée', {
+    roomCode,
+    gracePeriod,
+    basePeriod,
+    maxPeriod,
+    spread,
+    minLatency,
+    maxLatency,
+    playerCount,
+    validPlayerCount: validLatencies.length,
+    totalPlayerCount: roomLatencies.length,
+    wasFiltered: validLatencies.length < roomLatencies.length
+  });
+
+  return gracePeriod;
+}
+
+/**
+ * Calcule le seuil d'égalité adaptatif selon la qualité des connexions
+ */
+function calculateEqualityThreshold(validLatencies) {
+  if (validLatencies.length === 0) return 50; // Fallback par défaut
+  
+  const averageLatency = validLatencies.reduce((a, b) => a + b, 0) / validLatencies.length;
+  
+  // Seuil adaptatif : connexions rapides = seuil strict, connexions lentes = seuil plus permissif
+  if (averageLatency < 50) return 30;      // Connexions très rapides
+  if (averageLatency < 150) return 50;     // Connexions normales
+  if (averageLatency < 300) return 75;     // Connexions moyennes
+  return 100;                              // Connexions lentes
 }
 
 /**
@@ -81,16 +279,30 @@ function handleBuzz(socket, io, data, callback) {
       return callback({ error: 'Joueur introuvable dans la salle' });
     }
 
+    // 🚀 AMÉLIORATION 2: Fallback latence plus réaliste
+    const playerLatency = playerLatencies[socket.id]?.average || 150; // 150ms au lieu de 0ms
+    
+    // 🚀 AMÉLIORATION 1: Utiliser timestamp serveur pour éviter désync horloge
+    const serverTimestamp = Date.now();
+
     // PÉRIODE DE GRÂCE: si c'est le premier buzz, ouvrir une fenêtre d'opportunité
     if (!buzzerGracePeriods[roomCode]) {
+      // 🚀 AMÉLIORATION 4: Recalculer à chaque nouveau buzz
+      const gracePeriod = calculateGracePeriod(roomCode);
+      
       // Premier buzz reçu - créer une période de grâce
-      buzzerGracePeriods[roomCode] = [{
-        socketId: socket.id,
-        pseudo: room.players[socket.id].pseudo,
-        timestamp: clientTimestamp,
-        serverTimestamp: Date.now(),
-        delta: Math.abs(Date.now() - clientTimestamp)
-      }];
+      buzzerGracePeriods[roomCode] = {
+        candidates: [{
+          socketId: socket.id,
+          pseudo: room.players[socket.id].pseudo,
+          timestamp: clientTimestamp,
+          serverTimestamp: serverTimestamp,
+          latency: playerLatency,
+          compensatedTime: serverTimestamp + playerLatency // 🚀 AMÉLIORATION 1: Temps serveur compensé
+        }],
+        gracePeriod: gracePeriod,
+        startTime: serverTimestamp // Pour debugging
+      };
 
       // Confirmer réception sans désigner de gagnant encore
       callback({ received: true });
@@ -99,32 +311,36 @@ function handleBuzz(socket, io, data, callback) {
         socketId: socket.id,
         roomCode,
         pseudo: room.players[socket.id].pseudo,
-        delta: buzzerGracePeriods[roomCode][0].delta
+        latency: playerLatency,
+        gracePeriod: gracePeriod,
+        compensatedTime: serverTimestamp + playerLatency
       });
 
-      // Démarrer un court timer avant de déterminer le gagnant
+      // Démarrer un timer adaptatif avant de déterminer le gagnant
       setTimeout(() => {
         processBuzzers(roomCode, io);
-      }, 300);
+      }, gracePeriod);
 
       return;
     }
 
     // Si on est déjà dans une période de grâce, ajouter ce buzz à la liste
-    buzzerGracePeriods[roomCode].push({
+    buzzerGracePeriods[roomCode].candidates.push({
       socketId: socket.id,
       pseudo: room.players[socket.id].pseudo,
       timestamp: clientTimestamp,
-      serverTimestamp: Date.now(),
-      delta: Math.abs(Date.now() - clientTimestamp)
+      serverTimestamp: serverTimestamp,
+      latency: playerLatency,
+      compensatedTime: serverTimestamp + playerLatency // 🚀 AMÉLIORATION 1: Temps serveur compensé
     });
 
     logger.info('BUZZ', 'Buzz ajouté pendant la période de grâce', {
       socketId: socket.id,
       roomCode,
       pseudo: room.players[socket.id].pseudo,
-      candidateCount: buzzerGracePeriods[roomCode].length,
-      delta: Math.abs(Date.now() - clientTimestamp)
+      candidateCount: buzzerGracePeriods[roomCode].candidates.length,
+      latency: playerLatency,
+      compensatedTime: serverTimestamp + playerLatency
     });
 
     callback({ received: true });
@@ -141,7 +357,7 @@ function handleBuzz(socket, io, data, callback) {
 }
 
 /**
- * Traite les buzzers après la période de grâce
+ * Traite les buzzers après la période de grâce avec compensation de latence
  */
 function processBuzzers(roomCode, io) {
   try {
@@ -153,14 +369,15 @@ function processBuzzers(roomCode, io) {
       return;
     }
 
-    const candidates = buzzerGracePeriods[roomCode];
+    const candidates = buzzerGracePeriods[roomCode].candidates;
 
     logger.info('BUZZ_PROCESS', 'Traitement des buzzers après période de grâce', {
       roomCode,
       candidateCount: candidates.length,
       candidates: candidates.map(c => ({
         pseudo: c.pseudo,
-        delta: c.delta
+        latency: c.latency,
+        compensatedTime: c.compensatedTime
       }))
     });
 
@@ -169,22 +386,42 @@ function processBuzzers(roomCode, io) {
       return;
     }
 
-    // Trouver le candidat avec le delta le plus faible
-    candidates.sort((a, b) => a.delta - b.delta);
+    // Filtrer les candidats encore valides (joueurs toujours connectés)
+    const validCandidates = candidates.filter(c => room.players[c.socketId]);
 
-    // Vérification de sécurité: chercher un candidat valide
-    let winner = null;
-    for (const candidate of candidates) {
-      if (room.players[candidate.socketId]) {
-        winner = candidate;
-        break;
-      }
-    }
-
-    if (!winner) {
+    if (validCandidates.length === 0) {
       logger.info('BUZZ_PROCESS', 'Aucun candidat valide pour le buzz', { roomCode });
       delete buzzerGracePeriods[roomCode];
       return;
+    }
+
+    // Trier par temps compensé (server timestamp + latence)
+    validCandidates.sort((a, b) => a.compensatedTime - b.compensatedTime);
+
+    let winner = validCandidates[0];
+
+    // 🚀 AMÉLIORATION 5: Seuil d'égalité adaptatif
+    const roomLatencies = validCandidates.map(c => c.latency);
+    const equalityThreshold = calculateEqualityThreshold(roomLatencies);
+
+    // Vérifier s'il y a égalité avec seuil adaptatif
+    const second = validCandidates[1];
+    if (second && Math.abs(winner.compensatedTime - second.compensatedTime) < equalityThreshold) {
+      
+      // Départage aléatoire entre les ex-aequo
+      const tied = validCandidates.filter(c => 
+        Math.abs(c.compensatedTime - winner.compensatedTime) < equalityThreshold
+      );
+      
+      winner = tied[Math.floor(Math.random() * tied.length)];
+      
+      logger.info('BUZZ_PROCESS', 'Départage aléatoire appliqué', {
+        roomCode,
+        tiedCount: tied.length,
+        winner: winner.pseudo,
+        equalityThreshold,
+        timeDifference: second ? Math.abs(winner.compensatedTime - second.compensatedTime) : 'N/A'
+      });
     }
 
     // Désigner le gagnant
@@ -196,8 +433,11 @@ function processBuzzers(roomCode, io) {
       playerId: winner.socketId,
       roomCode,
       _debug: {
-        delta: winner.delta,
-        candidateCount: candidates.length
+        latency: winner.latency,
+        compensatedTime: winner.compensatedTime,
+        candidateCount: validCandidates.length,
+        equalityThreshold,
+        wasRandomTieBreak: second && Math.abs(winner.compensatedTime - second.compensatedTime) < equalityThreshold
       }
     };
 
@@ -215,8 +455,10 @@ function processBuzzers(roomCode, io) {
       roomCode,
       winner: winner.pseudo,
       socketId: winner.socketId,
-      delta: winner.delta,
-      candidateCount: candidates.length
+      latency: winner.latency,
+      compensatedTime: winner.compensatedTime,
+      candidateCount: validCandidates.length,
+      equalityThreshold
     });
 
     // Nettoyer
@@ -260,6 +502,11 @@ function handleResetBuzzer(socket, io, data) {
     // Réinitialiser le premier/dernier buzz dans la salle
     logger.info('RESET_BUZZER', 'Nettoyage des données de buzz de la salle', { roomCode });
     Room.clearBuzz(roomCode); // Réinitialise firstBuzz et lastBuzz
+
+    // Nettoyer les périodes de grâce en cours
+    if (buzzerGracePeriods[roomCode]) {
+      delete buzzerGracePeriods[roomCode];
+    }
 
     // *** AJOUT IMPORTANT ***
     // Émettre à nouveau l'état des joueurs après avoir mis buzzed=false

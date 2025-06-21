@@ -931,6 +931,30 @@ const handleBuzz = () => {
     };
   }, [joined]);
 
+  // Effet pour envoyer un ping périodique au serveur pour calcul de la latence buzzer
+  useEffect(() => {
+    if (!socket || !roomCode) return;
+  
+    // Fonction pour envoyer un ping
+    const sendPing = () => {
+      const timestamp = Date.now();
+      socket.emit('ping', timestamp, (response) => {
+        // Le ping est géré automatiquement côté serveur
+        // Pas besoin de traitement particulier côté client
+      });
+    };
+  
+    // Ping initial
+    sendPing();
+  
+    // Ping périodique toutes les 15 secondes
+    const pingInterval = setInterval(sendPing, 15000);
+  
+    return () => {
+      clearInterval(pingInterval);
+    };
+  }, [socket, roomCode]);
+
   // Effet pour bloquer/débloquer le scroll du body
   useEffect(() => {
     // Bloquer le scroll quand le composant est monté
