@@ -39,6 +39,10 @@ function Changelog() {
         {
           type: "fix",
           text: "Admin: Découplage de l'intégration Spotify pour permettre à une salle sans intégration de fonctionner correctement"
+        },
+        {
+          type: "fix",
+          text: "Empêcher le navigateur de traduire les textes de l'interface utilisateur"
         }
       ]
     },
