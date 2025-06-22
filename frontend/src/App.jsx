@@ -11,6 +11,7 @@ import ClientView from './components/client/ClientView/ClientView';
 import AdminRoomView from './components/admin/AdminRoomView/AdminRoomView';
 import PublicRanking from './pages/PublicRanking/PublicRanking';
 import AdminPanel from './components/admin/AdminPanel/AdminPanel';
+import Changelog from './pages/Changelog/Changelog';
 import { SpotifyProvider } from './contexts/SpotifyContext';
 import SpotifyCallback from './pages/SpotifyCallBack/SpotifyCallback';
 
@@ -48,6 +49,7 @@ function App() {
             }
           />
           <Route path="/classement" element={<PublicRanking />} />
+          <Route path="/changelog" element={<Changelog />} />
           <Route path="/spotify-callback" element={<SpotifyCallback />} />
           <Route
             path="/admin-room"

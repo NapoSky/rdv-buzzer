@@ -75,6 +75,7 @@ function ClientView({ setActiveRoomCode }) {
   const adminWasAbsentRef = useRef(false);
   const lastAdminDisconnectRef = useRef(false);
   const lastPauseEventRef = useRef(false);
+  const lastSocketIdRef = useRef(null);
   
   // Socket
   const socket = getSocket();
@@ -87,6 +88,9 @@ function ClientView({ setActiveRoomCode }) {
   const [foundTitle, setFoundTitle] = useState(false);
   const [roomOptions, setRoomOptions] = useState({ roomType: 'Standard', spotifyEnabled: false }); // Options de la salle
   const [firstBuzzer, setFirstBuzzer] = useState(null);
+
+  // Ajouter un state pour la connexion réseau
+  const [isOnline, setIsOnline] = useState(navigator.onLine);
 
   // Fonction pour rejoindre la salle actuelle
   const joinCurrentRoom = () => {
@@ -346,9 +350,9 @@ const handleBuzz = () => {
     };
     
     // Remplace l'appel à joinCurrentRoom() pour utiliser notre nouvelle fonction
-    if (!joined && roomCode && pseudo && !roomClosedRef.current && socket.connected) {
-      connectToRoomAndUpdateState();
-    }
+    //if (!joined && roomCode && pseudo && !roomClosedRef.current && socket.connected) {
+    //  connectToRoomAndUpdateState();
+    //}
   
     // Fonctions utilitaires pour les actions communes
     const resetBuzzerState = (showNotification = true) => {
@@ -719,48 +723,120 @@ const handleBuzz = () => {
 
   // Gestion de la reconnexion après mise en veille
   useEffect(() => {
-    if (!socket || !joined || !roomCode || !pseudo) return;
+  if (!socket || !joined || !roomCode || !pseudo) return;
+  
+  const handleSocketIdChange = () => {
+    const currentSocketId = socket.id;
     
-    const handleReconnect = () => {
-      // Correction
-      info('Tentative de reconnexion à la salle...');
+    // ✅ Détecter un changement d'ID socket
+    if (currentSocketId && lastSocketIdRef.current && currentSocketId !== lastSocketIdRef.current) {
+      console.log(`🔄 Changement d'ID socket détecté: ${lastSocketIdRef.current} → ${currentSocketId}`);
       
-      socket.emit('join_room', { roomCode, pseudo }, (response) => {
-        if (response.success) {
-          // Correction
-          success('Vous êtes à nouveau connecté à la salle');
-        } else {
-          // Correction
-          error(response.error || 'Erreur lors de la reconnexion');
-        }
-      });
-    };
-
-    on('reconnect', handleReconnect);
+      // ✅ Forcer une reconnexion immédiate AVEC DÉLAI
+      if (!reconnectAttemptRef.current) {
+        reconnectAttemptRef.current = true;
+        info('Nouvelle connexion détectée, reconnexion à la salle...');
+        
+        // ✅ SOLUTION : Attendre que la socket soit complètement prête
+        setTimeout(() => {
+          // Vérifier que la socket est toujours connectée avant d'envoyer
+          if (socket && socket.connected && socket.id === currentSocketId) {
+            socket.emit('join_room', { roomCode, pseudo }, (response) => {
+              reconnectAttemptRef.current = false;
+              
+              if (response && response.success) {
+                success('Reconnexion automatique réussie');
+                
+                // ✅ Mettre à jour tous les états
+                if (response.paused !== undefined) {
+                  setGamePaused(response.paused);
+                }
+                if (response.players) {
+                  setPlayers(response.players);
+                }
+                if (response.firstBuzzPlayer) {
+                  setBuzzedBy(response.firstBuzzPlayer);
+                  setShowBuzzedDialog(true);
+                }
+                
+                // ✅ Mettre à jour les états Spotify si nécessaire
+                if (response.artistFound !== undefined) {
+                  setFoundArtist(response.artistFound);
+                }
+                if (response.titleFound !== undefined) {
+                  setFoundTitle(response.titleFound);
+                }
+              } else {
+                // ✅ SOLUTION RADICALE : Ignorer complètement les erreurs de reconnexion automatique
+                console.log('Erreur de reconnexion automatique ignorée:', response?.error);
+                // Ne plus afficher d'erreur du tout pour les reconnexions automatiques
+              }
+            });
+          } else {
+            // Socket pas prête, reset le flag
+            reconnectAttemptRef.current = false;
+            console.log('Socket pas prête pour la reconnexion, abandon');
+          }
+        }, 1000); // ✅ Délai de 1 seconde pour laisser la socket se stabiliser
+      }
+    }
     
-    return () => {
-      off('reconnect', handleReconnect);
-    };
-  }, [socket, joined, roomCode, pseudo]);
+    // ✅ Mettre à jour la référence
+    lastSocketIdRef.current = currentSocketId;
+  };
+  
+  // ✅ Initialiser la référence au premier rendu
+  if (socket && socket.id && !lastSocketIdRef.current) {
+    lastSocketIdRef.current = socket.id;
+  }
+  
+  // ✅ Écouter les événements de connexion
+  on('connect', handleSocketIdChange);
+  
+  // ✅ Vérifier périodiquement (au cas où l'événement serait manqué)
+  const checkInterval = setInterval(() => {
+    if (socket && socket.id) {
+      handleSocketIdChange();
+    }
+  }, 2000);
+  
+  return () => {
+    off('connect', handleSocketIdChange);
+    clearInterval(checkInterval);
+  };
+}, [socket, joined, roomCode, pseudo]);
 
   // Gestion de l'événement global de reconnexion
   useEffect(() => {
-    const handleGlobalReconnect = (event) => {
-      const { downtime } = event.detail;
+  const handleGlobalReconnect = (event) => {
+    const { downtime } = event.detail;
+    
+    if (downtime > 5) {
+      info(`Reconnexion après ${downtime.toFixed(1)} secondes`);
       
-      if (downtime > 5) {
-        // Correction
-        info(`Reconnexion après ${downtime.toFixed(1)} secondes`);
+      // ✅ CORRECTION : Utiliser la même logique que les autres reconnexions
+      if (socket && socket.connected && !reconnectAttemptRef.current) {
+        reconnectAttemptRef.current = true;
         
-        if (socket && socket.connected) {
-          socket.emit('join_room', { roomCode, pseudo }, (response) => {
-            if (response && response.success) {
-              setGamePaused(response.paused);
+        socket.emit('join_room', { 
+          roomCode, 
+          pseudo 
+        }, (response) => {
+          reconnectAttemptRef.current = false;
+          
+          if (response && response.success) {
+            setGamePaused(response.paused);
+            // Mettre à jour les autres états si nécessaire
+            if (response.players) {
+              setPlayers(response.players);
             }
-          });
-        }
+          } else {
+            error(response?.error || 'Erreur lors de la reconnexion globale');
+          }
+        });
       }
-    };
+    }
+  };
     
     document.addEventListener('socket:reconnected', handleGlobalReconnect);
     
@@ -799,6 +875,9 @@ const handleBuzz = () => {
           reconnectAttemptRef.current = false;
           // Correction
           error('Impossible d\'établir une connexion avec le serveur');
+        })
+        .finally(() => {
+        reconnectAttemptRef.current = false; // ✅ Toujours reset le flag
         });
     }
   }, [roomCode, pseudo, joined]);
@@ -930,6 +1009,27 @@ const handleBuzz = () => {
       document.removeEventListener('visibilitychange', handleVisibilityChange);
     };
   }, [joined]);
+
+  // useEffect pour détecter les changements de connexion réseau
+  useEffect(() => {
+    const handleOnline = () => {
+    setIsOnline(true);
+    console.log('🟢 Connexion réseau rétablie');
+  };
+  
+  const handleOffline = () => {
+    setIsOnline(false);
+    console.log('🔴 Connexion réseau perdue');
+  };
+  
+  window.addEventListener('online', handleOnline);
+  window.addEventListener('offline', handleOffline);
+  
+  return () => {
+    window.removeEventListener('online', handleOnline);
+    window.removeEventListener('offline', handleOffline);
+  };
+}, []);
 
   // Effet pour envoyer un ping périodique au serveur pour calcul de la latence buzzer
   useEffect(() => {
@@ -1180,9 +1280,11 @@ const handleBuzz = () => {
               <div className={`player-score ${scoreChanged ? (scoreIncreased ? 'score-changed' : 'score-changed negative') : ''}`}>
                 Score: {Object.values(players).find(player => player.pseudo === pseudo)?.score || 0}
               </div>
-              <div className={`connection-status ${isConnected ? 'connected' : 'disconnected'}`}>
+              <div className={`connection-status ${isConnected && isOnline ? 'connected' : 'disconnected'}`}>
                 <span className="status-indicator"></span>
-                <span className="status-text">{isConnected ? 'Connecté' : 'Déconnecté'}</span>
+                <span className="status-text">
+                  {isConnected && isOnline ? 'Connecté' : 'Déconnecté'}
+                </span>
               </div>
             </div>
           </div>

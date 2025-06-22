@@ -46,6 +46,7 @@ function HeaderMenu({ activeRoomCode }) {
               </Link>
             )}
             <Link className="nav-item" to="/classement">Classement</Link>
+            <Link className="nav-item" to="/changelog">Nouveautés✨</Link>
             {isAdminAuthenticated && (
               <>
                 <Link className="nav-item" to="/admin-panel">Admin Panel</Link>
@@ -97,6 +98,10 @@ function HeaderMenu({ activeRoomCode }) {
 
               <DropdownMenu.Item className="mobile-menu-item">
                 <Link to="/classement">Classement</Link>
+              </DropdownMenu.Item>
+
+              <DropdownMenu.Item className="mobile-menu-item">
+                <Link to="/changelog">Nouveautés✨</Link>
               </DropdownMenu.Item>
 
               {isAdminAuthenticated && (
