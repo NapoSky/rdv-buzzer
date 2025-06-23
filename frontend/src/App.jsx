@@ -12,6 +12,7 @@ import AdminRoomView from './components/admin/AdminRoomView/AdminRoomView';
 import PublicRanking from './pages/PublicRanking/PublicRanking';
 import AdminPanel from './components/admin/AdminPanel/AdminPanel';
 import Changelog from './pages/Changelog/Changelog';
+import SpectatorView from './pages/SpectatorView/SpectatorView';
 import { SpotifyProvider } from './contexts/SpotifyContext';
 import SpotifyCallback from './pages/SpotifyCallBack/SpotifyCallback';
 
@@ -48,6 +49,7 @@ function App() {
               </SocketProvider>
             }
           />
+          <Route path="/spectator/:roomCode" element={<SocketProvider><SpectatorView /></SocketProvider>} />
           <Route path="/classement" element={<PublicRanking />} />
           <Route path="/changelog" element={<Changelog />} />
           <Route path="/spotify-callback" element={<SpotifyCallback />} />

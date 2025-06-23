@@ -51,6 +51,8 @@ function HomePage({ setActiveRoomCode }) {
   const [roomCode, setRoomCode] = useState('');
   const [pseudo, setPseudo] = useState('');
   const [adminPassword, setAdminPassword] = useState('');
+  const [roomExists, setRoomExists] = useState(null); // null, true, false
+  const [checkingRoom, setCheckingRoom] = useState(false);
   const { isAdminAuthenticated, setIsAdminAuthenticated } = useContext(AdminAuthContext);
   const { isDarkMode } = useContext(ThemeContext);
   const { info, warn, error, success } = useNotification();
@@ -62,6 +64,49 @@ function HomePage({ setActiveRoomCode }) {
     penaltyDelay: 3,
     saveRoom: true,
   });
+
+  // Fonction pour vérifier l'existence de la salle en temps réel
+  const checkRoomExistsRealTime = async (code) => {
+    if (!code || code.length < 5) {
+      setRoomExists(null);
+      return;
+    }
+
+    setCheckingRoom(true);
+    
+    try {
+      const BACKEND_URL = import.meta.env.VITE_BACKEND_URL;
+      const APP_SECRET = import.meta.env.VITE_APP_SECRET;
+      
+      const response = await fetch(`${BACKEND_URL}/api/rooms/list`, {
+        headers: {
+          'Authorization': `Bearer ${APP_SECRET}`
+        }
+      });
+      
+      if (!response.ok) {
+        setRoomExists(false);
+        return;
+      }
+      
+      const rooms = await response.json();
+      setRoomExists(!!rooms[code]);
+      
+    } catch (err) {
+      setRoomExists(false);
+    } finally {
+      setCheckingRoom(false);
+    }
+  };
+
+  // Debounce pour éviter trop de requêtes
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      checkRoomExistsRealTime(roomCode);
+    }, 500); // Attendre 500ms après la dernière frappe
+
+    return () => clearTimeout(timer);
+  }, [roomCode]);
 
   // Récupérer les valeurs de roomCode et pseudo depuis le localStorage si le client s'est déjà connecté auparavant
   useEffect(() => {
@@ -205,6 +250,17 @@ function HomePage({ setActiveRoomCode }) {
     navigate('/admin-room', { state: { roomOptions } });
   };
 
+  // Fonction pour rejoindre en tant que spectateur
+  const handleJoinAsSpectator = () => {
+    if (!roomCode || !roomExists) {
+      error('Code de salle invalide');
+      return;
+    }
+    
+    // Naviguer vers la vue spectateur
+    navigate(`/spectator/${roomCode}`);
+  };
+
   return (
     <div className={`home-container ${isDarkMode ? 'dark-mode' : ''}`}>
       <h1 className="home-title">Prêt(e) pour un blindtest ? 😏</h1>
@@ -213,14 +269,34 @@ function HomePage({ setActiveRoomCode }) {
         <h2>Rejoindre une salle</h2>
         <div className="form-group">
           <label className="form-label">Code de la salle :</label>
-          <input
-            type="text"
-            className="form-control"
-            maxLength={5}  
-            value={roomCode}
-            onChange={(e) => setRoomCode(e.target.value.toUpperCase())}
-          />
+          <div className="input-group">
+            <input
+              type="text"
+              className={`form-control ${
+                roomCode.length === 5 ? (
+                  checkingRoom ? 'checking' : (
+                    roomExists ? 'valid' : 'invalid'
+                  )
+                ) : ''
+              }`}
+              maxLength={5}  
+              value={roomCode}
+              onChange={(e) => setRoomCode(e.target.value.toUpperCase())}
+            />
+            {checkingRoom && (
+              <span className="input-status checking">⏳</span>
+            )}
+            {roomCode.length === 5 && !checkingRoom && (
+              <span className={`input-status ${roomExists ? 'valid' : 'invalid'}`}>
+                {roomExists ? '✅' : '❌'}
+              </span>
+            )}
+          </div>
+          {roomExists === false && roomCode.length === 5 && (
+            <small className="text-danger">Cette salle n'existe pas</small>
+          )}
         </div>
+        
         <div className="form-group">
           <label className="form-label">Pseudo :</label>
           <input
@@ -232,12 +308,25 @@ function HomePage({ setActiveRoomCode }) {
             onChange={(e) => setPseudo(e.target.value)}
           />
         </div>
-        <button 
-          className="btn btn-primary" 
-          onClick={handleJoinRoom}
-        >
-          Rejoindre
-        </button>
+        
+        <div className="button-group">
+          <button 
+            className="btn btn-primary" 
+            onClick={handleJoinRoom}
+          >
+            Rejoindre en tant que joueur
+          </button>
+          
+          {/* Bouton spectateur conditionnel */}
+          {roomExists && (
+            <button 
+              className="btn btn-outline-secondary spectator-btn" 
+              onClick={handleJoinAsSpectator}
+            >
+              👁️ Regarder en spectateur
+            </button>
+          )}
+        </div>
         
         {localStorage.getItem('roomCode') && localStorage.getItem('pseudo') && (
           <button 

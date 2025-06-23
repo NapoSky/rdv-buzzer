@@ -445,3 +445,76 @@
     background: linear-gradient(135deg, #5a6268, #4e555b) !important;
     box-shadow: 0 8px 20px rgba(108, 117, 125, 0.3);
   }
+  
+  .input-group {
+    position: relative;
+    display: flex;
+    align-items: center;
+  }
+  
+  .input-status {
+    position: absolute;
+    right: 10px;
+    z-index: 10;
+    font-size: 0.9em;
+    pointer-events: none;
+  }
+  
+  .input-status.checking {
+    animation: pulse 1.5s infinite;
+  }
+  
+  .form-control.checking {
+    border-color: #ffc107;
+  }
+  
+  .form-control.valid {
+    border-color: #28a745;
+  }
+  
+  .form-control.invalid {
+    border-color: #dc3545;
+  }
+  
+  .button-group {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    margin-top: 15px;
+  }
+  
+  .spectator-btn {
+    border: 2px dashed var(--border-color);
+    font-size: 0.9em;
+    transition: all 0.3s ease;
+  }
+  
+  .spectator-btn:hover {
+    background-color: var(--secondary-color);
+    border-style: solid;
+  }
+  
+  @keyframes pulse {
+    0% { opacity: 1; }
+    50% { opacity: 0.5; }
+    100% { opacity: 1; }
+  }
+  
+  .text-danger {
+    color: #dc3545;
+    font-size: 0.85em;
+    margin-top: 5px;
+  }
+  
+  /* Dark mode adjustments */
+  .dark-mode .form-control.valid {
+    border-color: #20c997;
+  }
+  
+  .dark-mode .form-control.invalid {
+    border-color: #e74c3c;
+  }
+  
+  .dark-mode .text-danger {
+    color: #e74c3c;
+  }
