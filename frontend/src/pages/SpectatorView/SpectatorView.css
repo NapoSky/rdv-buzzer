@@ -1,7 +1,6 @@
-/* CSS pour SpectatorView - Version nettoyée */
+/* CSS pour SpectatorView - Version nettoyée et corrigée */
 
 .spectator-view {
-  /* Variables */
   --primary: #007bff;
   --success: #28a745;
   --warning: #ffc107;
@@ -10,9 +9,8 @@
   --spectator-primary: #6f42c1;
   --spectator-secondary: #e83e8c;
   
-  /* Layout */
   min-height: calc(100vh - 80px);
-  padding: 80px 1rem 1rem 1rem;
+  padding: 30px 1rem 1rem 1rem;
   background: var(--bg-light, #ffffff);
   color: var(--text-light);
   display: flex;
@@ -26,7 +24,317 @@
   color: var(--text-dark);
 }
 
-/* === HEADER ZONE === */
+/* === LAYOUT GRID CORRIGÉ - PROPORTIONS ÉQUILIBRÉES === */
+.spectator-content-grid {
+  display: grid;
+  grid-template-columns: 1fr 700px; /* Spotify réduit + Classement BEAUCOUP plus large */
+  grid-template-rows: 1fr 200px; /* Spotify plus petit + Pub plus grande */
+  gap: 1rem;
+  flex: 1;
+  min-height: 0;
+  height: calc(100vh - 200px);
+}
+
+/* === ZONE VERTE - Spotify plus compact === */
+.spectator-spotify-big-zone {
+  grid-column: 1 / 2;
+  grid-row: 1 / 2;
+  background: rgba(255, 255, 255, 0.95);
+  backdrop-filter: blur(15px);
+  border-radius: 16px;
+  box-shadow: 0 8px 20px rgba(0, 0, 0, 0.1);
+  border: 1px solid rgba(0, 0, 0, 0.05);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 1rem; /* Réduit de 1.5rem à 1rem */
+}
+
+.dark-mode .spectator-spotify-big-zone {
+  background: rgba(30, 30, 35, 0.95);
+  border-color: rgba(255, 255, 255, 0.1);
+}
+
+/* Spotify Display beaucoup plus petit */
+.spotify-display-wrapper {
+  width: 100%;
+  height: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  max-width: none;
+  max-height: none;
+}
+
+.spotify-display-wrapper .spotifyDisplayContainer {
+  transform: scale(0.8); /* Réduit de 1.1 à 0.8 */
+  width: 100%;
+  max-width: none;
+  height: auto;
+}
+
+.spotify-display-wrapper .artworkContainer {
+  width: 120px; /* Réduit de 180px à 120px */
+  height: 120px;
+}
+
+.spotify-display-wrapper .artwork {
+  width: 120px; /* Réduit de 180px à 120px */
+  height: 120px;
+}
+
+.spotify-display-wrapper .trackInfo {
+  margin-top: 0.5rem; /* Réduit de 1rem à 0.5rem */
+}
+
+.spotify-display-wrapper .artist,
+.spotify-display-wrapper .title {
+  font-size: 1rem; /* Réduit de 1.2rem à 1rem */
+  margin: 0.2rem 0; /* Réduit de 0.3rem à 0.2rem */
+}
+
+/* AJOUTE cette section après la section "Spotify Display beaucoup plus petit" : */
+
+/* === SURCHARGE DU PLAYLIST BADGE === */
+.spotify-display-wrapper .playlist-badge {
+  position: absolute !important;
+  top: 0.5rem !important;
+  right: 0.5rem !important;
+  color: white !important;
+  padding: 0.8rem 1.0rem !important; /* AGRANDI de 0.4rem 0.6rem à 0.6rem 0.8rem */
+  border-radius: 16px !important; /* AGRANDI de 8px à 12px */
+  font-size: 1.1rem !important; /* AGRANDI de 0.7rem à 0.9rem */
+  font-weight: 600 !important;
+  z-index: 10 !important;
+  backdrop-filter: blur(8px) !important;
+  border: 1px solid rgba(255, 255, 255, 0.1) !important;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3) !important;
+  white-space: nowrap !important;
+  line-height: 1.0 !important; /* AJOUTÉ pour un meilleur espacement */
+}
+
+/* Status alternatif beaucoup plus petit */
+.spectator-status-big {
+  width: 100%;
+  height: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.status-card-big {
+  text-align: center;
+  padding: 1.5rem; /* Réduit de 2rem à 1.5rem */
+  background: rgba(255, 255, 255, 0.1);
+  border-radius: 20px;
+  border: 2px dashed rgba(255, 255, 255, 0.3);
+  width: 60%; /* Réduit de 70% à 60% */
+  max-width: 400px; /* Réduit de 500px à 400px */
+}
+
+.status-card-big h2 {
+  font-size: 1.4rem; /* Réduit de 1.8rem à 1.4rem */
+  margin-bottom: 0.8rem; /* Réduit de 1rem à 0.8rem */
+  color: var(--text-light);
+}
+
+.status-card-big p {
+  font-size: 0.9rem; /* Réduit de 1.1rem à 0.9rem */
+  opacity: 0.8;
+  line-height: 1.4;
+}
+
+/* === ZONE ROUGE - Classement TRÈS élargi === */
+.spectator-ranking-compact {
+  grid-column: 2 / 3;
+  grid-row: 1 / 3; /* Prend toute la hauteur */
+  background: rgba(255, 255, 255, 0.95);
+  backdrop-filter: blur(15px);
+  border-radius: 16px;
+  box-shadow: 0 8px 20px rgba(0, 0, 0, 0.1);
+  border: 1px solid rgba(0, 0, 0, 0.05);
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+.dark-mode .spectator-ranking-compact {
+  background: rgba(30, 30, 35, 0.95);
+  border-color: rgba(255, 255, 255, 0.1);
+}
+
+.spectator-ranking-compact .spectator-ranking-header {
+  padding: 1rem;
+  flex-shrink: 0;
+  border-bottom: 1px solid rgba(0, 0, 0, 0.05);
+}
+
+.spectator-ranking-compact .spectator-ranking-header h3 {
+  font-size: 1.1rem;
+  margin: 0;
+}
+
+.spectator-ranking-compact .player-count-badge {
+  font-size: 0.8rem;
+  padding: 0.3rem 0.8rem;
+}
+
+.spectator-ranking-table-container {
+  overflow-y: auto;
+  flex: 1;
+  min-height: 0;
+}
+
+/* === ZONE VIOLETTE - Pub TRÈS réduite === */
+.spectator-ad-zone {
+  grid-column: 1 / 2;
+  grid-row: 2 / 3;
+  background: rgba(255, 255, 255, 0.95);
+  backdrop-filter: blur(15px);
+  border-radius: 16px;
+  box-shadow: 0 8px 20px rgba(0, 0, 0, 0.1);
+  border: 1px solid rgba(0, 0, 0, 0.05);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0.8rem; /* Réduit de 1rem à 0.8rem */
+}
+
+.dark-mode .spectator-ad-zone {
+  background: rgba(30, 30, 35, 0.95);
+  border-color: rgba(255, 255, 255, 0.1);
+}
+
+/* === ZONE PROMO RDV === */
+.ad-content {
+  width: 100%;
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  gap: 1rem;
+}
+
+.rdv-logo-container {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  margin-bottom: 0.5rem;
+}
+
+.rdv-logo {
+  max-height: 80px; /* AGRANDI de 60px à 80px */
+  max-width: 160px; /* AGRANDI de 120px à 160px */
+  object-fit: contain;
+  filter: drop-shadow(0 4px 8px rgba(0, 0, 0, 0.2)); /* Plus d'ombre */
+  transition: transform 0.3s ease; /* Ajout d'une animation */
+}
+
+.rdv-logo:hover {
+  transform: scale(1.05); /* Petit effet au survol */
+}
+
+.rdv-promo-text {
+  display: flex;
+  flex-direction: column;
+  gap: 0.6rem; /* Réduit un peu l'espace entre les lignes */
+  width: 100%;
+}
+
+.promo-line {
+  text-align: center;
+  font-size: 0.9rem; /* AGRANDI de 0.85rem à 0.9rem */
+  line-height: 1.3;
+  margin: 0;
+  padding: 0.6rem 0.8rem; /* AGRANDI le padding */
+  border-radius: 10px; /* AGRANDI de 8px à 10px */
+  background: rgba(255, 255, 255, 0.08); /* Plus visible */
+  border: 1px solid rgba(255, 255, 255, 0.15); /* Bordure plus visible */
+  color: var(--text-primary);
+  transition: all 0.2s ease; /* Animation au survol */
+}
+
+.promo-line:hover {
+  transform: translateY(-1px); /* Léger effet de survol */
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+}
+
+.dark-mode .promo-line {
+  background: rgba(0, 0, 0, 0.15); /* Plus visible en mode sombre */
+  border-color: rgba(255, 255, 255, 0.15);
+}
+
+.promo-line.session {
+  background: linear-gradient(135deg, rgba(255, 193, 7, 0.2), rgba(255, 152, 0, 0.2)); /* Plus saturé */
+  border-color: rgba(255, 193, 7, 0.4); /* Bordure plus visible */
+}
+
+.promo-line.monthly {
+  background: linear-gradient(135deg, rgba(40, 167, 69, 0.2), rgba(25, 135, 84, 0.2)); /* Plus saturé */
+  border-color: rgba(40, 167, 69, 0.4); /* Bordure plus visible */
+}
+
+.promo-line strong {
+  color: var(--text-primary);
+  font-weight: 700;
+}
+
+.promo-line.session strong {
+  color: #ffb020; /* Couleur plus vive */
+}
+
+.promo-line.monthly strong {
+  color: #2dc653; /* Couleur plus vive */
+}
+
+/* Responsive pour la zone promo */
+@media (max-width: 768px) {
+  .rdv-logo {
+    max-height: 70px; /* AGRANDI de 50px à 70px */
+    max-width: 140px; /* AGRANDI de 100px à 140px */
+  }
+
+  .rdv-promo-text {
+    gap: 0.5rem;
+  }
+
+  .promo-line {
+    font-size: 0.85rem; /* AGRANDI de 0.8rem à 0.85rem */
+    padding: 0.5rem 0.7rem; /* AGRANDI le padding */
+  }
+}
+
+@media (max-width: 480px) {
+  .rdv-logo {
+    max-height: 60px; /* AGRANDI de 40px à 60px */
+    max-width: 120px; /* AGRANDI de 80px à 120px */
+  }
+
+  .rdv-promo-text {
+    gap: 0.4rem;
+  }
+
+  .promo-line {
+    font-size: 0.8rem; /* AGRANDI de 0.75rem à 0.8rem */
+    padding: 0.4rem 0.6rem; /* AGRANDI le padding */
+    line-height: 1.2;
+  }
+}
+
+@media (max-width: 350px) {
+  .rdv-logo {
+    max-height: 50px; /* AGRANDI de 35px à 50px */
+    max-width: 100px; /* AGRANDI de 70px à 100px */
+  }
+
+  .promo-line {
+    font-size: 0.75rem; /* AGRANDI de 0.7rem à 0.75rem */
+    padding: 0.35rem 0.5rem; /* AGRANDI le padding */
+  }
+}
+
+/* === HEADER === */
 .spectator-header-zone {
   display: flex;
   flex-direction: column;
@@ -118,78 +426,71 @@
   flex-shrink: 0;
 }
 
-/* === MAIN ZONE === */
-.spectator-main-zone {
-  flex: 1;
-  display: flex;
-  flex-direction: column;
-  justify-content: center;
-  min-height: 200px;
+/* === TABLEAU === */
+.spectator-ranking-table {
+  width: 100%;
+  border-collapse: collapse;
 }
 
-.spectator-spotify-zone,
-.spectator-status-zone {
-  display: flex;
-  justify-content: center;
-  align-items: center;
-}
-
-.status-card {
-  background: rgba(255, 255, 255, 0.9);
-  backdrop-filter: blur(10px);
-  border-radius: 16px;
-  padding: 2rem;
-  text-align: center;
-  box-shadow: 0 8px 20px rgba(0, 0, 0, 0.1);
-  border: 1px solid rgba(0, 0, 0, 0.05);
-  max-width: 500px;
-}
-
-.dark-mode .status-card {
-  background: rgba(30, 30, 35, 0.9);
-  border-color: rgba(255, 255, 255, 0.1);
-}
-
-/* === RANKING ZONE === */
-.spectator-ranking-zone {
-  background: rgba(255, 255, 255, 0.95);
-  backdrop-filter: blur(15px);
-  border-radius: 16px;
-  box-shadow: 0 8px 20px rgba(0, 0, 0, 0.1);
-  border: 1px solid rgba(0, 0, 0, 0.05);
-  flex-shrink: 0;
-  max-height: calc(100vh - 400px);
-  display: flex;
-  flex-direction: column;
-}
-
-.dark-mode .spectator-ranking-zone {
-  background: rgba(30, 30, 35, 0.95);
-  border-color: rgba(255, 255, 255, 0.1);
-}
-
-.spectator-ranking-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  padding: 1rem 1.5rem;
+.spectator-ranking-table th,
+.spectator-ranking-table td {
+  padding: 0.8rem 1rem;
+  text-align: left;
   border-bottom: 1px solid rgba(0, 0, 0, 0.05);
-  flex-shrink: 0;
+  font-size: 0.9rem;
 }
 
-.dark-mode .spectator-ranking-header {
+.dark-mode .spectator-ranking-table th,
+.dark-mode .spectator-ranking-table td {
   border-bottom-color: rgba(255, 255, 255, 0.1);
 }
 
-.spectator-ranking-header h3 {
-  margin: 0;
-  font-size: 1.2rem;
-  font-weight: 700;
-  color: var(--text-light);
+.spectator-ranking-table th {
+  font-weight: 600;
 }
 
-.dark-mode .spectator-ranking-header h3 {
-  color: var(--text-dark);
+/* Alignement des colonnes */
+.spectator-ranking-table th:first-child,
+.position-cell {
+  text-align: center;
+  width: 80px;
+}
+
+.spectator-ranking-table th:nth-child(3),
+.score-cell {
+  text-align: right;
+  font-weight: 600;
+  color: var(--primary);
+  font-size: 1rem;
+}
+
+.spectator-ranking-table th:nth-child(4),
+.status-cell {
+  text-align: center;
+  width: 80px;
+}
+
+/* === ÉLÉMENTS JOUEURS === */
+.position-medal {
+  font-size: 1.3rem;
+}
+
+.position-number {
+  background: rgba(0, 0, 0, 0.1);
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 600;
+  font-size: 0.8rem;
+}
+
+.player-name-container {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
 }
 
 .player-count-badge {
@@ -201,100 +502,62 @@
   font-weight: 600;
 }
 
-.spectator-ranking-table-container {
-  overflow-y: auto;
-  flex: 1;
-  min-height: 0;
-}
-
-.spectator-ranking-table {
-  width: 100%;
-  border-collapse: collapse;
-}
-
-.spectator-ranking-table th,
-.spectator-ranking-table td {
-  padding: 1rem 1.5rem;
-  text-align: left;
-  border-bottom: 1px solid rgba(0, 0, 0, 0.05);
-}
-
-.dark-mode .spectator-ranking-table th,
-.dark-mode .spectator-ranking-table td {
-  border-bottom-color: rgba(255, 255, 255, 0.1);
-}
-
-/* === PLAYER ELEMENTS === */
-.position-cell {
-  width: 80px;
-  text-align: center;
-}
-
-.position-medal {
-  font-size: 1.5rem;
-}
-
-.position-number {
-  background: rgba(0, 0, 0, 0.1);
-  width: 30px;
-  height: 30px;
-  border-radius: 50%;
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  font-weight: 600;
-  font-size: 0.9rem;
-}
-
-.player-name-container {
-  display: flex;
-  align-items: center;
-  gap: 0.5rem;
-}
-
-.score-cell {
-  text-align: right;
-  font-weight: 600;
-  color: var(--primary);
-  font-size: 1.1rem;
-}
-
-.status-cell {
-  text-align: center;
-  width: 80px;
-}
-
-/* === STATUS INDICATORS (UNE SEULE DÉFINITION) === */
+/* === STATUS INDICATORS AVEC !IMPORTANT === */
 .player-status {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
+  display: inline-flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  background: none !important;
+  border: none !important;
+  padding: 0 !important;
+  margin: 0 !important;
 }
 
 .status-indicator {
-  width: 12px;
-  height: 12px;
-  border-radius: 50%;
-  transition: all 0.3s ease;
+  width: 12px !important;
+  height: 12px !important;
+  border-radius: 50% !important;
+  transition: all 0.3s ease !important;
+  background: none !important;
+  border: none !important;
+  box-shadow: none !important;
+  margin: 0 !important;
+  padding: 0 !important;
 }
 
 .player-status.connected .status-indicator {
-  background-color: var(--success);
-  box-shadow: 0 0 8px rgba(40, 167, 69, 0.5);
+  background-color: var(--success) !important;
+  box-shadow: 0 0 8px rgba(40, 167, 69, 0.5) !important;
+  border: none !important;
 }
 
 .player-status.disconnected .status-indicator {
-  background-color: var(--danger);
-  opacity: 0.6;
+  background-color: var(--danger) !important;
+  opacity: 0.6 !important;
+  box-shadow: none !important;
+  border: none !important;
+}
+
+/* Force le nettoyage de tous les styles parasites */
+.spectator-ranking-table .player-status,
+.spectator-ranking-table .player-status *,
+.spectator-ranking-table .status-indicator {
+  text-decoration: none !important;
+  text-shadow: none !important;
+  font-weight: normal !important;
+  font-size: inherit !important;
+  color: transparent !important;
+  outline: none !important;
+  box-sizing: border-box !important;
 }
 
 /* === BUZZ INDICATORS === */
 .buzz-indicator-small {
   background: rgba(220, 53, 69, 0.15);
   color: var(--danger);
-  padding: 0.2rem 0.5rem;
-  border-radius: 12px;
-  font-size: 0.75rem;
+  padding: 0.2rem 0.4rem;
+  border-radius: 10px;
+  font-size: 0.7rem;
   font-weight: 600;
   animation: buzzPulse 1s infinite;
   white-space: nowrap;
@@ -302,12 +565,12 @@
 }
 
 .spectator-ranking-table tr.player-buzzed {
-  background: rgba(220, 53, 69, 0.15) !important;
+  background: rgba(220, 53, 69, 0.15);
   animation: buzzRowHighlight 1s ease-in-out infinite alternate;
   border-left: 4px solid var(--danger);
 }
 
-/* === SCORE ANIMATIONS (UNE SEULE DÉFINITION) === */
+/* === SCORE ANIMATIONS === */
 .score-container {
   position: relative;
   display: flex;
@@ -317,523 +580,825 @@
 }
 
 .spectator-ranking-table tr.score-change-positive {
-  animation: scorePositivePulse 2s ease-out;
-  background: rgba(40, 167, 69, 0.15) !important;
+  animation: scorePositivePulse 3s ease-out forwards; /* Ajouter forwards */
+  background: rgba(40, 167, 69, 0.15);
 }
 
 .spectator-ranking-table tr.score-change-negative {
-  animation: scoreNegativePulse 2s ease-out;
-  background: rgba(220, 53, 69, 0.15) !important;
+  animation: scoreNegativePulse 3s ease-out forwards; /* Ajouter forwards */
+  background: rgba(220, 53, 69, 0.15);
 }
 
 .score-change-indicator {
   position: absolute;
-  right: -3rem;
+  right: -2.5rem;
   top: 50%;
   transform: translateY(-50%);
-  font-size: 1rem;
+  font-size: 0.9rem;
   font-weight: 700;
-  padding: 0.3rem 0.6rem;
-  border-radius: 12px;
+  padding: 0.2rem 0.5rem;
+  border-radius: 10px;
   white-space: nowrap;
-  animation: scoreIndicatorSlide 2s ease-out;
+  animation: scoreIndicatorSlide 3s ease-out forwards;
   z-index: 2;
   border: 2px solid rgba(255, 255, 255, 0.3);
+  opacity: 0; /* Commencer invisible */
 }
 
 .score-change-indicator.positive {
-  background: rgba(40, 167, 69, 0.9);
-  color: white;
-  box-shadow: 0 2px 8px rgba(40, 167, 69, 0.4);
+  background: rgba(40, 167, 69, 0.9) !important;
+  color: white !important;
+  box-shadow: 0 2px 8px rgba(40, 167, 69, 0.4) !important;
 }
 
 .score-change-indicator.negative {
-  background: rgba(220, 53, 69, 0.9);
-  color: white;
-  box-shadow: 0 2px 8px rgba(220, 53, 69, 0.4);
+  background: rgba(220, 53, 69, 0.9) !important;
+  color: white !important;
+  box-shadow: 0 2px 8px rgba(220, 53, 69, 0.4) !important;
 }
 
-/* === ANIMATIONS (UNE SEULE DÉFINITION CHACUNE) === */
+/* === ANIMATIONS === */
 @keyframes buzzPulse {
-  0%, 100% { 
-    opacity: 0.8; 
-    transform: scale(1);
-  }
-  50% { 
-    opacity: 1; 
-    transform: scale(1.05);
-  }
+  0%, 100% { opacity: 0.8; transform: scale(1); }
+  50% { opacity: 1; transform: scale(1.05); }
 }
 
 @keyframes buzzRowHighlight {
-  from { background: rgba(220, 53, 69, 0.15) !important; }
-  to { background: rgba(220, 53, 69, 0.25) !important; }
+  from { background: rgba(220, 53, 69, 0.15); }
+  to { background: rgba(220, 53, 69, 0.25); }
 }
 
 @keyframes scorePositivePulse {
-  0% { 
-    background: rgba(40, 167, 69, 0.4) !important;
-    box-shadow: 0 0 20px rgba(40, 167, 69, 0.3);
-  }
-  50% { 
-    background: rgba(40, 167, 69, 0.25) !important;
-    box-shadow: 0 0 15px rgba(40, 167, 69, 0.2);
-  }
-  100% { 
-    background: rgba(40, 167, 69, 0.1) !important;
-    box-shadow: none;
-  }
+  0% { background: rgba(40, 167, 69, 0.4); box-shadow: 0 0 20px rgba(40, 167, 69, 0.3); }
+  50% { background: rgba(40, 167, 69, 0.25); box-shadow: 0 0 15px rgba(40, 167, 69, 0.2); }
+  100% { background: rgba(40, 167, 69, 0.1); box-shadow: none; }
 }
 
 @keyframes scoreNegativePulse {
-  0% { 
-    background: rgba(220, 53, 69, 0.4) !important;
-    box-shadow: 0 0 20px rgba(220, 53, 69, 0.3);
-  }
-  50% { 
-    background: rgba(220, 53, 69, 0.25) !important;
-    box-shadow: 0 0 15px rgba(220, 53, 69, 0.2);
-  }
-  100% { 
-    background: rgba(220, 53, 69, 0.1) !important;
-    box-shadow: none;
-  }
+  0% { background: rgba(220, 53, 69, 0.4); box-shadow: 0 0 20px rgba(220, 53, 69, 0.3); }
+  50% { background: rgba(220, 53, 69, 0.25); box-shadow: 0 0 15px rgba(220, 53, 69, 0.2); }
+  100% { background: rgba(220, 53, 69, 0.1); box-shadow: none; }
 }
 
 @keyframes scoreIndicatorSlide {
-  0% {
-    opacity: 0;
-    transform: translateY(-50%) translateX(15px) scale(0.7);
+  0% { opacity: 0; transform: translateY(-50%) translateX(15px) scale(0.7); }
+  15% { opacity: 1; transform: translateY(-50%) translateX(0) scale(1.2); }
+  85% { opacity: 1; transform: translateY(-50%) translateX(0) scale(1); }
+  100% { opacity: 0; transform: translateY(-50%) translateX(-15px) scale(0.7); }
+}
+
+/* === MODALE QR CODE === */
+.qr-modal-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.8);
+  backdrop-filter: blur(4px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+  animation: modalFadeIn 0.2s ease-out;
+}
+
+.qr-modal-content {
+  background: var(--bg-primary);
+  border-radius: 16px;
+  border: 2px solid var(--border-light);
+  box-shadow: 0 20px 40px rgba(0, 0, 0, 0.3);
+  max-width: 90vw;
+  max-height: 90vh;
+  overflow: hidden;
+  animation: modalSlideIn 0.3s ease-out;
+}
+
+.dark-mode .qr-modal-content {
+  background: var(--bg-secondary);
+  border-color: var(--border-dark);
+}
+
+.qr-modal-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 1.5rem 2rem;
+  border-bottom: 1px solid var(--border-light);
+  background: rgba(0, 0, 0, 0.02);
+}
+
+.dark-mode .qr-modal-header {
+  border-bottom-color: var(--border-dark);
+  background: rgba(255, 255, 255, 0.02);
+}
+
+.qr-modal-header h3 {
+  margin: 0;
+  font-size: 1.25rem;
+  font-weight: 600;
+  color: var(--text-primary);
+}
+
+.qr-modal-close {
+  background: none;
+  border: none;
+  font-size: 1.5rem;
+  color: var(--text-secondary);
+  cursor: pointer;
+  padding: 0.5rem;
+  border-radius: 8px;
+  transition: all 0.2s ease;
+  line-height: 1;
+  width: 2.5rem;
+  height: 2.5rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.qr-modal-close:hover {
+  background: rgba(220, 53, 69, 0.1);
+  color: var(--danger);
+  transform: scale(1.1);
+}
+
+.qr-modal-body {
+  padding: 2rem;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 1.5rem;
+}
+
+.qr-code-image {
+  max-width: 300px;
+  max-height: 300px;
+  width: auto;
+  height: auto;
+  border-radius: 12px;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.15);
+  cursor: pointer;
+  transition: transform 0.2s ease;
+}
+
+.qr-code-image:hover {
+  transform: scale(1.02);
+}
+
+.qr-code-info {
+  text-align: center;
+  color: var(--text-secondary);
+  font-size: 0.9rem;
+  margin: 0;
+  max-width: 280px;
+}
+
+/* Badge Spectateur cliquable */
+.spectator-badge {
+  cursor: pointer !important;
+  transition: all 0.2s ease !important;
+}
+
+.spectator-badge:hover {
+  background: rgba(74, 144, 226, 0.9) !important;
+  transform: scale(1.05) !important;
+  box-shadow: 0 4px 12px rgba(74, 144, 226, 0.3) !important;
+}
+
+.spectator-badge:active {
+  transform: scale(0.98) !important;
+}
+
+/* Animations */
+@keyframes modalFadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+@keyframes modalSlideIn {
+  from { 
+    opacity: 0; 
+    transform: scale(0.9) translateY(-20px); 
   }
-  15% {
-    opacity: 1;
-    transform: translateY(-50%) translateX(0) scale(1.2);
+  to { 
+    opacity: 1; 
+    transform: scale(1) translateY(0); 
   }
-  85% {
-    opacity: 1;
-    transform: translateY(-50%) translateX(0) scale(1);
+}
+
+/* Responsive pour la modale */
+@media (max-width: 768px) {
+  .qr-modal-content {
+    max-width: 95vw;
+    margin: 1rem;
   }
-  100% {
-    opacity: 0;
-    transform: translateY(-50%) translateX(-15px) scale(0.7);
+
+  .qr-modal-header {
+    padding: 1rem 1.5rem;
+  }
+
+  .qr-modal-header h3 {
+    font-size: 1.1rem;
+  }
+
+  .qr-modal-body {
+    padding: 1.5rem;
+    gap: 1rem;
+  }
+
+  .qr-code-image {
+    max-width: 250px;
+    max-height: 250px;
+  }
+
+  .qr-code-info {
+    font-size: 0.85rem;
+  }
+
+  .qr-room-code {
+    font-size: 1.3em;
+    padding: 0.25rem 0.6rem;
+  }
+}
+
+@media (max-width: 480px) {
+  .qr-modal-content {
+    max-width: 98vw;
+    margin: 0.5rem;
+  }
+
+  .qr-modal-header {
+    padding: 0.75rem 1rem;
+  }
+
+  .qr-modal-header h3 {
+    font-size: 1rem;
+  }
+
+  .qr-modal-body {
+    padding: 1rem;
+  }
+
+  .qr-code-image {
+    max-width: 200px;
+    max-height: 200px;
+  }
+
+  .qr-code-info {
+    font-size: 0.8rem;
+    max-width: 220px;
+  }
+
+  .qr-room-code {
+    font-size: 1.2em;
+    padding: 0.2rem 0.5rem;
+    display: inline-block;
+    margin-top: 0.25rem;
   }
 }
 
 /* === RESPONSIVE === */
+@media (max-width: 1200px) {
+  .spectator-content-grid {
+    grid-template-columns: 1fr 600px; /* Garde le classement large même sur écrans moyens */
+  }
+}
+
 @media (max-width: 768px) {
   .spectator-view {
-    padding: 60px 0.5rem 0.5rem 0.5rem;
+    padding: 30px 0.5rem 0.5rem 0.5rem; /* Réduire le padding */
     gap: 0.5rem;
   }
+
+  .spectator-content-grid {
+    grid-template-columns: 1fr; /* Une seule colonne sur mobile */
+    grid-template-rows: auto auto auto; /* Hauteur automatique */
+    height: auto;
+    gap: 0.75rem;
+  }
   
+  .spectator-spotify-big-zone {
+    grid-column: 1;
+    grid-row: 1;
+    min-height: 180px; /* Plus compact */
+    padding: 0.75rem;
+  }
+  
+  .spectator-ranking-compact {
+    grid-column: 1;
+    grid-row: 2;
+    max-height: 400px; /* Hauteur fixe pour éviter débordement */
+    min-height: 250px;
+  }
+  
+  .spectator-ad-zone {
+    grid-column: 1;
+    grid-row: 3;
+    min-height: 120px; /* Plus compact */
+    padding: 0.5rem;
+  }
+
+  /* Header plus compact */
+  .spectator-header-zone {
+    gap: 0.75rem;
+  }
+
   .spectator-room-info {
+    padding: 0.75rem 1rem;
     flex-direction: column;
-    gap: 1rem;
-    padding: 1rem;
+    gap: 0.75rem;
+    align-items: stretch;
   }
-  
+
+  .spectator-room-code {
+    justify-content: space-between;
+  }
+
+  .spectator-room-code h2 {
+    font-size: 1.25rem;
+  }
+
   .spectator-game-info {
-    flex-direction: column !important;
-    gap: 0.5rem !important;
-    width: 100% !important;
-    align-items: center !important;
-    text-align: center !important;
+    justify-content: space-between;
+    flex-wrap: wrap;
+    gap: 0.5rem;
   }
-  
-  .game-status,
-  .player-count {
-    font-size: 0.8rem;
-    padding: 0.4rem 0.8rem;
-    min-width: 120px;
+
+  /* Spotify Display mobile */
+  .spotify-display-wrapper .spotifyDisplayContainer {
+    transform: scale(0.9); /* Légèrement plus grand sur tablette */
   }
-  
-  .spectator-view .game-status {
-    display: block !important;
-    text-align: center !important;
-    font-size: 0.8rem !important;
-    padding: 0.4rem 0.8rem !important;
-    min-width: 100px !important;
-    margin: 0 auto !important; /* ← VOILÀ CE QUI MANQUAIT ! */
-    box-sizing: border-box !important;
-    background: rgba(40, 167, 69, 0.15) !important;
-    color: var(--success) !important;
-    border: 1px solid rgba(40, 167, 69, 0.3) !important;
-    border-radius: 20px !important;
-    font-weight: 600 !important;
-    white-space: nowrap !important;
-    flex-shrink: 0 !important;
+
+  .spotify-display-wrapper .artworkContainer,
+  .spotify-display-wrapper .artwork {
+    width: 100px;
+    height: 100px;
   }
-  
-  .spectator-view .player-count {
-    display: block !important;
-    text-align: center !important;
-    margin: 0 auto !important; /* ← ET LÀ AUSSI ! */
-    font-size: 0.8rem !important;
-    padding: 0.4rem 0.8rem !important;
-    min-width: 120px !important;
-    background: rgba(0, 123, 255, 0.1) !important;
-    color: var(--primary) !important;
-    border-radius: 20px !important;
-    font-weight: 600 !important;
-    white-space: nowrap !important;
-    flex-shrink: 0 !important;
+
+  .spotify-display-wrapper .playlist-badge {
+    padding: 0.6rem 0.8rem !important;
+    font-size: 1rem !important;
+    border-radius: 12px !important;
   }
-  
-  .score-change-indicator {
-    position: static;
-    display: inline-block;
-    margin-left: 0.5rem;
-    font-size: 0.8rem;
-    animation: scoreIndicatorMobile 2s ease-out;
+
+  /* Tableau mobile */
+  .spectator-ranking-table th,
+  .spectator-ranking-table td {
+    padding: 0.6rem 0.75rem;
+    font-size: 0.85rem;
   }
-  
-  @keyframes scoreIndicatorMobile {
-    0% { opacity: 0; transform: scale(0.8); }
-    15% { opacity: 1; transform: scale(1.1); }
-    85% { opacity: 1; transform: scale(1); }
-    100% { opacity: 0; transform: scale(0.8); }
+
+  .spectator-ranking-compact .spectator-ranking-header {
+    padding: 0.75rem;
+  }
+
+  .spectator-ranking-compact .spectator-ranking-header h3 {
+    font-size: 1rem;
+  }
+
+  /* Status card mobile */
+  .status-card-big {
+    width: 80%;
+    max-width: 300px;
+    padding: 1.25rem;
+  }
+
+  .status-card-big h2 {
+    font-size: 1.2rem;
+  }
+
+  .status-card-big p {
+    font-size: 0.85rem;
+  }
+
+  /* Ad zone mobile */
+  .ad-content h3 {
+    font-size: 0.85rem;
+    margin-bottom: 0.15rem;
+  }
+
+  .ad-content p {
+    font-size: 0.65rem;
+    margin-bottom: 0.25rem;
+  }
+
+  .ad-placeholder {
+    padding: 0.6rem;
+    font-size: 0.75rem;
+    border-radius: 4px;
   }
 }
 
 @media (max-width: 480px) {
   .spectator-view {
-    padding-top: 50px; /* Encore plus compact sur petit mobile */
-  }
-  
-  .spectator-ranking-header {
-    padding: 0.75rem 1rem;
-    flex-direction: column;
+    padding: 30px 0.25rem 0.25rem 0.25rem; /* Padding minimal */
     gap: 0.5rem;
-    text-align: center;
   }
-  
-  .spectator-ranking-header h3 {
-    font-size: 1rem;
+
+  .spectator-content-grid {
+    gap: 0.5rem;
   }
-  
+
+  /* Header très compact */
+  .spectator-room-info {
+    padding: 0.5rem 0.75rem;
+    gap: 0.5rem;
+  }
+
+  .spectator-room-code h2 {
+    font-size: 1.1rem;
+    padding: 0.5rem 1rem;
+  }
+
+  .spectator-badge {
+    font-size: 0.8rem;
+    padding: 0.4rem 0.8rem;
+  }
+
+  .game-status {
+    font-size: 0.8rem;
+    padding: 0.4rem 0.8rem;
+  }
+
+  .player-count {
+    font-size: 0.8rem;
+    padding: 0.4rem 0.8rem;
+  }
+
+  /* Spotify zone très compacte */
+  .spectator-spotify-big-zone {
+    min-height: 150px;
+    padding: 0.5rem;
+  }
+
+  .spotify-display-wrapper .spotifyDisplayContainer {
+    transform: scale(0.7); /* Plus petit sur mobile */
+  }
+
+  .spotify-display-wrapper .artworkContainer,
+  .spotify-display-wrapper .artwork {
+    width: 80px;
+    height: 80px;
+  }
+
+  .spotify-display-wrapper .artist,
+  .spotify-display-wrapper .title {
+    font-size: 0.9rem;
+    margin: 0.15rem 0;
+  }
+
+  .spotify-display-wrapper .playlist-badge {
+    padding: 0.5rem 0.7rem !important;
+    font-size: 0.9rem !important;
+    border-radius: 10px !important;
+    top: 0.4rem !important;
+    right: 0.4rem !important;
+  }
+
+  /* Classement mobile optimisé */
+  .spectator-ranking-compact {
+    max-height: 350px;
+    min-height: 200px;
+  }
+
+  .spectator-ranking-compact .spectator-ranking-header {
+    padding: 0.5rem 0.75rem;
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 0.5rem;
+  }
+
+  .spectator-ranking-compact .spectator-ranking-header h3 {
+    font-size: 0.95rem;
+    margin: 0;
+  }
+
+  .spectator-ranking-compact .player-count-badge {
+    align-self: flex-start;
+    font-size: 0.75rem;
+    padding: 0.25rem 0.6rem;
+  }
+
+  /* Tableau très compact */
   .spectator-ranking-table th,
   .spectator-ranking-table td {
-    padding: 0.5rem 0.75rem;
+    padding: 0.5rem 0.5rem;
+    font-size: 0.8rem;
+  }
+
+  .spectator-ranking-table th:first-child,
+  .position-cell {
+    width: 50px;
+    padding: 0.5rem 0.25rem;
+  }
+
+  .spectator-ranking-table th:nth-child(3),
+  .score-cell {
+    width: 60px;
     font-size: 0.85rem;
   }
-  
-  /* Encore plus compact sur très petit écran */
-  .spectator-ranking-zone {
-    max-height: calc(100vh - 250px);
+
+  .spectator-ranking-table th:nth-child(4),
+  .status-cell {
+    width: 50px;
+    padding: 0.5rem 0.25rem;
   }
-  
-  /* Optimiser les badges de statut sur mobile */
+
+  .position-medal {
+    font-size: 1.1rem;
+  }
+
+  .position-number {
+    width: 24px;
+    height: 24px;
+    font-size: 0.7rem;
+  }
+
+  .player-name-container {
+    gap: 0.4rem;
+  }
+
+  .buzz-indicator-small {
+    font-size: 0.6rem;
+    padding: 0.15rem 0.3rem;
+  }
+
+  .score-change-indicator {
+    right: -2rem;
+    font-size: 0.8rem;
+    padding: 0.15rem 0.4rem;
+  }
+
+  /* Status card mobile */
+  .status-card-big {
+    width: 90%;
+    max-width: 280px;
+    padding: 1rem;
+  }
+
+  .status-card-big h2 {
+    font-size: 1.1rem;
+    margin-bottom: 0.6rem;
+  }
+
+  .status-card-big p {
+    font-size: 0.8rem;
+  }
+
+  /* Ad zone très réduite */
+  .spectator-ad-zone {
+    min-height: 100px;
+    padding: 0.4rem;
+  }
+
+  .ad-content h3 {
+    font-size: 0.8rem;
+    margin-bottom: 0.1rem;
+  }
+
+  .ad-content p {
+    font-size: 0.6rem;
+    margin-bottom: 0.2rem;
+  }
+
+  .ad-placeholder {
+    padding: 0.5rem;
+    font-size: 0.7rem;
+    line-height: 1.1;
+  }
+}
+
+@media (max-width: 350px) {
+  .spectator-view {
+    padding: 30px 0.2rem 0.2rem 0.2rem;
+  }
+
+  /* Header ultra compact */
+  .spectator-room-code h2 {
+    font-size: 1rem;
+    padding: 0.4rem 0.8rem;
+  }
+
+  .spectator-badge {
+    font-size: 0.75rem;
+    padding: 0.3rem 0.6rem;
+  }
+
   .game-status,
   .player-count {
     font-size: 0.75rem;
     padding: 0.3rem 0.6rem;
   }
-}
 
-/* Ajustement spécifique pour les très petits écrans */
-@media (max-width: 350px) {
+  /* Spotify ultra compact */
+  .spectator-spotify-big-zone {
+    min-height: 130px;
+    padding: 0.4rem;
+  }
+
+  .spotify-display-wrapper .spotifyDisplayContainer {
+    transform: scale(0.6);
+  }
+
+  .spotify-display-wrapper .artworkContainer,
+  .spotify-display-wrapper .artwork {
+    width: 70px;
+    height: 70px;
+  }
+
+  .spotify-display-wrapper .artist,
+  .spotify-display-wrapper .title {
+    font-size: 0.85rem;
+    margin: 0.1rem 0;
+  }
+
+  .spotify-display-wrapper .playlist-badge {
+    padding: 0.4rem 0.6rem !important;
+    font-size: 0.8rem !important;
+    border-radius: 8px !important;
+  }
+
+  /* Classement ultra compact */
+  .spectator-ranking-compact {
+    max-height: 300px;
+    min-height: 180px;
+  }
+
+  .spectator-ranking-compact .spectator-ranking-header h3 {
+    font-size: 0.9rem;
+  }
+
   .spectator-ranking-table th,
   .spectator-ranking-table td {
-    padding: 0.4rem 0.5rem;
-    font-size: 0.8rem;
+    padding: 0.4rem 0.4rem;
+    font-size: 0.75rem;
   }
-  
-  .position-medal {
-    font-size: 1.2rem;
+
+  .spectator-ranking-table th:first-child,
+  .position-cell {
+    width: 45px;
+    padding: 0.4rem 0.2rem;
   }
-  
+
+  .spectator-ranking-table th:nth-child(3),
+  .score-cell {
+    width: 55px;
+  }
+
+  .spectator-ranking-table th:nth-child(4),
+  .status-cell {
+    width: 45px;
+    padding: 0.4rem 0.2rem;
+  }
+
   .position-number {
-    width: 25px;
-    height: 25px;
-    font-size: 0.8rem;
+    width: 20px;
+    height: 20px;
+    font-size: 0.65rem;
+  }
+
+  .status-indicator {
+    width: 10px !important;
+    height: 10px !important;
+  }
+
+  /* Status card ultra compact */
+  .status-card-big {
+    width: 95%;
+    padding: 0.8rem;
+  }
+
+  .status-card-big h2 {
+    font-size: 1rem;
+    margin-bottom: 0.5rem;
+  }
+
+  .status-card-big p {
+    font-size: 0.75rem;
+  }
+
+  /* Ad zone minimale */
+  .spectator-ad-zone {
+    min-height: 80px;
+    padding: 0.3rem;
+  }
+
+  .ad-content h3 {
+    font-size: 0.75rem;
+  }
+
+  .ad-content p {
+    font-size: 0.55rem;
+  }
+
+  .ad-placeholder {
+    padding: 0.4rem;
+    font-size: 0.65rem;
   }
 }
 
-/* Ajoute ça à la fin de ton fichier CSS */
+/* AJOUTE cette règle dans la section modale QR code : */
 
-/* Fix spécifique pour éviter la duplication du texte */
-.spectator-view .game-status {
-  position: relative;
-  overflow: hidden;
+.qr-room-code {
+  font-weight: 700;
+  font-size: 1.25em;
+  color: var(--primary);
+  background: rgba(74, 144, 226, 0.1);
+  padding: 0.2rem 0.5rem;
+  border-radius: 6px;
+  border: 1px solid rgba(74, 144, 226, 0.2);
+  white-space: nowrap;
 }
 
-/* Corrige la section mobile pour le game-status : */
-
-/* Force l'override sur mobile */
-@media (max-width: 768px) {
-  .spectator-view .game-status {
-    display: block !important;
-    text-align: center !important;
-    font-size: 0.8rem !important;
-    padding: 0.4rem 0.8rem !important;
-    min-width: 100px !important;
-    margin: 0 auto !important; /* ← VOILÀ CE QUI MANQUAIT ! */
-    box-sizing: border-box !important;
-    overflow: hidden !important;
-    position: relative !important;
-    background: rgba(40, 167, 69, 0.15) !important; /* Pour "En cours" */
-    color: var(--success) !important;
-    border: 1px solid rgba(40, 167, 69, 0.3) !important;
-    border-radius: 20px !important;
-    font-weight: 600 !important;
-    white-space: nowrap !important;
-    flex-shrink: 0 !important;
-  }
-  
-  .spectator-view .game-status.spectator-paused {
-    background: rgba(255, 193, 7, 0.15) !important;
-    color: var(--warning) !important;
-    border: 1px solid rgba(255, 193, 7, 0.3) !important;
-  }
-  
-  .spectator-view .player-count {
-    display: block !important;
-    text-align: center !important;
-    margin: 0 auto !important; /* ← ET LÀ AUSSI ! */
-    font-size: 0.8rem !important;
-    padding: 0.4rem 0.8rem !important;
-    min-width: 120px !important;
-    background: rgba(0, 123, 255, 0.1) !important;
-    color: var(--primary) !important;
-    border-radius: 20px !important;
-    font-weight: 600 !important;
-    white-space: nowrap !important;
-    flex-shrink: 0 !important;
-  }
+.dark-mode .qr-room-code {
+  background: rgba(74, 144, 226, 0.15);
+  border-color: rgba(74, 144, 226, 0.3);
 }
 
-/* Ajoute à la fin du fichier - Override pour forcer les styles spectateur : */
+/* AJOUTE cette section après les styles de connexion : */
 
-/* Override forcé pour les status indicators - Écraser le CSS global */
-.spectator-view .status-indicator {
-  width: 12px !important;
-  height: 12px !important;
-  border-radius: 50% !important;
-  transition: all 0.3s ease !important;
-  background: transparent !important;
-  border: none !important;
-  box-shadow: none !important;
-  position: static !important;
+/* === ÉCRAN D'ERREUR === */
+.spectator-error-container {
+  min-height: 100vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 2rem;
 }
 
-.spectator-view .player-status.connected .status-indicator {
-  background-color: var(--success) !important;
-  box-shadow: 0 0 8px rgba(40, 167, 69, 0.5) !important;
+.spectator-error-content {
+  text-align: center;
+  max-width: 400px;
+  padding: 2rem;
+  background: var(--bg-primary);
+  border-radius: 16px;
+  border: 2px solid var(--danger);
+  box-shadow: 0 8px 32px rgba(220, 53, 69, 0.1);
 }
 
-.spectator-view .player-status.disconnected .status-indicator {
-  background-color: var(--danger) !important;
-  opacity: 0.6 !important;
-  box-shadow: none !important;
+.dark-mode .spectator-error-content {
+  background: var(--bg-secondary);
+  box-shadow: 0 8px 32px rgba(220, 53, 69, 0.2);
 }
 
-/* Override pour empêcher l'héritage de styles globaux sur les cellules */
-.spectator-view .spectator-ranking-table td {
-  background: transparent !important;
-  position: static !important;
+.spectator-error-content .error-icon {
+  width: 4rem;
+  height: 4rem;
+  color: var(--danger);
+  margin-bottom: 1rem;
 }
 
-.spectator-view .spectator-ranking-table td::before,
-.spectator-view .spectator-ranking-table td::after {
-  display: none !important;
-  content: none !important;
+.spectator-error-content h2 {
+  color: var(--danger);
+  margin-bottom: 1rem;
+  font-size: 1.5rem;
 }
 
-/* Override pour les status-cell spécifiquement */
-.spectator-view .status-cell {
-  background: transparent !important;
-  position: static !important;
+.spectator-error-content p {
+  color: var(--text-secondary);
+  margin-bottom: 2rem;
+  line-height: 1.5;
 }
 
-.spectator-view .status-cell::before,
-.spectator-view .status-cell::after {
-  display: none !important;
-  content: none !important;
-}
-
-/* Override pour player-status container */
-.spectator-view .player-status {
-  background: transparent !important;
-  border: none !important;
-  box-shadow: none !important;
-  position: static !important;
-  display: inline-flex !important;
-  align-items: center !important;
-  justify-content: center !important;
-  width: auto !important;
-  height: auto !important;
-  padding: 0 !important;
-  margin: 0 !important;
-}
-
-.spectator-view .player-status::before,
-.spectator-view .player-status::after {
-  display: none !important;
-  content: none !important;
-}
-
-/* Reset complet pour éviter tout héritage indésirable */
-.spectator-view .spectator-ranking-table * {
-  box-sizing: border-box !important;
-}
-
-.spectator-view .spectator-ranking-table td *:not(.status-indicator):not(.score-change-indicator):not(.buzz-indicator-small) {
-  background: transparent !important;
-}
-
-/* Override spécifique pour empêcher les pseudo-éléments globaux */
-.spectator-view .spectator-ranking-table .status-cell *,
-.spectator-view .spectator-ranking-table .player-status *,
-.spectator-view .spectator-ranking-table .status-indicator {
-  position: static !important;
-}
-
-.spectator-view .spectator-ranking-table .status-cell *::before,
-.spectator-view .spectator-ranking-table .status-cell *::after,
-.spectator-view .spectator-ranking-table .player-status *::before,
-.spectator-view .spectator-ranking-table .player-status *::after {
-  display: none !important;
-  content: none !important;
-  background: none !important;
-}
-
-/* Corrige le centrage des status indicators sur mobile - Ajoute cette section : */
-
-/* Force le centrage des status indicators sur TOUS les écrans */
-.spectator-view .status-cell {
-  background: transparent !important;
-  position: static !important;
-  text-align: center !important;
-  vertical-align: middle !important;
-  display: table-cell !important;
-}
-
-.spectator-view .player-status {
-  background: transparent !important;
-  border: none !important;
-  box-shadow: none !important;
-  position: static !important;
-  display: inline-flex !important;
-  align-items: center !important;
-  justify-content: center !important;
-  width: 100% !important;
-  height: auto !important;
-  padding: 0 !important;
-  margin: 0 auto !important;
-}
-
-.spectator-view .status-indicator {
-  width: 12px !important;
-  height: 12px !important;
-  border-radius: 50% !important;
-  transition: all 0.3s ease !important;
-  background: transparent !important;
-  border: none !important;
-  box-shadow: none !important;
-  position: static !important;
-  display: block !important;
-  margin: 0 auto !important;
-}
-
-/* Force spécifiquement sur mobile */
-@media (max-width: 768px) {
-  .spectator-view .status-cell {
-    text-align: center !important;
-    vertical-align: middle !important;
-    width: 60px !important;
-    padding: 0.5rem !important;
-    display: table-cell !important;
-  }
-  
-  .spectator-view .player-status {
-    justify-content: center !important;
-    align-items: center !important;
-    width: 100% !important;
-    margin: 0 auto !important;
-    display: flex !important;
-    position: relative !important;
-    left: 50% !important;
-    transform: translateX(-50%) !important;
-  }
-  
-  .spectator-view .status-indicator {
-    margin: 0 auto !important;
-    display: block !important;
-    position: static !important;
-    width: 12px !important;
-    height: 12px !important;
-  }
-}
-
-/* === ALIGNEMENT TABLEAU - VERSION UNIQUE === */
-
-/* Alignement PC */
-.spectator-ranking-table th {
-  padding: 1rem 1.5rem;
-  text-align: left;
-  border-bottom: 1px solid rgba(0, 0, 0, 0.05);
+.spectator-error-content .btn-primary {
+  background: var(--primary);
+  color: white;
+  border: none;
+  padding: 0.75rem 1.5rem;
+  border-radius: 8px;
+  font-size: 1rem;
   font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s ease;
 }
 
-.spectator-ranking-table th:first-child,
-.position-cell {
-  text-align: center !important;
+.spectator-error-content .btn-primary:hover {
+  background: var(--primary-hover);
+  transform: translateY(-1px);
 }
 
-.spectator-ranking-table th:nth-child(3),
-.score-cell {
-  text-align: right !important;
-}
+/* Responsive pour l'erreur */
+@media (max-width: 480px) {
+  .spectator-error-container {
+    padding: 1rem;
+  }
 
-.spectator-ranking-table th:nth-child(4),
-.status-cell {
-  text-align: center !important;
-}
+  .spectator-error-content {
+    padding: 1.5rem;
+  }
 
-/* Alignement MOBILE - Section unique */
-@media (max-width: 768px) {
-  /* Entêtes alignés */
-  .spectator-ranking-table th:first-child {
-    text-align: center !important;
+  .spectator-error-content .error-icon {
+    width: 3rem;
+    height: 3rem;
   }
-  
-  .spectator-ranking-table th:nth-child(3) {
-    text-align: right !important;
+
+  .spectator-error-content h2 {
+    font-size: 1.25rem;
   }
-  
-  .spectator-ranking-table th:nth-child(4) {
-    text-align: center !important;
-  }
-  
-  /* Cellules de données */
-  .spectator-view .position-cell {
-    text-align: center !important;
-  }
-  
-  .spectator-view .score-cell {
-    text-align: right !important;
-    padding-right: 1.5rem !important;
-  }
-  
-  .spectator-view .status-cell {
-    text-align: center !important;
-    width: 60px !important;
-    padding: 0.5rem !important;
-  }
-  
-  /* Centrage parfait de la pastille de statut */
-  .spectator-view .player-status {
-    display: flex !important;
-    justify-content: center !important;
-    align-items: center !important;
-    width: 100% !important;
-    margin: 0 !important;
-    padding: 0 !important;
-  }
-  
-  .spectator-view .status-indicator {
-    width: 12px !important;
-    height: 12px !important;
-    margin: 0 !important;
+
+  .spectator-error-content .btn-primary {
+    padding: 0.6rem 1.2rem;
+    font-size: 0.9rem;
   }
 }
