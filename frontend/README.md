@@ -18,6 +18,7 @@ Ce projet constitue une application web interactive qui permet de gérer des ses
 - **⚡ Connexion simplifiée** : Accès rapide avec code de salle et pseudo
 - **🎯 Buzzer réactif** : Interface optimisée pour minimiser la latence
 - **📈 Suivi du classement** : Visualisation en temps réel des scores
+- **👀 Mode Spectateur** : Permet aux utilisateurs de suivre les sessions en temps réel sans participer activement
 
 ### 🛠️ Fonctionnalités admin
 

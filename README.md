@@ -7,7 +7,8 @@ Ce dépôt contient deux applications principales qui forment un système comple
 ## 1. RDV-Buzzer Frontend
 - **Type :** Application React
 - **Fonctionnalités clés :**  
-  - **🚀 Création et gestion de salles** avec codes  
+  - **🚀 Création et gestion de salles** avec codes 
+  - **👀 Mode Spectateur pour visionner la salle sur grand écran !**
   - **🔔 Système de buzzer en temps réel**  
   - **📊 Suivi des scores et mode admin**  
   - **🌓 Thème clair/sombre**
