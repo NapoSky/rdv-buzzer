@@ -101,7 +101,7 @@ function SpectatorView() {
     // === HANDLERS POUR TOUS LES ÉVÉNEMENTS DYNAMIQUES ===
     
     const handleSpectatorRoomData = (data) => {
-      console.log('Spectator room data (événement):', data);
+      //console.log('Spectator room data (événement):', data);
       
       // Vérifier s'il y a une erreur dans la réponse
       if (data && data.error) {
@@ -146,7 +146,7 @@ function SpectatorView() {
     };
 
     const handleUpdatePlayers = (newPlayers) => {
-      console.log('🔄 Update players:', newPlayers);
+      //console.log('🔄 Update players:', newPlayers);
       
       // Convertir disconnected en connected pour cohérence
       const playersWithConnectionStatus = {};
@@ -192,7 +192,7 @@ function SpectatorView() {
                     if (timeSinceStart < 3000) {
                       finalChange = existingChange.cumulativeChange + scoreDiff;
                       animationType = finalChange > 0 ? 'positive' : 'negative';
-                      console.log(`📊 Cumulating score change for ${player.pseudo}: ${existingChange.cumulativeChange} + ${scoreDiff} = ${finalChange}`);
+                      //console.log(`📊 Cumulating score change for ${player.pseudo}: ${existingChange.cumulativeChange} + ${scoreDiff} = ${finalChange}`);
                     }
                   }
                   
@@ -207,7 +207,7 @@ function SpectatorView() {
                     }
                   };
                   
-                  console.log(`📊 ${existingChange ? 'Updated' : 'New'} score change for ${player.pseudo}: ${finalChange > 0 ? '+' : ''}${finalChange}`);
+                  //console.log(`📊 ${existingChange ? 'Updated' : 'New'} score change for ${player.pseudo}: ${finalChange > 0 ? '+' : ''}${finalChange}`);
                   
                   return updatedChanges;
                 });
@@ -223,19 +223,19 @@ function SpectatorView() {
 
     // === GESTION DES BUZZ - CES ÉVÉNEMENTS ARRIVENT DÉJÀ ===
     const handleBuzzed = (data) => {
-        console.log('🔴 Buzz reçu:', data);
+        //console.log('🔴 Buzz reçu:', data);
         const buzzedPlayer = data.buzzedBy || '';
       setBuzzedBy(buzzedPlayer);
     };
 
     const handleBuzzCleared = () => {
-      console.log('🔄 Buzz cleared');
+      //console.log('🔄 Buzz cleared');
       setBuzzedBy('');
     };
 
     // === GESTION SPOTIFY - CES ÉVÉNEMENTS ARRIVENT DÉJÀ ===
     const handleSpotifyTrackChanged = (data) => {
-      console.log('🎵 Spotify track changed:', data);
+      //console.log('🎵 Spotify track changed:', data);
       // Les données peuvent venir dans différents formats
       const newTrack = data.trackInfo || data.track || data.newTrack || null;
       setSpotifyTrackInfo(newTrack);
@@ -246,7 +246,7 @@ function SpectatorView() {
     };
 
     const handleJudgeAnswer = (data) => {
-      console.log('⚖️ Judge answer:', data);
+      //console.log('⚖️ Judge answer:', data);
       setFoundArtist(data.artistFound || false);
       setFoundTitle(data.titleFound || false);
       // Clear le buzz après jugement
@@ -255,18 +255,18 @@ function SpectatorView() {
 
     // === GESTION DU JEU - CES ÉVÉNEMENTS ARRIVENT DÉJÀ ===
     const handleGamePaused = (data) => {
-      console.log('⏸️ Game paused:', data);
+      //console.log('⏸️ Game paused:', data);
       setGameStatus(data.paused ? 'paused' : 'playing');
     };
 
     const handleRoomOptionsUpdated = (options) => {
-      console.log('⚙️ Room options updated:', options);
+      //console.log('⚙️ Room options updated:', options);
       setRoomOptions(options);
     };
 
     // === GESTION DES CONNEXIONS - CES ÉVÉNEMENTS ARRIVENT DÉJÀ ===
     const handlePlayerDisconnected = (data) => {
-      console.log('🔴 Player disconnected:', data);
+      //console.log('🔴 Player disconnected:', data);
       setPlayers(prevPlayers => {
         const playerKey = Object.keys(prevPlayers).find(key => 
           prevPlayers[key].pseudo === data.pseudo || key === data.playerId
@@ -286,7 +286,7 @@ function SpectatorView() {
     };
     
     const handlePlayerConnected = (data) => {
-      console.log('🟢 Player connected:', data);
+      //console.log('🟢 Player connected:', data);
       setPlayers(prevPlayers => {
         const playerKey = Object.keys(prevPlayers).find(key => 
           prevPlayers[key].pseudo === data.pseudo || key === data.playerId
@@ -307,7 +307,7 @@ function SpectatorView() {
 
     // === GESTION DES QUESTIONS/ROUNDS - CES ÉVÉNEMENTS ARRIVENT DÉJÀ ===
     const handleNextQuestion = (data) => {
-      console.log('⏭️ Next question:', data);
+      //console.log('⏭️ Next question:', data);
       setBuzzedBy('');
       setFoundArtist(false);
       setFoundTitle(false);
@@ -318,7 +318,7 @@ function SpectatorView() {
 
     // === AJOUT DU NOUVEAU HANDLER ===
     const handleBuzzerReset = () => {
-      console.log('🔄 Buzzer reset - Admin a passé');
+      //console.log('🔄 Buzzer reset - Admin a passé');
       setBuzzedBy('');
     };
 
@@ -394,6 +394,62 @@ function SpectatorView() {
     
     return () => clearInterval(cleanupInterval);
   }, []);
+    
+  /* Wake Lock simple pour empêcher l'écran de s'éteindre */
+useEffect(() => {
+  let wakeLock = null;
+  
+  const enableWakeLock = async () => {
+    // API Wake Lock standard (Chrome/Edge sur PC)
+    if ('wakeLock' in navigator) {
+      try {
+        wakeLock = await navigator.wakeLock.request('screen');
+        console.log('Wake Lock activé pour la vue spectateur');
+        
+        // Gérer la libération automatique
+        wakeLock.addEventListener('release', () => {
+          console.log('Wake Lock libéré automatiquement');
+        });
+        
+      } catch (err) {
+        console.log('Wake Lock non supporté ou refusé:', err.message);
+      }
+    } else {
+      console.log('Wake Lock API non disponible sur ce navigateur');
+    }
+  };
+  
+  const handleVisibilityChange = async () => {
+    // Réactiver le wake lock quand on revient sur la page
+    if (document.visibilityState === 'visible' && roomData) {
+      if (wakeLock && wakeLock.released) {
+        try {
+          wakeLock = await navigator.wakeLock.request('screen');
+          console.log('Wake Lock réactivé après retour sur la page');
+        } catch (err) {
+          console.log('Impossible de réactiver le Wake Lock:', err.message);
+        }
+      }
+    }
+  };
+  
+  // Activer le wake lock quand les données sont chargées
+  if (roomData) {
+    enableWakeLock();
+    document.addEventListener('visibilitychange', handleVisibilityChange);
+  }
+  
+  // Nettoyage
+  return () => {
+    if (wakeLock && !wakeLock.released) {
+      wakeLock.release()
+        .then(() => console.log('Wake Lock libéré (vue spectateur)'))
+        .catch(e => console.log('Erreur libération Wake Lock:', e));
+    }
+    
+    document.removeEventListener('visibilitychange', handleVisibilityChange);
+  };
+}, [roomData]); // Déclencher quand roomData est disponible      
 
   // Calculer les données du classement AVANT les returns conditionnels
   const sortedPlayers = React.useMemo(() => {
@@ -659,3 +715,4 @@ function SpectatorView() {
 }
 
 export default SpectatorView;
+
