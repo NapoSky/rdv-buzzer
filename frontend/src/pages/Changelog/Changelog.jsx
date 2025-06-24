@@ -11,10 +11,38 @@ function Changelog() {
   // Données du changelog - vous pouvez les externaliser dans un fichier JSON plus tard
   const changelogEntries = [
     {
+      version: "2.2.0",
+      date: "2025-06-24",
+      type: "minor",
+      title: "Ajout du mode spectateur",
+      changes: [
+        {
+          type: "feature",
+          text: "Ajout du mode spectateur pour suivre les parties en temps réel (à condition d'avoir le code 😏)"
+        },
+        {
+          type: "improvement",
+          text: "Spectateur : Le bouton 'spectateur' permet d'afficher le QR code du RDV-Buzzer"
+        },
+        {
+          type: "improvement",
+          text: "Spectateur : L'oeil permet de cacher le code de la salle"
+        },
+        {
+          type: "improvement",
+          text: "Le mode spectateur s'affiche à condition d'entrer un code de salle valide"
+        },
+        {
+          type: "fix",
+          text: "L'interface indique si le code de la salle est invalide"
+        }
+      ]
+    },
+    {
       version: "2.1.0",
       date: "2025-06-22",
       type: "minor",
-      title: "Correction de bugs et améliorations mineures",
+      title: "Ajout spotify, amélioration des buzzers et correctifs mineurs",
       changes: [
         {
           type: "feature",
@@ -50,7 +78,7 @@ function Changelog() {
       version: "2.0.1",
       date: "2025-04-16",
       type: "minor",
-      title: "Nouvelles options et corrections de bugs",
+      title: "Nouvelles options de salle et corrections de bugs",
       changes: [
         {
           type: "feature",

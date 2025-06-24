@@ -3,6 +3,7 @@ const { Server } = require('socket.io');
 const roomHandlers = require('./handlers/roomHandlers');
 const buzzHandlers = require('./handlers/buzzHandlers');
 const playerHandlers = require('./handlers/playerHandlers');
+const spectatorHandlers = require('./handlers/spectatorHandlers');
 const logger = require('../utils/logger');
 
 let io;
@@ -68,6 +69,9 @@ function configureSocketHandlers(socket) {
   
   // Événements de joueur
   playerHandlers.attachEvents(socket, io);
+  
+  // Événements de spectateur
+  spectatorHandlers.attachEvents(socket, io);
 }
 
 /**
