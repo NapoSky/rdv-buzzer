@@ -2,6 +2,7 @@ const SpotifyWebApi = require('spotify-web-api-node');
 const spotifyConfig = require('../config/spotify');
 const logger = require('../utils/logger');
 const { Room } = require('../models/Room'); // Importer Room pour accéder à l'état
+const spotifyRecovery = require('../middlewares/spotifyRecovery'); // NOUVEAU: Middleware de récupération
 
 // Stockage des tokens par salle (en mémoire) - existant
 const roomTokens = {};
@@ -390,34 +391,53 @@ async function refreshAccessTokenIfNeeded(roomCode) {
         return false;
     }
 
-    // Note: spotify-web-api-node ne gère pas l'expiration automatiquement.
-    // Il faudrait stocker l'heure d'expiration ou simplement essayer de rafraîchir en cas d'erreur 401.
-    // Pour cet exemple, on suppose qu'on rafraîchit seulement en cas d'erreur 401 gérée dans getCurrentPlayback.
-    // Si on voulait être proactif, il faudrait stocker `expires_at` lors de `storeTokenForRoom`.
-
     try {
-       
+        logger.info('SPOTIFY_REFRESH', `Tentative de rafraîchissement du token pour ${roomCode}`);
         const data = await spotifyApi.refreshAccessToken();
         const newAccessToken = data.body['access_token'];
+        const newRefreshToken = data.body['refresh_token'] || roomTokens[roomCode].refreshToken; // Garde l'ancien si pas de nouveau
+        
+        // Mettre à jour l'API Spotify
         spotifyApi.setAccessToken(newAccessToken);
-        // Mettre à jour le token stocké
-        roomTokens[roomCode].accessToken = newAccessToken;
-        // Mettre à jour l'heure d'expiration si on la stockait
-        // roomTokens[roomCode].expiresAt = Date.now() + (data.body['expires_in'] * 1000);
-       
+        if (newRefreshToken !== roomTokens[roomCode].refreshToken) {
+            spotifyApi.setRefreshToken(newRefreshToken);
+        }
+        
+        // Mettre à jour le token stocké avec expiration
+        roomTokens[roomCode] = {
+            accessToken: newAccessToken,
+            refreshToken: newRefreshToken,
+            expiresAt: Date.now() + ((data.body['expires_in'] || 3600) * 1000)
+        };
+        
+        logger.info('SPOTIFY_REFRESH', `Token rafraîchi avec succès pour ${roomCode}`);
         return true;
     } catch (error) {
+        logger.error('SPOTIFY', `Échec du refresh token pour ${roomCode}`, error);
         
-        removeTokenForRoom(roomCode);
-        try { // Ajouter un try/catch pour l'appel à getIO
-            const io = require('../socket/index').getIO(); // <-- MODIFIÉ: Appel direct
+        // NOUVEAU: Enregistrer l'échec dans le middleware de récupération
+        spotifyRecovery.recordFailure(roomCode, 'token_refresh_failed');
+        
+        // Notifier les clients de l'échec
+        try {
+            const io = require('../socket/index').getIO();
             if (io) {
-                io.to(roomCode).emit('spotify_connected', { connected: false, error: 'refresh_failed' });
-            } else {
-                logger.error('SPOTIFY_REFRESH', `Impossible d'émettre spotify_connected pour ${roomCode} car io est indisponible (via require).`);
+                // Envoyer un état Spotify déconnecté
+                io.to(roomCode).emit('spotify_connected', { 
+                    connected: false, 
+                    error: 'refresh_failed',
+                    message: 'Token Spotify expiré. Veuillez vous reconnecter.' 
+                });
+                
+                // Envoyer un événement track_changed avec null pour nettoyer l'interface
+                io.to(roomCode).emit('spotify_track_changed', {
+                    roomCode,
+                    track: null,
+                    newTrack: null
+                });
             }
         } catch (ioError) {
-             logger.error('SPOTIFY_REFRESH', `Erreur lors de l'appel à require('../socket/index').getIO()`, ioError);
+             logger.error('SPOTIFY_REFRESH', `Erreur lors de l'émission des événements de déconnexion`, ioError);
         }
         return false;
     }
@@ -486,9 +506,20 @@ async function checkAndNotifyTrackChange(roomCode) {
                 newTrack: updatedRoom.currentTrack // Compatibilité
             };
             
-            console.log('[Backend][checkAndNotify] Émission spotify_track_changed avec playlist info:', JSON.stringify(payload));
-            io.to(roomCode).emit('spotify_track_changed', payload);
-            io.to(roomCode).emit('update_players', updatedRoom.players);
+            try {
+                console.log('[Backend][checkAndNotify] Émission spotify_track_changed avec playlist info:', JSON.stringify(payload));
+                io.to(roomCode).emit('spotify_track_changed', payload);
+                io.to(roomCode).emit('update_players', updatedRoom.players);
+                
+                // NOUVEAU: Marquer le succès de récupération si applicable
+                if (spotifyRecovery.isInFailureState(roomCode)) {
+                    spotifyRecovery.markRecoverySuccess(roomCode);
+                }
+                
+            } catch (emitError) {
+                logger.error('SPOTIFY_EMIT', `Erreur lors de l'émission pour ${roomCode}`, emitError);
+                spotifyRecovery.recordFailure(roomCode, 'emit_failed');
+            }
         } else {
              // logger.info('SPOTIFY_POLL_INFO', `Aucun changement d'ID de piste détecté pour ${roomCode}.`);
         }

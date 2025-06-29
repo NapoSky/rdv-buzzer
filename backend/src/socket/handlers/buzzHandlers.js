@@ -251,6 +251,11 @@ function handleBuzz(socket, io, data, callback) {
       return callback({ error: 'La partie est en pause' });
     }
 
+    // ✅ SYNCHRONISATION : Vérifier si un jugement est en cours
+    if (Room.isJudgmentInProgress(roomCode)) {
+      return callback({ error: 'Jugement en cours, veuillez patienter' });
+    }
+
     // Si un buzz est déjà validé, traiter normalement
     if (room.firstBuzz) {
       // *** VÉRIFIER que le joueur qui a firstBuzz n'est pas en pénalité ***
@@ -325,6 +330,20 @@ function handleBuzz(socket, io, data, callback) {
     }
 
     // Si on est déjà dans une période de grâce, ajouter ce buzz à la liste
+    const existingCandidate = buzzerGracePeriods[roomCode].candidates.find(c => c.socketId === socket.id);
+    
+    // ✅ ANTISPAM SERVEUR : Ignorer les buzz multiples du même joueur
+    if (existingCandidate) {
+      logger.info('BUZZ', 'Buzz multiple ignoré (antispam)', {
+        socketId: socket.id,
+        roomCode,
+        pseudo: room.players[socket.id].pseudo,
+        originalTime: existingCandidate.compensatedTime,
+        newTime: serverTimestamp + playerLatency
+      });
+      return callback({ received: true, duplicate: true });
+    }
+    
     buzzerGracePeriods[roomCode].candidates.push({
       socketId: socket.id,
       pseudo: room.players[socket.id].pseudo,

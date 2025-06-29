@@ -2,6 +2,7 @@
 const { Room, defaultRoomOptions } = require('../../models/Room');
 const logger = require('../../utils/logger');
 const { handleDisableBuzzer, handleResetBuzzer } = require('./buzzHandlers'); // Garder ces imports
+const { syncSpectatorsAfterScoreUpdate } = require('./spectatorHandlers'); // NOUVEAU: Import pour sync spectateurs
 
 /**
  * Gère l'ajustement manuel du score par l'admin
@@ -26,6 +27,8 @@ function handleAdjustScore(socket, io, data) {
       });
       // Émettre la mise à jour des joueurs
       io.to(roomCode).emit('update_players', room.players);
+      // NOUVEAU: Synchroniser les spectateurs après mise à jour score
+      syncSpectatorsAfterScoreUpdate(io, roomCode, room);
     } else {
        logger.info('PLAYERS', 'Ajustement manuel sans changement de score', {
          roomCode, playerId, pseudo: player.pseudo, adjustment, currentScore
@@ -51,6 +54,11 @@ function handleJudgeAnswer(socket, io, data) {
     if (!room) return logger.warn('PLAYERS', 'Salle non trouvée pour jugement', { roomCode });
     if (room.adminId !== socket.id) return logger.warn('PLAYERS', 'Tentative de jugement non-admin', { roomCode, socketId: socket.id });
     if (!room.players[playerId]) return logger.warn('PLAYERS', 'Joueur non trouvé pour jugement', { roomCode, playerId });
+
+    // ✅ SYNCHRONISATION : Activer le flag de jugement pour bloquer les nouveaux buzzs
+    // (Après toutes les vérifications pour éviter les flags orphelins)
+    Room.setJudgmentInProgress(roomCode, true);
+    logger.info('PLAYERS', 'Début du jugement - buzzs bloqués', { roomCode, playerId });
 
     const player = room.players[playerId];
     const options = room.options || defaultRoomOptions;
@@ -120,6 +128,8 @@ function handleJudgeAnswer(socket, io, data) {
     // --- 3. Émissions Socket ---
     // Émettre la mise à jour des joueurs (inclut nouveau score et potentiellement état buzzed)
     io.to(roomCode).emit('update_players', room.players);
+    // NOUVEAU: Synchroniser les spectateurs après mise à jour score
+    syncSpectatorsAfterScoreUpdate(io, roomCode, room);
     logger.info('PLAYERS', 'Score mis à jour après jugement', { // Ce log reflète maintenant le scoreChange correct
       roomCode, playerId, pseudo: player.pseudo, judgment, isCorrect: isCorrectJudgment, scoreChange, newScore
     });
@@ -162,6 +172,10 @@ console.log('Envoi judge_answer avec:', {
       logger.info('PLAYERS', `Réponse correcte ou piste trouvée (${room.trackIsFullyFound}), réinitialisation générale des buzzers`, { roomCode });
       // handleResetBuzzer met à jour l'état buzzed des joueurs et émet update_players + reset_buzzer
       handleResetBuzzer(socket, io, { roomCode });
+      
+      // ✅ SYNCHRONISATION : Désactiver le flag de jugement APRÈS le reset complet
+      Room.setJudgmentInProgress(roomCode, false);
+      logger.info('PLAYERS', 'Fin du jugement (piste trouvée/correcte) - buzzs débloqués', { roomCode, playerId });
     }
     // Si la réponse était incorrecte ET que la piste n'est PAS encore trouvée
     else if (!isCorrectJudgment && !room.trackIsFullyFound) {
@@ -171,11 +185,25 @@ console.log('Envoi judge_answer avec:', {
       Room.resetBuzz(roomCode);
       handleDisableBuzzer(socket, io, { roomCode, playerId });
       // Note: handleResetBuzzer n'est PAS appelé ici pour que les autres puissent buzzer
+      
+      // ✅ SYNCHRONISATION : Désactiver le flag de jugement APRÈS la pénalité
+      Room.setJudgmentInProgress(roomCode, false);
+      logger.info('PLAYERS', 'Fin du jugement (incorrect/pénalité) - buzzs débloqués', { roomCode, playerId });
     }
     // Si la réponse est incorrecte MAIS que la piste est trouvée (cas rare ?), on a déjà fait le reset général plus haut.
 
   } catch (error) {
     logger.error('PLAYERS', 'Erreur lors du jugement de la réponse', error);
+    // ✅ SYNCHRONISATION : S'assurer que le flag est désactivé même en cas d'erreur
+    try {
+      const { roomCode } = data;
+      if (roomCode) {
+        Room.setJudgmentInProgress(roomCode, false);
+        logger.warn('PLAYERS', 'Flag de jugement désactivé après erreur', { roomCode });
+      }
+    } catch (cleanupError) {
+      logger.error('PLAYERS', 'Erreur lors du nettoyage du flag de jugement', cleanupError);
+    }
   }
 }
 
@@ -376,6 +404,8 @@ function handleNextQuestion(socket, io, data) {
     // Informer tous les clients du changement
     io.to(roomCode).emit('next_question', { roomCode });
     io.to(roomCode).emit('update_players', room.players);
+    // NOUVEAU: Synchroniser les spectateurs après reset
+    syncSpectatorsAfterScoreUpdate(io, roomCode, room);
 
     logger.info('PLAYERS', 'Question suivante activée', { roomCode });
 

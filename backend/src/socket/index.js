@@ -43,10 +43,38 @@ function initialize(server) {
       });
     });
 
-    // Ping-pong pour le debugging de connexion
+    // Ping-pong pour le debugging de connexion avec gestion des latences aberrantes
     socket.on('ping', (data, callback) => {
+      const serverTime = Date.now();
+      
+      if (data && data.timestamp) {
+        const latency = serverTime - data.timestamp;
+        
+        // Filtrer les latences aberrantes (probablement dues à des problèmes réseau)
+        if (latency > 10000) { // Plus de 10 secondes
+          logger.warn('PING', 'Latence aberrante ignorée', {
+            socketId: socket.id,
+            latency,
+            clientTimestamp: data.timestamp,
+            serverTimestamp: serverTime
+          });
+          // Ne pas répondre aux pings avec latence aberrante
+          return;
+        } else if (latency > 1000) { // Plus d'1 seconde mais moins de 10
+          logger.warn('PING', 'Pic de latence temporaire ignoré', {
+            socketId: socket.id,
+            latency,
+            threshold: 1000
+          });
+        }
+      }
+      
       if (typeof callback === 'function') {
-        callback({ time: Date.now(), received: true });
+        callback({ 
+          time: serverTime, 
+          received: true,
+          latency: data?.timestamp ? serverTime - data.timestamp : null
+        });
       }
     });
   });

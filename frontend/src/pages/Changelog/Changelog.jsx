@@ -11,6 +11,30 @@ function Changelog() {
   // Données du changelog - vous pouvez les externaliser dans un fichier JSON plus tard
   const changelogEntries = [
     {
+      version: "2.2.1",
+      date: "2025-06-29",
+      type: "patch",
+      title: "Améliorations de l'interface et corrections de bugs",
+      changes: [
+        {
+          type: "improvement",
+          text: "Amélioration de l'antispam client pour éviter les buzzs multiples en cas de latence réseau"
+        },
+        {
+          type: "fix",
+          text: "Correction de la gestion des tokens Spotify pour éviter les erreurs de connexion"
+        },
+        {
+          type: "fix",
+          text: "Admin : Correction des problèmes de désynchronisation lors d'un spam de buzzs client"
+        },
+        {
+          type: "fix",
+          text: "Spectateur : Correction de l'affichage Spotify et des scores dans le mode spectateur"
+        }
+      ]
+    },
+    {
       version: "2.2.0",
       date: "2025-06-24",
       type: "minor",

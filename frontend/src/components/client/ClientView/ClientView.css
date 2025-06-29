@@ -350,6 +350,13 @@
   box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
 }
 
+.buzz-button.buzzing {
+  background: linear-gradient(145deg, #ff8c42, #ff6b1a);
+  cursor: wait;
+  box-shadow: 0 4px 12px rgba(255, 140, 66, 0.4);
+  animation: pulse-buzzing 1s infinite ease-in-out;
+}
+
 .buzz-button-content {
   display: flex;
   flex-direction: column;
@@ -2305,4 +2312,31 @@ tr.buzzed-player {
   .social-links {
     padding: 0.75rem;
   }
+}
+
+/* Animation pour l'état buzzing */
+@keyframes pulse-buzzing {
+  0% { 
+    transform: scale(1); 
+    box-shadow: 0 4px 12px rgba(255, 140, 66, 0.4);
+  }
+  50% { 
+    transform: scale(1.02); 
+    box-shadow: 0 6px 16px rgba(255, 140, 66, 0.6);
+  }
+  100% { 
+    transform: scale(1); 
+    box-shadow: 0 4px 12px rgba(255, 140, 66, 0.4);
+  }
+}
+
+.buzzing-status {
+  background: rgba(255, 140, 66, 0.9);
+  color: white;
+  animation: pulse-text 1s infinite ease-in-out;
+}
+
+@keyframes pulse-text {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.7; }
 }

@@ -58,6 +58,7 @@ function ClientView({ setActiveRoomCode }) {
   const [buzzedBy, setBuzzedBy] = useState('');
   const [gamePaused, setGamePaused] = useState(false);
   const [isDisabled, setIsDisabled] = useState(false);
+  const [isBuzzing, setIsBuzzing] = useState(false); // ✅ ANTISPAM STATE
   const [adminPresent, setAdminPresent] = useState(true);
   
   // États pour les modales et erreurs
@@ -179,6 +180,12 @@ function ClientView({ setActiveRoomCode }) {
 
   // Fonction pour buzzer (CORRIGÉE)
 const handleBuzz = () => {
+  // ✅ ANTISPAM : Bloquer si un buzz est déjà en cours
+  if (isBuzzing) {
+    console.log('🚫 Buzz ignoré: déjà en cours d\'envoi');
+    return;
+  }
+
   // 1. Calculer si la piste est trouvée AU MOMENT du clic
   const trackFullyFound =
     (roomOptions?.roomType === 'Standard' && (foundArtist || foundTitle)) ||
@@ -201,10 +208,17 @@ const handleBuzz = () => {
 
   // 3. Si le bouton N'EST PAS désactivé ET que la piste N'EST PAS trouvée, envoyer le buzz
   if (socket && joined) { // gamePaused et isDisabled sont déjà vérifiés
+    // ✅ ANTISPAM : Activer le flag de buzz en cours
+    setIsBuzzing(true);
+    console.log('📤 Envoi du buzz...');
+    
     // Désactiver immédiatement pour éviter double-clic (pendant l'attente de la réponse serveur)
     setIsDisabled(true);
 
     buzz(roomCode, pseudo, (response) => {
+      // ✅ ANTISPAM : Libérer le flag de buzz en cours
+      setIsBuzzing(false);
+      
       if (response && response.error) {
         // Gérer les erreurs de buzz (trop tard, etc.)
         if (response.lateAttempt) {
@@ -1292,9 +1306,9 @@ const handleBuzz = () => {
 
         <div className="buzz-zone">
           <button
-            className={`buzz-button ${isDisabled ? 'disabled' : gamePaused ? 'paused' : 'active'}`}
+            className={`buzz-button ${isDisabled ? 'disabled' : gamePaused ? 'paused' : isBuzzing ? 'buzzing' : 'active'}`}
             onClick={handleBuzz}
-            disabled={gamePaused || isDisabled}
+            disabled={gamePaused || isDisabled || isBuzzing}
           >
             <div className="buzz-button-content">
               <LightningBoltIcon className="buzz-icon" />
@@ -1305,7 +1319,12 @@ const handleBuzz = () => {
                 Partie en pause
               </div>
             )}
-            {isDisabled && !gamePaused && (
+            {isBuzzing && !gamePaused && (
+              <div className="button-status buzzing-status">
+                Envoi en cours...
+              </div>
+            )}
+            {isDisabled && !gamePaused && !isBuzzing && (
               <div className="button-status disabled-status">
                 Buzzer désactivé
               </div>

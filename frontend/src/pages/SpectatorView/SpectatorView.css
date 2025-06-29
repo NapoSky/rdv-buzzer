@@ -67,7 +67,7 @@
 }
 
 .spotify-display-wrapper .spotifyDisplayContainer {
-  transform: scale(0.8); /* Réduit de 1.1 à 0.8 */
+  transform: scale(0.9); /* Réduit de 1.1 à 0.8 */
   width: 100%;
   max-width: none;
   height: auto;
@@ -89,7 +89,7 @@
 
 .spotify-display-wrapper .artist,
 .spotify-display-wrapper .title {
-  font-size: 1rem; /* Réduit de 1.2rem à 1rem */
+  font-size: 1.4rem; /* Réduit de 1.2rem à 1rem */
   margin: 0.2rem 0; /* Réduit de 0.3rem à 0.2rem */
 }
 
@@ -98,12 +98,12 @@
 /* === SURCHARGE DU PLAYLIST BADGE === */
 .spotify-display-wrapper .playlist-badge {
   position: absolute !important;
-  top: 0.5rem !important;
-  right: 0.5rem !important;
+  top: 0.3rem !important;
+  right: 0.3rem !important;
   color: white !important;
   padding: 0.8rem 1.0rem !important; /* AGRANDI de 0.4rem 0.6rem à 0.6rem 0.8rem */
   border-radius: 16px !important; /* AGRANDI de 8px à 12px */
-  font-size: 1.1rem !important; /* AGRANDI de 0.7rem à 0.9rem */
+  font-size: 1.5rem !important; /* AGRANDI de 0.7rem à 0.9rem */
   font-weight: 600 !important;
   z-index: 10 !important;
   backdrop-filter: blur(8px) !important;
