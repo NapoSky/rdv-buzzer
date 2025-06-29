@@ -30,6 +30,7 @@ class Room {
       paused: false,
       firstBuzz: null, // Utiliser firstBuzz comme vu dans buzzHandlers.js
       lastBuzz: null,
+      judgmentInProgress: false, // ✅ SYNCHRONISATION : Bloquer les buzz pendant jugement
       options: roomOptions, // Stocker les options ici
 
       // --- LOGIQUE GÉNÉRIQUE (fonctionne avec ou sans Spotify) ---
@@ -225,6 +226,17 @@ class Room {
     };
   }
   // --- Fin Méthodes ajoutées ---
+
+  // ✅ SYNCHRONISATION : Méthodes pour gérer l'état de jugement
+  static setJudgmentInProgress(roomCode, inProgress) {
+    if (!rooms[roomCode]) return false;
+    rooms[roomCode].judgmentInProgress = inProgress;
+    return true;
+  }
+
+  static isJudgmentInProgress(roomCode) {
+    return rooms[roomCode]?.judgmentInProgress || false;
+  }
 }
 
 module.exports = {
