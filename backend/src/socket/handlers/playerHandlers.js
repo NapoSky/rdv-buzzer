@@ -2,6 +2,7 @@
 const { Room, defaultRoomOptions } = require('../../models/Room');
 const logger = require('../../utils/logger');
 const { handleDisableBuzzer, handleResetBuzzer } = require('./buzzHandlers'); // Garder ces imports
+const { syncSpectatorsAfterScoreUpdate } = require('./spectatorHandlers'); // NOUVEAU: Import pour sync spectateurs
 
 /**
  * Gère l'ajustement manuel du score par l'admin
@@ -26,6 +27,8 @@ function handleAdjustScore(socket, io, data) {
       });
       // Émettre la mise à jour des joueurs
       io.to(roomCode).emit('update_players', room.players);
+      // NOUVEAU: Synchroniser les spectateurs après mise à jour score
+      syncSpectatorsAfterScoreUpdate(io, roomCode, room);
     } else {
        logger.info('PLAYERS', 'Ajustement manuel sans changement de score', {
          roomCode, playerId, pseudo: player.pseudo, adjustment, currentScore
@@ -125,6 +128,8 @@ function handleJudgeAnswer(socket, io, data) {
     // --- 3. Émissions Socket ---
     // Émettre la mise à jour des joueurs (inclut nouveau score et potentiellement état buzzed)
     io.to(roomCode).emit('update_players', room.players);
+    // NOUVEAU: Synchroniser les spectateurs après mise à jour score
+    syncSpectatorsAfterScoreUpdate(io, roomCode, room);
     logger.info('PLAYERS', 'Score mis à jour après jugement', { // Ce log reflète maintenant le scoreChange correct
       roomCode, playerId, pseudo: player.pseudo, judgment, isCorrect: isCorrectJudgment, scoreChange, newScore
     });
@@ -399,6 +404,8 @@ function handleNextQuestion(socket, io, data) {
     // Informer tous les clients du changement
     io.to(roomCode).emit('next_question', { roomCode });
     io.to(roomCode).emit('update_players', room.players);
+    // NOUVEAU: Synchroniser les spectateurs après reset
+    syncSpectatorsAfterScoreUpdate(io, roomCode, room);
 
     logger.info('PLAYERS', 'Question suivante activée', { roomCode });
 

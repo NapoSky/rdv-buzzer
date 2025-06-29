@@ -71,12 +71,32 @@ function broadcastSpectatorUpdate(io, roomCode, room) {
       artistFound: room.artistFound || false,
       titleFound: room.titleFound || false,
       buzzedBy: room.firstBuzz ? room.players[room.firstBuzz]?.pseudo : '',
-      paused: room.paused || false
+      paused: room.paused || false,
+      timestamp: Date.now() // Ajouter un timestamp pour détecter les mises à jour
+    });
+
+    logger.debug('SPECTATOR', `Mise à jour diffusée pour ${roomCode}`, {
+      playerCount: Object.keys(playersWithConnectionStatus).length,
+      buzzedBy: room.firstBuzz ? room.players[room.firstBuzz]?.pseudo : null
     });
 
   } catch (error) {
     logger.error('SPECTATOR', 'Erreur lors de la diffusion spectateur', error);
   }
+}
+
+/**
+ * Fonction utilitaire pour synchroniser les spectateurs après un changement de score
+ */
+function syncSpectatorsAfterScoreUpdate(io, roomCode, room) {
+  broadcastSpectatorUpdate(io, roomCode, room);
+}
+
+/**
+ * Fonction utilitaire pour synchroniser les spectateurs après un changement Spotify
+ */
+function syncSpectatorsAfterSpotifyUpdate(io, roomCode, room) {
+  broadcastSpectatorUpdate(io, roomCode, room);
 }
 
 /**
@@ -88,5 +108,7 @@ function attachEvents(socket, io) {
 
 module.exports = {
   attachEvents,
-  broadcastSpectatorUpdate
+  broadcastSpectatorUpdate,
+  syncSpectatorsAfterScoreUpdate,
+  syncSpectatorsAfterSpotifyUpdate
 };

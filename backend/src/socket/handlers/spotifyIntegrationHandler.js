@@ -1,5 +1,6 @@
 const { Room } = require('../../models/Room');
 const logger = require('../../utils/logger');
+const { syncSpectatorsAfterSpotifyUpdate } = require('./spectatorHandlers'); // NOUVEAU: Import pour sync spectateurs
 
 // Import conditionnel du service Spotify
 let spotifyService;
@@ -105,6 +106,9 @@ async function handleTrackChange(socket, io, data, callback, trackAction, action
           track: result.currentTrack 
         });
         io.to(roomCode).emit('update_players', authCheck.room.players);
+        
+        // NOUVEAU: Synchroniser les spectateurs après un changement de piste
+        syncSpectatorsAfterSpotifyUpdate(io, roomCode, authCheck.room);
         
         return {
           success: true,
@@ -416,6 +420,8 @@ async function handleTrackFullyFound(data, io) {
             track: result.currentTrack 
           });
           io.to(roomCode).emit('update_players', room.players);
+          // NOUVEAU: Synchroniser les spectateurs après passage automatique
+          syncSpectatorsAfterSpotifyUpdate(io, roomCode, room);
         }
       }, 3000); // 3 secondes de délai
     }
