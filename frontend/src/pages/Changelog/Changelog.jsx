@@ -14,11 +14,15 @@ function Changelog() {
       version: "2.2.1",
       date: "2025-06-29",
       type: "patch",
-      title: "Améliorations de l'interface et corrections de bugs",
+      title: "Corrections désynchronisation et antispam client",
       changes: [
         {
           type: "improvement",
           text: "Amélioration de l'antispam client pour éviter les buzzs multiples en cas de latence réseau"
+        },
+        {
+          type: "improvement",
+          text: "Spectateur : Agrandissement des textes de l'affichage Spotify pour une meilleure lisibilité"
         },
         {
           type: "fix",
