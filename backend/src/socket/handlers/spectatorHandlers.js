@@ -75,7 +75,7 @@ function broadcastSpectatorUpdate(io, roomCode, room) {
       timestamp: Date.now() // Ajouter un timestamp pour détecter les mises à jour
     });
 
-    logger.debug('SPECTATOR', `Mise à jour diffusée pour ${roomCode}`, {
+    logger.info('SPECTATOR', `Mise à jour diffusée pour ${roomCode}`, {
       playerCount: Object.keys(playersWithConnectionStatus).length,
       buzzedBy: room.firstBuzz ? room.players[room.firstBuzz]?.pseudo : null
     });
