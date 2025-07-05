@@ -11,6 +11,18 @@ function Changelog() {
   // Données du changelog - vous pouvez les externaliser dans un fichier JSON plus tard
   const changelogEntries = [
     {
+      version: "2.2.2",
+      date: "2025-07-05",
+      type: "patch",
+      title: "Corrections gestion buzz côté Admin",
+      changes: [
+        {
+          type: "fix",
+          text: "Admin : Correction de l'affichage des buzzers dans le panel d'administration"
+        }
+      ]
+    },
+    {
       version: "2.2.1",
       date: "2025-06-29",
       type: "patch",
