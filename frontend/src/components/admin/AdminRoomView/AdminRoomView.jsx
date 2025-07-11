@@ -152,7 +152,10 @@ function AdminRoomView() {
       setPlayers(newPlayers);
     };
     
-    const handleGamePaused = (pausedState) => {
+    const handleGamePaused = (data) => {
+      console.log("[AdminRoomView] Événement game_paused reçu:", data);
+      // ✅ CORRECTION : Le serveur envoie { paused: boolean }, pas un boolean direct
+      const pausedState = data.paused;
       console.log("[AdminRoomView] État pause mis à jour:", pausedState);
       setPaused(pausedState);
     };
@@ -703,24 +706,22 @@ const handleKick = async (playerId) => {
         console.log(`Tentative de ${paused ? 'reprise' : 'pause'} du jeu`);
         const newPauseState = !paused;
         
-        // Mettre à jour l'état local d'abord pour une réponse UI immédiate
-        setPaused(newPauseState);
+        // ❌ NE PAS mettre à jour l'état local immédiatement
+        // setPaused(newPauseState);
         
         // Envoyer la commande au serveur
         const response = await togglePause(roomCode, newPauseState);
         
         if (response && response.error) {
           console.error(`Erreur lors du changement de pause:`, response.error);
-          // Restaurer l'état précédent en cas d'erreur
-          setPaused(paused);
           alert(`Erreur: ${response.error}`);
         } else {
           console.log(`Jeu ${newPauseState ? 'en pause' : 'repris'} avec succès`);
+          // ✅ L'état sera mis à jour via l'événement 'game_paused' du serveur
         }
       } catch (error) {
         console.error("Exception lors du toggle pause:", error);
-        // Restaurer l'état précédent en cas d'erreur
-        setPaused(paused);
+        alert(`Erreur: ${error.message}`);
       }
     }
   };
