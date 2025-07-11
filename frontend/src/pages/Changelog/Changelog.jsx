@@ -11,6 +11,18 @@ function Changelog() {
   // Données du changelog - vous pouvez les externaliser dans un fichier JSON plus tard
   const changelogEntries = [
     {
+      version: "2.2.3",
+      date: "2025-07-12",
+      type: "patch",
+      title: "Corrections gestion pause côté Admin",
+      changes: [
+        {
+          type: "fix",
+          text: "Admin : Correction de la possibilité de mettre en pause ou de reprendre la partie depuis le panel d'administration"
+        }
+      ]
+    },
+    {
       version: "2.2.2",
       date: "2025-07-05",
       type: "patch",
