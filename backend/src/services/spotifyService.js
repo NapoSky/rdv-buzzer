@@ -14,9 +14,16 @@ const roomAdminUserIds = {}; // { roomCode: spotifyUserId }
 const playlistCache = {}; // { roomCode: { id, name, total, tracks: [...] } }
 
 // Initialiser l'API Spotify avec le token de la salle - existant
-const initSpotifyApiForRoom = (roomCode) => {
+const initSpotifyApiForRoom = async (roomCode) => {
   if (!roomTokens[roomCode]) {
     return null; // Retourner null si pas de token
+  }
+
+  // Vérifier et rafraîchir le token si nécessaire AVANT de créer l'API
+  const tokenValid = await ensureValidToken(roomCode);
+  if (!tokenValid) {
+    logger.warn('SPOTIFY', `Impossible de s'assurer de la validité du token pour ${roomCode}`);
+    return null;
   }
 
   const spotifyApi = spotifyConfig.createApi(); // Utilise la config pour créer une instance
@@ -27,7 +34,7 @@ const initSpotifyApiForRoom = (roomCode) => {
 
 // Pause de la lecture
 const pausePlayback = async (roomCode) => {
-  const spotifyApi = initSpotifyApiForRoom(roomCode);
+  const spotifyApi = await initSpotifyApiForRoom(roomCode);
   if (!spotifyApi) {
     return { success: false, error: 'NOT_AUTHENTICATED' };
   }
@@ -50,7 +57,7 @@ const pausePlayback = async (roomCode) => {
 
 // Reprise de la lecture
 const resumePlayback = async (roomCode) => {
-  const spotifyApi = initSpotifyApiForRoom(roomCode);
+  const spotifyApi = await initSpotifyApiForRoom(roomCode);
   if (!spotifyApi) {
     return { success: false, error: 'NOT_AUTHENTICATED' };
   }
@@ -89,10 +96,15 @@ const getAuthorizationUrl = (roomCode) => {
 };
 
 // Stocker les tokens pour une salle - Modifier pour stocker aussi l'ID utilisateur
-const storeTokenForRoom = async (roomCode, { accessToken, refreshToken }) => { // Rendre async
-  roomTokens[roomCode] = { accessToken, refreshToken };
+const storeTokenForRoom = async (roomCode, { accessToken, refreshToken, expiresIn = 3600 }) => { // Rendre async
+  // Stocker avec expiration
+  roomTokens[roomCode] = { 
+    accessToken, 
+    refreshToken,
+    expiresAt: Date.now() + (expiresIn * 1000) // Ajouter l'expiration dès le stockage initial
+  };
   // Essayer de récupérer et stocker l'ID utilisateur immédiatement
-  const spotifyApi = initSpotifyApiForRoom(roomCode);
+  const spotifyApi = await initSpotifyApiForRoom(roomCode);
   if (spotifyApi) {
       try {
           const data = await spotifyApi.getMe();
@@ -114,7 +126,7 @@ const isRoomConnected = (roomCode) => {
 
 // Récupérer le profil utilisateur
 const getUserProfile = async (roomCode) => {
-  const spotifyApi = initSpotifyApiForRoom(roomCode);
+  const spotifyApi = await initSpotifyApiForRoom(roomCode);
   if (!spotifyApi) {
     return { success: false, error: 'NOT_AUTHENTICATED' };
   }
@@ -143,7 +155,7 @@ const getUserProfile = async (roomCode) => {
  * @returns {Promise<object|null>} Informations de la playlist ou null
  */
 async function getPlaylistDetails(roomCode, playlistId) {
-    const spotifyApi = initSpotifyApiForRoom(roomCode);
+    const spotifyApi = await initSpotifyApiForRoom(roomCode);
     if (!spotifyApi) return null;
 
     try {
@@ -212,7 +224,7 @@ function extractPlaylistId(contextUri) {
  * @returns {object | null} L'objet playback state enrichi avec les infos de playlist
  */
 async function getCurrentPlayback(roomCode) {
-    let spotifyApi = initSpotifyApiForRoom(roomCode);
+    let spotifyApi = await initSpotifyApiForRoom(roomCode);
     if (!spotifyApi) return null;
 
     try {
@@ -281,7 +293,7 @@ async function getCurrentPlayback(roomCode) {
             logger.warn('SPOTIFY', `Token expiré pour ${roomCode}, tentative de rafraîchissement.`);
             const refreshed = await refreshAccessTokenIfNeeded(roomCode);
             if (refreshed) {
-                spotifyApi = initSpotifyApiForRoom(roomCode);
+                spotifyApi = await initSpotifyApiForRoom(roomCode);
                 if (!spotifyApi) return null;
                 try {
                     // Réessayer après refresh - même logique enrichie
@@ -362,7 +374,7 @@ function clearPlaylistCache(roomCode) {
 
 // Récupérer les appareils disponibles
 const getAvailableDevices = async (roomCode) => {
-  const spotifyApi = initSpotifyApiForRoom(roomCode);
+  const spotifyApi = await initSpotifyApiForRoom(roomCode);
   if (!spotifyApi) {
     return { success: false, error: 'NOT_AUTHENTICATED' };
   }
@@ -385,11 +397,16 @@ const getAvailableDevices = async (roomCode) => {
  * @returns {boolean} true si le refresh a réussi ou n'était pas nécessaire, false sinon.
  */
 async function refreshAccessTokenIfNeeded(roomCode) {
-    const spotifyApi = initSpotifyApiForRoom(roomCode);
-    if (!spotifyApi || !roomTokens[roomCode]?.refreshToken) {
-        logger.warn('SPOTIFY_REFRESH', `Pas d'API ou de refresh token pour ${roomCode}`);
+    // Ne pas utiliser initSpotifyApiForRoom ici car ça créerait une récursion infinie
+    // On crée l'API directement avec les tokens existants
+    if (!roomTokens[roomCode]?.refreshToken) {
+        logger.warn('SPOTIFY_REFRESH', `Pas de refresh token pour ${roomCode}`);
         return false;
     }
+
+    const spotifyApi = spotifyConfig.createApi();
+    spotifyApi.setAccessToken(roomTokens[roomCode].accessToken);
+    spotifyApi.setRefreshToken(roomTokens[roomCode].refreshToken);
 
     try {
         logger.info('SPOTIFY_REFRESH', `Tentative de rafraîchissement du token pour ${roomCode}`);
@@ -442,6 +459,25 @@ async function refreshAccessTokenIfNeeded(roomCode) {
         return false;
     }
 }
+
+// Vérifier et rafraîchir le token si proche de l'expiration (avant qu'il expire)
+const ensureValidToken = async (roomCode) => {
+  if (!roomTokens[roomCode]) {
+    return false;
+  }
+  
+  const tokenData = roomTokens[roomCode];
+  const now = Date.now();
+  const timeUntilExpiry = tokenData.expiresAt - now;
+  
+  // Rafraîchir si le token expire dans moins de 5 minutes (300 000 ms)
+  if (timeUntilExpiry < 300000) {
+    logger.info('SPOTIFY_REFRESH', `Token expire bientôt pour ${roomCode}, rafraîchissement préventif`);
+    return await refreshAccessTokenIfNeeded(roomCode);
+  }
+  
+  return true; // Token encore valide
+};
 
 /**
  * Vérifie si la piste Spotify a changé et notifie les clients.
