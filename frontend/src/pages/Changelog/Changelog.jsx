@@ -11,6 +11,18 @@ function Changelog() {
   // Données du changelog - vous pouvez les externaliser dans un fichier JSON plus tard
   const changelogEntries = [
     {
+      version: "2.2.4",
+      date: "2025-08-05",
+      type: "patch",
+      title: "Correction gestion Spotify",
+      changes: [
+        {
+          type: "fix",
+          text: "Admin : Correction du rafraichissement du jeton Spotify pour éviter les erreurs de connexion passé 1h de jeu"
+        }
+      ]
+    },
+    {
       version: "2.2.3",
       date: "2025-07-12",
       type: "patch",

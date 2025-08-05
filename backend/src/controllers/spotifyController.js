@@ -36,12 +36,13 @@ async function handleCallback(req, res) {
     
     // Échanger le code contre des tokens
     const data = await spotifyApi.authorizationCodeGrant(code);
-    const { access_token, refresh_token } = data.body;
+    const { access_token, refresh_token, expires_in } = data.body;
     
     // Stocker les tokens pour cette salle
     await spotifyService.storeTokenForRoom(roomCode, { // Assurez-vous que c'est await si storeTokenForRoom est async
       accessToken: access_token,
-      RefreshToken: refresh_token
+      refreshToken: refresh_token,  // 🔧 CORRIGÉ: refreshToken (minuscule) au lieu de RefreshToken
+      expiresIn: expires_in || 3600 // 🔧 AJOUT: Inclure la durée d'expiration
     });
 
     // Mettre à jour l'option de la salle pour indiquer que Spotify est activé

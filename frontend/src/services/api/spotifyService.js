@@ -29,11 +29,6 @@ export const authenticateSpotify = (roomCode) => {
     .catch(error => console.error('Erreur lors de la récupération de l\'URL d\'authentification:', error));
 };
 
-// Stockage du token reçu du serveur d'autorisation Spotify
-export const storeSpotifyToken = (token) => {
-  localStorage.setItem('spotify_token', token);
-};
-
 // Fonction utilitaire pour les requêtes Spotify
 const makeSpotifyRequest = async (endpoint, method = 'GET', body = null, roomCode = null) => {
   let apiUrl;
