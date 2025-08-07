@@ -175,7 +175,7 @@ function HomePage({ setActiveRoomCode }) {
     setActiveRoomCode(roomCode);
     
     // Rediriger vers la page client
-    navigate(`/client?roomCode=${roomCode}&pseudo=${pseudo}`);
+    navigate(`/client?roomCode=${encodeURIComponent(roomCode)}&pseudo=${encodeURIComponent(pseudo)}`);
   };
   
   // Permettre de revenir dans une salle si les informations sont déjà enregistrées
@@ -208,7 +208,7 @@ function HomePage({ setActiveRoomCode }) {
     
     // La salle existe, on peut continuer
     setActiveRoomCode(savedRoomCode);
-    navigate(`/client?roomCode=${savedRoomCode}&pseudo=${savedPseudo}`);
+    navigate(`/client?roomCode=${encodeURIComponent(savedRoomCode)}&pseudo=${encodeURIComponent(savedPseudo)}`);
   };
 
   // Connexion admin

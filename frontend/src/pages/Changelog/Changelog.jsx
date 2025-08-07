@@ -11,6 +11,18 @@ function Changelog() {
   // Données du changelog - vous pouvez les externaliser dans un fichier JSON plus tard
   const changelogEntries = [
     {
+      version: "2.2.5",
+      date: "2025-08-07",
+      type: "patch",
+      title: "Correction problème pseudo",
+      changes: [
+        {
+          type: "fix",
+          text: "Correction qui empêchait les joueurs d'utiliser un pseudo contenant le caractère '&'"
+        }
+      ]
+    },
+    {
       version: "2.2.4",
       date: "2025-08-05",
       type: "patch",

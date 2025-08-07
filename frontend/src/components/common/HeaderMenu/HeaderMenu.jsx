@@ -41,7 +41,7 @@ function HeaderMenu({ activeRoomCode }) {
           <nav className="desktop-nav">
             <Link className="nav-item" to="/">Accueil</Link>
             {storedRoomCode && storedPseudo && (
-              <Link className="nav-item" to={`/client?roomCode=${storedRoomCode}&pseudo=${storedPseudo}`}>
+              <Link className="nav-item" to={`/client?roomCode=${encodeURIComponent(storedRoomCode)}&pseudo=${encodeURIComponent(storedPseudo)}`}>
                 Ma salle
               </Link>
             )}
@@ -90,7 +90,7 @@ function HeaderMenu({ activeRoomCode }) {
 
               {storedRoomCode && storedPseudo && (
                 <DropdownMenu.Item className="mobile-menu-item">
-                  <Link to={`/client?roomCode=${storedRoomCode}&pseudo=${storedPseudo}`}>
+                  <Link to={`/client?roomCode=${encodeURIComponent(storedRoomCode)}&pseudo=${encodeURIComponent(storedPseudo)}`}>
                     Ma salle
                   </Link>
                 </DropdownMenu.Item>
