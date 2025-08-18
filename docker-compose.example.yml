@@ -30,4 +30,8 @@ services:
   redis:
     image: redis:latest
     container_name: rdv-redis
+    # Use docker native volume if you want to deploy on a cluster instead of bind mount
+    volumes:
+      - ./data:/data
+
 
