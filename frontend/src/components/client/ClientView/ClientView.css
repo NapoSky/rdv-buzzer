@@ -293,6 +293,59 @@
   color: var(--danger);
 }
 
+/* Time Sync Status - Indicateur de synchronisation temporelle */
+.time-sync-status {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  font-size: 0.8rem;
+  flex-shrink: 0;
+  white-space: nowrap;
+  padding: 0.25rem 0.5rem;
+  border-radius: var(--border-radius-sm);
+  transition: all 0.3s ease;
+  cursor: help;
+}
+
+.time-sync-status.synced {
+  background-color: rgba(40, 167, 69, 0.1);
+  color: var(--success);
+}
+
+.time-sync-status.syncing {
+  background-color: rgba(255, 193, 7, 0.1);
+  color: var(--warning);
+  animation: pulse-sync 2s ease-in-out infinite;
+}
+
+.dark-mode .time-sync-status.synced {
+  background-color: rgba(40, 167, 69, 0.15);
+}
+
+.dark-mode .time-sync-status.syncing {
+  background-color: rgba(255, 193, 7, 0.15);
+}
+
+.sync-indicator {
+  font-size: 1rem;
+  line-height: 1;
+}
+
+.sync-text {
+  font-size: 0.75rem;
+  font-weight: 500;
+  letter-spacing: 0.02em;
+}
+
+@keyframes pulse-sync {
+  0%, 100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.6;
+  }
+}
+
 /* Buzz Zone */
 .buzz-zone {
   flex: 0.5;

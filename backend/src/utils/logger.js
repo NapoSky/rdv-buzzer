@@ -1,3 +1,15 @@
+function debug(category, message, data = {}) {
+    const timestamp = new Date().toISOString();
+    const logEntry = {
+      timestamp,
+      level: 'INFO',
+      category,
+      message,
+      ...data
+    };
+    console.log(JSON.stringify(logEntry));
+}
+
 function info(category, message, data = {}) {
     const timestamp = new Date().toISOString();
     const logEntry = {
@@ -55,6 +67,7 @@ function warn(category, message, data = {}) {
   }
   
   module.exports = {
+    debug,
     info,
     warn,
     error,

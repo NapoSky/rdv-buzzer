@@ -16,6 +16,8 @@ import {
 import SpotifyDisplay from '../SpotifyDisplay/SpotifyDisplay';
 import { ThemeContext } from '../../../contexts/ThemeContext';
 import { useNotification } from '../../../contexts/NotificationContext';
+import { useServerTimeContext } from '../../../contexts/ServerTimeContext';
+import TimeSyncWarning from '../../common/TimeSyncWarning/TimeSyncWarning';
 import { 
   getSocket, 
   joinRoom, 
@@ -35,6 +37,7 @@ function ClientView({ setActiveRoomCode }) {
   const { isDarkMode } = useContext(ThemeContext);
   // Correction: utiliser les fonctions spécifiques du contexte
   const { success, error, warning, info } = useNotification();
+  const { timeOffset, isSynced, syncQuality } = useServerTimeContext();
   
   // Effect Events pour les notifications (React 19.2)
   const onSuccess = useEffectEvent((message) => {
@@ -1323,6 +1326,9 @@ const handleBuzz = () => {
   // Rendu principal - Vue client
   return (
     <div className={`client-view ${isDarkMode ? 'dark-mode' : ''}`}>
+      {/* Alerte de dérive temporelle */}
+      <TimeSyncWarning />
+      
       {/* Ajouter un padding-bottom pour laisser de la place au footer fixe */}
       <div className="client-container" style={{ paddingBottom: '60px' /* Ajuster si besoin */ }}>
         <div className="header-zone">
@@ -1360,6 +1366,35 @@ const handleBuzz = () => {
                   {isConnected && isOnline ? 'Connecté' : 'Déconnecté'}
                 </span>
               </div>
+              {/* Indicateur de synchronisation temporelle */}
+              <Tooltip.Provider>
+                <Tooltip.Root>
+                  <Tooltip.Trigger asChild>
+                    <div className={`time-sync-status ${isSynced ? 'synced' : 'syncing'}`}>
+                      <span className="sync-indicator">⏱️</span>
+                      <span className="sync-text">
+                        {isSynced ? 'Synchro' : 'Sync...'}
+                      </span>
+                    </div>
+                  </Tooltip.Trigger>
+                  <Tooltip.Portal>
+                    <Tooltip.Content className="tooltip-content" side="bottom">
+                      {isSynced ? (
+                        <>
+                          <div>Horloge synchronisée</div>
+                          <div style={{ fontSize: '0.85em', opacity: 0.8 }}>
+                            Offset: {(timeOffset / 1000).toFixed(3)}s
+                            {syncQuality && ` | Latence: ${Math.round(syncQuality.rtt)}ms`}
+                          </div>
+                        </>
+                      ) : (
+                        'Synchronisation en cours...'
+                      )}
+                      <Tooltip.Arrow className="tooltip-arrow" />
+                    </Tooltip.Content>
+                  </Tooltip.Portal>
+                </Tooltip.Root>
+              </Tooltip.Provider>
             </div>
           </div>
         </div>

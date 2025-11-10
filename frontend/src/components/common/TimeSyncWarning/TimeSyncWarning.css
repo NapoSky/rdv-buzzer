@@ -1,0 +1,141 @@
+/* TimeSyncWarning.css */
+
+.time-sync-warning {
+  position: fixed;
+  top: 80px; /* Sous le header */
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 9999;
+  max-width: 600px;
+  width: 90%;
+  animation: slideDown 0.3s ease-out;
+}
+
+@keyframes slideDown {
+  from {
+    opacity: 0;
+    transform: translate(-50%, -20px);
+  }
+  to {
+    opacity: 1;
+    transform: translate(-50%, 0);
+  }
+}
+
+.warning-content {
+  display: flex;
+  align-items: flex-start;
+  gap: 1rem;
+  padding: 1rem 1.25rem;
+  background: linear-gradient(135deg, #fff3cd 0%, #ffeaa7 100%);
+  border: 2px solid #ffc107;
+  border-radius: 12px;
+  box-shadow: 0 4px 12px rgba(255, 193, 7, 0.3);
+  position: relative;
+}
+
+.dark-mode .warning-content {
+  background: linear-gradient(135deg, #3d3416 0%, #4a3e1a 100%);
+  border-color: #856404;
+  box-shadow: 0 4px 12px rgba(255, 193, 7, 0.2);
+}
+
+.warning-icon {
+  width: 24px;
+  height: 24px;
+  color: #856404;
+  flex-shrink: 0;
+  margin-top: 2px;
+}
+
+.dark-mode .warning-icon {
+  color: #ffc107;
+}
+
+.warning-text {
+  flex: 1;
+}
+
+.warning-title {
+  font-size: 1rem;
+  font-weight: 600;
+  color: #856404;
+  margin-bottom: 0.5rem;
+}
+
+.dark-mode .warning-title {
+  color: #ffc107;
+}
+
+.warning-description {
+  font-size: 0.9rem;
+  line-height: 1.5;
+  color: #664d03;
+}
+
+.dark-mode .warning-description {
+  color: #e0d4a0;
+}
+
+.warning-description strong {
+  font-weight: 700;
+  color: #856404;
+}
+
+.dark-mode .warning-description strong {
+  color: #ffc107;
+}
+
+.warning-dismiss {
+  position: absolute;
+  top: 0.5rem;
+  right: 0.5rem;
+  background: transparent;
+  border: none;
+  color: #856404;
+  font-size: 1.25rem;
+  line-height: 1;
+  cursor: pointer;
+  padding: 0.25rem 0.5rem;
+  border-radius: 4px;
+  transition: all 0.2s ease;
+}
+
+.warning-dismiss:hover {
+  background: rgba(133, 100, 4, 0.1);
+  transform: scale(1.1);
+}
+
+.dark-mode .warning-dismiss {
+  color: #ffc107;
+}
+
+.dark-mode .warning-dismiss:hover {
+  background: rgba(255, 193, 7, 0.1);
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+  .time-sync-warning {
+    top: 70px;
+    width: 95%;
+  }
+
+  .warning-content {
+    padding: 0.875rem 1rem;
+    gap: 0.75rem;
+  }
+
+  .warning-icon {
+    width: 20px;
+    height: 20px;
+  }
+
+  .warning-title {
+    font-size: 0.9rem;
+  }
+
+  .warning-description {
+    font-size: 0.85rem;
+  }
+}

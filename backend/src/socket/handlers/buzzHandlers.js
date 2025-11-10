@@ -1,6 +1,7 @@
 // src/socket/handlers/buzzHandlers.js
 const { Room, defaultRoomOptions } = require('../../models/Room'); // Importer defaultRoomOptions
 const logger = require('../../utils/logger');
+const timeSyncService = require('../../services/timeSyncService');
 
 // Stockage des périodes de grâce pour les buzzers
 const buzzerGracePeriods = {};
@@ -26,6 +27,9 @@ function attachEvents(socket, io) {
   // Ping pour mesurer la latence
   socket.on('ping', (timestamp, callback) => handlePing(socket, timestamp, callback));
 
+  // Synchronisation temporelle (time_sync)
+  socket.on('time_sync', (clientTimestamp, callback) => handleTimeSync(socket, clientTimestamp, callback));
+
   // Nettoyage lors de la déconnexion
   socket.on('disconnect', () => {
     cleanupPlayerData(socket.id);
@@ -40,6 +44,9 @@ function cleanupPlayerData(socketId) {
   if (playerLatencies[socketId]) {
     delete playerLatencies[socketId];
   }
+
+  // Nettoyer les données de synchronisation temporelle
+  timeSyncService.cleanupSocket(socketId);
 
   // Nettoyer des périodes de grâce en cours
   for (const roomCode in buzzerGracePeriods) {
@@ -122,6 +129,18 @@ function handlePing(socket, clientTimestamp, callback) {
   }
 
   callback({ serverTimestamp, latency });
+}
+
+/**
+ * Gère la synchronisation temporelle pour éliminer les désynchronisations d'horloge client
+ * Le client utilise cette réponse pour calculer son offset temporel
+ */
+function handleTimeSync(socket, clientTimestamp, callback) {
+  const response = timeSyncService.handleTimeSync(socket.id, clientTimestamp);
+  
+  if (callback && typeof callback === 'function') {
+    callback(response);
+  }
 }
 
 /**
@@ -287,8 +306,51 @@ function handleBuzz(socket, io, data, callback) {
     // 🚀 AMÉLIORATION 2: Fallback latence plus réaliste
     const playerLatency = playerLatencies[socket.id]?.average || 150; // 150ms au lieu de 0ms
     
-    // 🚀 AMÉLIORATION 1: Utiliser timestamp serveur pour éviter désync horloge
-    const serverTimestamp = Date.now();
+    // 🚀 AMÉLIORATION TIME SYNC: Utiliser le timestamp client synchronisé comme base
+    // Le clientTimestamp est maintenant synchronisé avec l'horloge serveur (via getServerTime())
+    // On ne l'utilise donc plus comme "timestamp d'envoi" mais comme "timestamp de référence serveur"
+    const serverTimestamp = Date.now(); // Timestamp de réception serveur
+    
+    // ⏱️ CALCUL DU TEMPS COMPENSÉ:
+    // Option A: Si clientTimestamp est fiable (synchronisé via time_sync)
+    //   → Utiliser clientTimestamp comme référence temporelle du moment du clic
+    //   → Ajouter la demi-latence pour estimer le temps "réel" du clic
+    // Option B: Si clientTimestamp non synchronisé (fallback)
+    //   → Utiliser serverTimestamp et soustraire la demi-latence
+    //
+    // Pour détecter si le client est synchronisé, on compare l'écart client-serveur
+    const timeDifference = Math.abs(clientTimestamp - serverTimestamp);
+    const isClientSynced = timeDifference < 2000; // Écart < 2s = client probablement synchronisé
+    
+    let compensatedTime;
+    if (isClientSynced) {
+      // ✅ CLIENT SYNCHRONISÉ: Utiliser le timestamp client comme référence
+      // Le clientTimestamp représente déjà le moment du clic en "temps serveur"
+      // On ajoute juste la demi-latence pour compenser le temps de transmission
+      compensatedTime = clientTimestamp + (playerLatency / 2);
+      
+      logger.debug('BUZZ', 'Utilisation timestamp client synchronisé', {
+        socketId: socket.id,
+        clientTimestamp,
+        serverTimestamp,
+        timeDifference,
+        playerLatency,
+        compensatedTime
+      });
+    } else {
+      // ⚠️ CLIENT NON SYNCHRONISÉ: Fallback sur méthode classique
+      // Utiliser le timestamp serveur et soustraire la demi-latence
+      compensatedTime = serverTimestamp - (playerLatency / 2);
+      
+      logger.warn('BUZZ', 'Client non synchronisé, fallback méthode classique', {
+        socketId: socket.id,
+        clientTimestamp,
+        serverTimestamp,
+        timeDifference,
+        playerLatency,
+        compensatedTime
+      });
+    }
 
     // PÉRIODE DE GRÂCE: si c'est le premier buzz, ouvrir une fenêtre d'opportunité
     if (!buzzerGracePeriods[roomCode]) {
@@ -303,7 +365,8 @@ function handleBuzz(socket, io, data, callback) {
           timestamp: clientTimestamp,
           serverTimestamp: serverTimestamp,
           latency: playerLatency,
-          compensatedTime: serverTimestamp + playerLatency // 🚀 AMÉLIORATION 1: Temps serveur compensé
+          compensatedTime: compensatedTime, // ⏱️ Utiliser le temps compensé calculé
+          isSynced: isClientSynced // ℹ️ Indiquer si le client était synchronisé
         }],
         gracePeriod: gracePeriod,
         startTime: serverTimestamp // Pour debugging
@@ -318,7 +381,10 @@ function handleBuzz(socket, io, data, callback) {
         pseudo: room.players[socket.id].pseudo,
         latency: playerLatency,
         gracePeriod: gracePeriod,
-        compensatedTime: serverTimestamp + playerLatency
+        compensatedTime: compensatedTime,
+        clientTimestamp,
+        serverTimestamp,
+        isClientSynced
       });
 
       // Démarrer un timer adaptatif avant de déterminer le gagnant
@@ -339,7 +405,7 @@ function handleBuzz(socket, io, data, callback) {
         roomCode,
         pseudo: room.players[socket.id].pseudo,
         originalTime: existingCandidate.compensatedTime,
-        newTime: serverTimestamp + playerLatency
+        newTime: compensatedTime
       });
       return callback({ received: true, duplicate: true });
     }
@@ -350,7 +416,8 @@ function handleBuzz(socket, io, data, callback) {
       timestamp: clientTimestamp,
       serverTimestamp: serverTimestamp,
       latency: playerLatency,
-      compensatedTime: serverTimestamp + playerLatency // 🚀 AMÉLIORATION 1: Temps serveur compensé
+      compensatedTime: compensatedTime, // ⏱️ Utiliser le temps compensé calculé
+      isSynced: isClientSynced // ℹ️ Indiquer si le client était synchronisé
     });
 
     logger.info('BUZZ', 'Buzz ajouté pendant la période de grâce', {
@@ -359,7 +426,8 @@ function handleBuzz(socket, io, data, callback) {
       pseudo: room.players[socket.id].pseudo,
       candidateCount: buzzerGracePeriods[roomCode].candidates.length,
       latency: playerLatency,
-      compensatedTime: serverTimestamp + playerLatency
+      compensatedTime: compensatedTime,
+      isClientSynced
     });
 
     callback({ received: true });
@@ -396,7 +464,8 @@ function processBuzzers(roomCode, io) {
       candidates: candidates.map(c => ({
         pseudo: c.pseudo,
         latency: c.latency,
-        compensatedTime: c.compensatedTime
+        compensatedTime: c.compensatedTime,
+        isSynced: c.isSynced
       }))
     });
 
@@ -414,7 +483,9 @@ function processBuzzers(roomCode, io) {
       return;
     }
 
-    // Trier par temps compensé (server timestamp + latence)
+    // Trier par temps compensé (calculé selon la synchronisation du client)
+    // - Client synchronisé : clientTimestamp + (latency / 2)
+    // - Client non synchronisé : serverTimestamp - (latency / 2)
     validCandidates.sort((a, b) => a.compensatedTime - b.compensatedTime);
 
     let winner = validCandidates[0];
@@ -456,7 +527,9 @@ function processBuzzers(roomCode, io) {
         compensatedTime: winner.compensatedTime,
         candidateCount: validCandidates.length,
         equalityThreshold,
-        wasRandomTieBreak: second && Math.abs(winner.compensatedTime - second.compensatedTime) < equalityThreshold
+        wasRandomTieBreak: second && Math.abs(winner.compensatedTime - second.compensatedTime) < equalityThreshold,
+        isSynced: winner.isSynced, // ℹ️ Indiquer si le gagnant était synchronisé
+        syncedCount: validCandidates.filter(c => c.isSynced).length // 📊 Combien de clients étaient synchronisés
       }
     };
 
@@ -477,7 +550,10 @@ function processBuzzers(roomCode, io) {
       latency: winner.latency,
       compensatedTime: winner.compensatedTime,
       candidateCount: validCandidates.length,
-      equalityThreshold
+      equalityThreshold,
+      isSynced: winner.isSynced,
+      syncedCount: validCandidates.filter(c => c.isSynced).length,
+      totalCount: validCandidates.length
     });
 
     // Nettoyer
