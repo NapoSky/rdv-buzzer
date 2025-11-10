@@ -323,6 +323,7 @@ const handleBuzz = () => {
         buzzerDelayActiveRef.current = false; // ✅ Désactiver le flag
         setTrackChangeCountdown(null); // ✅ Reset le décompte
         clearInterval(countdownInterval); // ✅ Nettoyer l'interval
+        // ✅ CORRECTION : Vérifier que le jeu n'est PAS en pause avant de réactiver
         checkAndActivateBuzzer(notify); // ✅ Effect Event = toujours les dernières valeurs
       }, delay);
     } else {
@@ -694,9 +695,11 @@ const handleBuzz = () => {
     
     on('room_resumed', () => {
       setGamePaused(false);
-      if (!buzzedBy) {
+      // ✅ CORRECTION : Ne pas réactiver le buzzer si un délai de changement de piste est en cours
+      if (!buzzedBy && !buzzerDelayActiveRef.current) {
         setIsDisabled(false);
       }
+      // Si un délai est en cours, le buzzer restera désactivé jusqu'à la fin du timeout
       onInfo('La partie a repris');
     });
     
@@ -742,9 +745,11 @@ const handleBuzz = () => {
           onInfo('L\'administrateur a mis la partie en pause');
         }
       } else {
-        if (!buzzedBy) {
+        // ✅ CORRECTION : Ne pas réactiver le buzzer si un délai de changement de piste est en cours
+        if (!buzzedBy && !buzzerDelayActiveRef.current) {
           setIsDisabled(false);
         }
+        // Si un délai est en cours, le buzzer restera désactivé jusqu'à la fin du timeout
         onInfo('La partie a repris');
       }
     });
