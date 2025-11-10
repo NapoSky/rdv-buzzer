@@ -1402,3 +1402,147 @@
     font-size: 0.9rem;
   }
 }
+
+/* ========================================
+   🎬 COUNTDOWN OVERLAY - Décompte Spotify
+   ======================================== */
+
+.countdown-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100vw;
+  height: 100vh;
+  background: rgba(0, 0, 0, 0.7); /* Fond sombre semi-transparent */
+  backdrop-filter: blur(8px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 10000;
+  animation: fadeIn 0.3s ease;
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+.countdown-content {
+  background: linear-gradient(
+    135deg,
+    #007bff 0%,
+    #0056b3 25%,
+    #17a2b8 50%,
+    #0056b3 75%,
+    #007bff 100%
+  );
+  background-size: 400% 400%;
+  animation: gradientShift 3s ease infinite;
+  padding: 3rem 4rem;
+  border-radius: 30px;
+  box-shadow: 
+    0 20px 60px rgba(0, 0, 0, 0.5),
+    0 0 100px rgba(0, 123, 255, 0.6),
+    0 0 150px rgba(23, 162, 184, 0.4);
+  text-align: center;
+  color: white;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 1.5rem;
+  transform: scale(0.95);
+  animation: popIn 0.4s ease forwards;
+  border: 3px solid rgba(255, 255, 255, 0.3);
+}
+
+@keyframes popIn {
+  from {
+    transform: scale(0.8);
+    opacity: 0;
+  }
+  to {
+    transform: scale(1);
+    opacity: 1;
+  }
+}
+
+/* Animation du gradient arc-en-ciel qui tourne */
+@keyframes gradientShift {
+  0% {
+    background-position: 0% 50%;
+  }
+  50% {
+    background-position: 100% 50%;
+  }
+  100% {
+    background-position: 0% 50%;
+  }
+}
+
+.countdown-message {
+  font-size: 2.5rem;
+  font-weight: 700;
+  text-shadow: 
+    0 0 20px rgba(255, 255, 255, 0.8),
+    0 0 40px rgba(255, 255, 255, 0.6),
+    0 4px 10px rgba(0, 0, 0, 0.3);
+  letter-spacing: 2px;
+}
+
+.countdown-number {
+  font-size: 10rem;
+  font-weight: 900;
+  line-height: 1;
+  text-shadow: 
+    0 0 40px rgba(23, 162, 184, 0.9),
+    0 0 80px rgba(0, 123, 255, 0.8),
+    0 8px 20px rgba(0, 0, 0, 0.5);
+  animation: pulse 1s ease-in-out infinite;
+  font-family: 'Arial Black', sans-serif;
+}
+
+/* Animation pulse continue (battement de cœur) */
+@keyframes pulse {
+  0%, 100% {
+    transform: scale(1);
+    opacity: 1;
+  }
+  50% {
+    transform: scale(1.15);
+    opacity: 0.9;
+  }
+}
+
+/* Responsive pour petits écrans */
+@media (max-width: 768px) {
+  .countdown-content {
+    padding: 2rem 3rem;
+  }
+  
+  .countdown-message {
+    font-size: 1.8rem;
+  }
+  
+  .countdown-number {
+    font-size: 7rem;
+  }
+}
+
+@media (max-width: 480px) {
+  .countdown-content {
+    padding: 1.5rem 2rem;
+    border-radius: 20px;
+  }
+  
+  .countdown-message {
+    font-size: 1.3rem;
+  }
+  
+  .countdown-number {
+    font-size: 5rem;
+  }
+}

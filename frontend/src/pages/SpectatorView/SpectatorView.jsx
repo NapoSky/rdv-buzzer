@@ -23,6 +23,7 @@ function SpectatorView() {
   const [isRoomCodeHidden, setIsRoomCodeHidden] = useState(false);
   const [isQRModalOpen, setIsQRModalOpen] = useState(false);
   const [roomError, setRoomError] = useState(''); // AJOUT DU STATE POUR GÉRER LES ERREURS DE SALLE
+  const [trackChangeCountdown, setTrackChangeCountdown] = useState(null); // ✅ Décompte changement de piste (spectateur)
   const navigate = useNavigate();
 
   // Vérifier que le contexte socket existe
@@ -185,6 +186,26 @@ function SpectatorView() {
     setFoundTitle(false);
     // Clear le buzz car nouvelle piste
     setBuzzedBy('');
+    
+    // ✅ Lancer le décompte de 5 secondes pour les spectateurs
+    setTrackChangeCountdown(5);
+    
+    // ✅ Décrémenter chaque seconde
+    const countdownInterval = setInterval(() => {
+      setTrackChangeCountdown((prev) => {
+        if (prev === null || prev <= 1) {
+          clearInterval(countdownInterval);
+          return null;
+        }
+        return prev - 1;
+      });
+    }, 1000);
+    
+    // ✅ Nettoyer après 5 secondes
+    setTimeout(() => {
+      setTrackChangeCountdown(null);
+      clearInterval(countdownInterval);
+    }, 5000);
   });
 
   const handleJudgeAnswer = useEffectEvent((data) => {
@@ -664,6 +685,16 @@ useEffect(() => {
                 Scannez ce QR code pour rejoindre la salle <span className="qr-room-code">{roomCode}</span>
               </p>
             </div>
+          </div>
+        </div>
+      )}
+
+      {/* ✅ COUNTDOWN OVERLAY - Décompte changement de piste */}
+      {trackChangeCountdown !== null && (
+        <div className="countdown-overlay">
+          <div className="countdown-content">
+            <div className="countdown-message">🎵 Préparez-vous...</div>
+            <div className="countdown-number">{trackChangeCountdown}</div>
           </div>
         </div>
       )}
