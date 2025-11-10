@@ -89,6 +89,7 @@ function ClientView({ setActiveRoomCode }) {
   const [isDisabled, setIsDisabled] = useState(false);
   const [isBuzzing, setIsBuzzing] = useState(false); // ✅ ANTISPAM STATE
   const [adminPresent, setAdminPresent] = useState(true);
+  const [trackChangeCountdown, setTrackChangeCountdown] = useState(null); // ✅ Décompte changement de piste (en secondes)
   
   // États pour les modales et erreurs
   const [showAdminMissingDialog, setShowAdminMissingDialog] = useState(false);
@@ -299,12 +300,31 @@ const handleBuzz = () => {
     if (delay > 0) {
       setIsDisabled(true);
       buzzerDelayActiveRef.current = true; // ✅ Activer le flag de délai
+      
+      // ✅ Initialiser le décompte pour changement de piste (en secondes)
+      const delaySeconds = Math.ceil(delay / 1000);
+      setTrackChangeCountdown(delaySeconds);
+      
+      // ✅ Mettre à jour le décompte chaque seconde
+      const countdownInterval = setInterval(() => {
+        setTrackChangeCountdown((prev) => {
+          if (prev === null || prev <= 1) {
+            clearInterval(countdownInterval);
+            return null;
+          }
+          return prev - 1;
+        });
+      }, 1000);
+      
       setTimeout(() => {
         buzzerDelayActiveRef.current = false; // ✅ Désactiver le flag
+        setTrackChangeCountdown(null); // ✅ Reset le décompte
+        clearInterval(countdownInterval); // ✅ Nettoyer l'interval
         checkAndActivateBuzzer(notify); // ✅ Effect Event = toujours les dernières valeurs
       }, delay);
     } else {
       // Activation immédiate (comportement original)
+      setTrackChangeCountdown(null);
       checkAndActivateBuzzer(notify);
     }
   };
@@ -1364,7 +1384,12 @@ const handleBuzz = () => {
                 Envoi en cours...
               </div>
             )}
-            {isDisabled && !gamePaused && !isBuzzing && (
+            {trackChangeCountdown !== null && !gamePaused && !isBuzzing && (
+              <div className="button-status buzzing-status">
+                {trackChangeCountdown}
+              </div>
+            )}
+            {isDisabled && !gamePaused && !isBuzzing && trackChangeCountdown === null && (
               <div className="button-status disabled-status">
                 Buzzer désactivé
               </div>
