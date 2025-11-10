@@ -70,6 +70,8 @@
     overflow: hidden; /* Empêche le texte de déborder */
     flex-grow: 1; /* Prend l'espace restant */
     gap: 2px; /* Petit espace entre artiste et titre */
+    min-width: 0; /* Important pour permettre au flex-child de rétrécir */
+    max-width: 100%; /* Ne pas dépasser le conteneur parent */
 }
 
 .artist,
@@ -79,6 +81,8 @@
     overflow: hidden;
     text-overflow: ellipsis; /* Ajoute '...' si le texte est trop long */
     color: var(--text-color-primary); /* Couleur par défaut */
+    max-width: 100%; /* Contraindre à la largeur du parent */
+    word-break: break-word; /* En dernier recours, couper les mots trop longs */
 }
 
 .artist {

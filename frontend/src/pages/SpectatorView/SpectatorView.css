@@ -64,6 +64,7 @@
   justify-content: center;
   max-width: none;
   max-height: none;
+  overflow: hidden; /* Empêcher tout débordement */
 }
 
 .spotify-display-wrapper .spotifyDisplayContainer {
@@ -71,11 +72,14 @@
   width: 100%;
   max-width: none;
   height: auto;
+  overflow: hidden; /* Empêcher tout débordement */
+  box-sizing: border-box; /* Inclure padding et border dans la largeur */
 }
 
 .spotify-display-wrapper .artworkContainer {
   width: 120px; /* Réduit de 180px à 120px */
   height: 120px;
+  flex-shrink: 0; /* Ne pas rétrécir */
 }
 
 .spotify-display-wrapper .artwork {
@@ -85,12 +89,19 @@
 
 .spotify-display-wrapper .trackInfo {
   margin-top: 0.5rem; /* Réduit de 1rem à 0.5rem */
+  overflow: hidden; /* Empêcher tout débordement */
+  min-width: 0; /* Important pour permettre au flex-child de rétrécir */
+  max-width: 100%; /* Ne pas dépasser le conteneur parent */
 }
 
 .spotify-display-wrapper .artist,
 .spotify-display-wrapper .title {
   font-size: 1.4rem; /* Réduit de 1.2rem à 1rem */
   margin: 0.2rem 0; /* Réduit de 0.3rem à 0.2rem */
+  white-space: nowrap !important;
+  overflow: hidden !important;
+  text-overflow: ellipsis !important;
+  max-width: 100% !important; /* Contraindre à la largeur du parent */
 }
 
 /* AJOUTE cette section après la section "Spotify Display beaucoup plus petit" : */
