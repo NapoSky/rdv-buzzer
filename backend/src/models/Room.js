@@ -238,6 +238,92 @@ class Room {
   static isJudgmentInProgress(roomCode) {
     return rooms[roomCode]?.judgmentInProgress || false;
   }
+
+  // --- Méthodes de persistence Redis ---
+
+  /**
+   * Sérialise l'état d'une room pour Redis (backup uniquement)
+   * @param {string} roomCode
+   * @returns {object|null} État sérialisable de la room
+   */
+  static toRedis(roomCode) {
+    const room = this.get(roomCode);
+    if (!room) return null;
+
+    return {
+      code: room.code,
+      options: room.options,
+      players: Object.values(room.players).map(p => ({
+        pseudo: p.pseudo,
+        score: p.score,
+        isAdmin: p.isAdmin
+      })),
+      paused: room.paused,
+      lastUpdated: Date.now()
+    };
+  }
+
+  /**
+   * Persiste l'état d'une room dans Redis avec TTL 24h
+   * @param {string} roomCode
+   * @returns {Promise<boolean>} Succès de l'opération
+   */
+  static async persistToRedis(roomCode) {
+    const RedisService = require('../services/redisService');
+    const logger = require('../utils/logger');
+    const { client: redisClient } = require('../config/db');
+
+    const data = this.toRedis(roomCode);
+    if (!data) {
+      logger.warn('ROOM_PERSIST', `Impossible de sérialiser la room ${roomCode}`);
+      return false;
+    }
+
+    try {
+      const success = await RedisService.set(`room:${roomCode}`, data);
+      if (success && redisClient.isOpen) {
+        // Ajouter un TTL de 24h (86400 secondes)
+        await redisClient.expire(`room:${roomCode}`, 86400);
+      }
+      return success;
+    } catch (error) {
+      logger.error('ROOM_PERSIST', `Erreur lors de la persistence de ${roomCode}`, error);
+      return false;
+    }
+  }
+
+  /**
+   * Restaure une room depuis Redis
+   * @param {string} roomCode
+   * @param {object} data Données Redis désérialisées
+   * @returns {object|null} Room restaurée
+   */
+  static fromRedis(roomCode, data) {
+    if (!data || !data.code) return null;
+
+    // Recréer la structure de room en mémoire
+    rooms[roomCode] = {
+      code: data.code,
+      adminId: null, // Sera réattribué lors de la reconnexion
+      players: {}, // Sera reconstruit lors des reconnexions
+      paused: data.paused || false,
+      firstBuzz: null,
+      lastBuzz: null,
+      judgmentInProgress: false,
+      options: data.options || defaultRoomOptions,
+      currentTrack: null,
+      artistFound: false,
+      titleFound: false,
+      trackIsFullyFound: false,
+      spotifyConnected: false,
+      // Garder les joueurs persistés pour réconciliation lors du join
+      _persistedPlayers: data.players || []
+    };
+
+    return rooms[roomCode];
+  }
+
+  // --- Fin Méthodes de persistence Redis ---
 }
 
 module.exports = {

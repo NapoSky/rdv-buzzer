@@ -77,6 +77,11 @@ function handleCreateRoom(socket, options, callback) {
     // Faire rejoindre la salle au créateur
     socket.join(roomCode);
     
+    // Persister la room dans Redis (backup)
+    Room.persistToRedis(roomCode).catch(err => {
+      logger.error('ROOM', 'Erreur lors de la persistence Redis à la création', err);
+    });
+    
     // Démarrer le polling si Spotify est activé (nécessite connexion Spotify séparée)
     // Le polling ne démarrera vraiment que si isRoomConnected est true plus tard
     if (validatedOptions.spotifyEnabled) {
@@ -220,13 +225,29 @@ function handleJoinRoom(socket, io, data, callback) {
       return callback({ error: 'Ce pseudo est déjà pris' });
     }
 
-    // --- LOGIQUE POUR NOUVEAU JOUEUR (inchangée) ---
-    // Ajouter le joueur à la salle
+    // --- RÉCONCILIATION AVEC JOUEURS PERSISTÉS (REDIS) ---
+    // Si la room a été restaurée depuis Redis, vérifier si ce pseudo correspond à un joueur persisté
+    let initialScore = 0;
+    let wasAdmin = false;
+    if (room._persistedPlayers && Array.isArray(room._persistedPlayers)) {
+      const persistedIndex = room._persistedPlayers.findIndex(p => p.pseudo === pseudo);
+      if (persistedIndex !== -1) {
+        const persistedPlayer = room._persistedPlayers[persistedIndex];
+        initialScore = persistedPlayer.score || 0;
+        wasAdmin = persistedPlayer.isAdmin || false;
+        // Retirer ce joueur de la liste des joueurs persistés
+        room._persistedPlayers.splice(persistedIndex, 1);
+        logger.info('ROOM', `Joueur ${pseudo} réconcilié depuis Redis avec score ${initialScore}`, { roomCode });
+      }
+    }
+
+    // --- LOGIQUE POUR NOUVEAU JOUEUR ---
+    // Ajouter le joueur à la salle (avec le score restauré si disponible)
     Room.addPlayer(roomCode, socket.id, {
       pseudo,
-      score: 0,
+      score: initialScore, // Utiliser le score persisté ou 0
       buzzed: false,
-      isAdmin: !!isAdmin,
+      isAdmin: !!isAdmin || wasAdmin, // Prendre en compte si le joueur était admin
       disconnected: false
     });
 

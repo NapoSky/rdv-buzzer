@@ -30,6 +30,11 @@ function handleAdjustScore(socket, io, data) {
       io.to(roomCode).emit('update_players', room.players);
       // NOUVEAU: Synchroniser les spectateurs après mise à jour score
       syncSpectatorsAfterScoreUpdate(io, roomCode, room);
+      
+      // Persister dans Redis après mise à jour du score
+      Room.persistToRedis(roomCode).catch(err => {
+        logger.error('ROOM_PERSIST', 'Erreur persistence après ajustement score', err);
+      });
     } else {
        logger.info('PLAYERS', 'Ajustement manuel sans changement de score', {
          roomCode, playerId, pseudo: player.pseudo, adjustment, currentScore
@@ -137,6 +142,11 @@ function handleJudgeAnswer(socket, io, data) {
     
     logger.info('PLAYERS', 'Score mis à jour après jugement', { // Ce log reflète maintenant le scoreChange correct
       roomCode, playerId, pseudo: player.pseudo, judgment, isCorrect: isCorrectJudgment, scoreChange, newScore
+    });
+
+    // Persister dans Redis après mise à jour du score
+    Room.persistToRedis(roomCode).catch(err => {
+      logger.error('ROOM_PERSIST', 'Erreur persistence après jugement', err);
     });
 
         // ---> AJOUTER CE BLOC DE LOG <---

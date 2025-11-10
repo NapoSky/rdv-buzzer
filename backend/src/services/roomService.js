@@ -68,6 +68,10 @@ async function closeRoom(roomCode, io, saveScores = true) { // Ajout du paramèt
     // Nettoyer les analytics de la salle
     analyticsService.cleanupRoomAnalytics(roomCode);
     
+    // Supprimer la room de Redis (backup)
+    const RedisService = require('./redisService');
+    await RedisService.delete(`room:${roomCode}`);
+    
     // Supprimer la salle de la mémoire
     Room.delete(roomCode);
     
