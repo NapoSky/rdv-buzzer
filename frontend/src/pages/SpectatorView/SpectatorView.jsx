@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useContext } from 'react';
+import React, { useState, useEffect, useContext, useEffectEvent } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { SocketContext } from '../../contexts/SocketContext';
 import { ThemeContext } from '../../contexts/ThemeContext';
@@ -23,6 +23,7 @@ function SpectatorView() {
   const [isRoomCodeHidden, setIsRoomCodeHidden] = useState(false);
   const [isQRModalOpen, setIsQRModalOpen] = useState(false);
   const [roomError, setRoomError] = useState(''); // AJOUT DU STATE POUR GÉRER LES ERREURS DE SALLE
+  const [trackChangeCountdown, setTrackChangeCountdown] = useState(null); // ✅ Décompte changement de piste (spectateur)
   const navigate = useNavigate();
 
   // Vérifier que le contexte socket existe
@@ -41,6 +42,249 @@ function SpectatorView() {
   }
 
   const { socket } = socketContext;
+
+  // ===== EFFECT EVENTS - Handlers stables qui lisent toujours les dernières valeurs =====
+  
+  const handleSpectatorRoomData = useEffectEvent((data) => {
+    //console.log('Spectator room data (événement):', data);
+    
+    // Vérifier s'il y a une erreur dans la réponse
+    if (data && data.error) {
+      setRoomError(data.error);
+      return;
+    }
+    
+    // TRAITER LES DONNÉES ICI (au lieu d'attendre le callback)
+    if (data) {
+      setRoomData(data);
+      
+      // Initialiser les scores précédents
+      const initialScores = {};
+      Object.keys(data.players || {}).forEach(playerId => {
+        const player = data.players[playerId];
+        if (!player.isAdmin) {
+          initialScores[player.pseudo] = player.score;
+        }
+      });
+      setPreviousScores(initialScores);
+      
+      // Traiter les joueurs avec leurs statuts de connexion
+      const playersWithConnection = {};
+      Object.keys(data.players || {}).forEach(playerId => {
+        playersWithConnection[playerId] = {
+          ...data.players[playerId],
+          connected: data.players[playerId].connected !== false
+        };
+      });
+      
+      setPlayers(playersWithConnection);
+      setRoomOptions(data.options);
+      setSpotifyTrackInfo(data.currentTrack);
+      setFoundArtist(data.artistFound || false);
+      setFoundTitle(data.titleFound || false);
+      setBuzzedBy(data.buzzedBy || '');
+      setGameStatus(data.paused ? 'paused' : 'playing');
+      
+      // Réinitialiser l'erreur si tout va bien
+      setRoomError('');
+    }
+  });
+
+  const handleUpdatePlayers = useEffectEvent((newPlayers) => {
+    //console.log('🔄 Update players:', newPlayers);
+    
+    // Convertir disconnected en connected pour cohérence
+    const playersWithConnectionStatus = {};
+    Object.keys(newPlayers || {}).forEach(playerId => {
+      const player = newPlayers[playerId];
+      playersWithConnectionStatus[playerId] = {
+        ...player,
+        connected: !player.disconnected
+      };
+    });
+    
+    // Mise à jour des joueurs AVANT de traiter les scores
+    setPlayers(playersWithConnectionStatus);
+    
+    // Traiter les changements de score avec les scores précédents
+    setPreviousScores(prevScores => {
+      const currentScores = {};
+      let hasScoreChanges = false;
+      
+      Object.keys(newPlayers || {}).forEach(playerId => {
+        const player = newPlayers[playerId];
+        if (!player.isAdmin) {
+          currentScores[player.pseudo] = player.score;
+          
+          // Comparer avec le score précédent
+          const previousScore = prevScores[player.pseudo];
+          if (previousScore !== undefined) {
+            const scoreDiff = player.score - previousScore;
+            
+            if (scoreDiff !== 0) {
+              hasScoreChanges = true;
+              
+              // Traiter les changements de score
+              setScoreChanges(prevChanges => {
+                const existingChange = prevChanges[player.pseudo];
+                let finalChange = scoreDiff;
+                let animationType = scoreDiff > 0 ? 'positive' : 'negative';
+                
+                // Si une animation est déjà en cours, additionner les changements
+                if (existingChange) {
+                  const timeSinceStart = Date.now() - existingChange.timestamp;
+                  // Si l'animation précédente a moins de 3 secondes, on cumule
+                  if (timeSinceStart < 3000) {
+                    finalChange = existingChange.cumulativeChange + scoreDiff;
+                    animationType = finalChange > 0 ? 'positive' : 'negative';
+                    //console.log(`📊 Cumulating score change for ${player.pseudo}: ${existingChange.cumulativeChange} + ${scoreDiff} = ${finalChange}`);
+                  }
+                }
+                
+                const updatedChanges = {
+                  ...prevChanges,
+                  [player.pseudo]: {
+                    change: finalChange,
+                    cumulativeChange: finalChange,
+                    type: animationType,
+                    timestamp: Date.now(),
+                    isUpdated: !!existingChange
+                  }
+                };
+                
+                //console.log(`📊 ${existingChange ? 'Updated' : 'New'} score change for ${player.pseudo}: ${finalChange > 0 ? '+' : ''}${finalChange}`);
+                
+                return updatedChanges;
+              });
+            }
+          }
+        }
+      });
+      
+      // Retourner les nouveaux scores seulement s'il y a eu des changements
+      return currentScores;
+    });
+  });
+
+  const handleBuzzed = useEffectEvent((data) => {
+    //console.log('🔴 Buzz reçu:', data);
+    const buzzedPlayer = data.buzzedBy || '';
+    setBuzzedBy(buzzedPlayer);
+  });
+
+  const handleBuzzCleared = useEffectEvent(() => {
+    //console.log('🔄 Buzz cleared');
+    setBuzzedBy('');
+  });
+
+  const handleSpotifyTrackChanged = useEffectEvent((data) => {
+    //console.log('🎵 Spotify track changed:', data);
+    // Les données peuvent venir dans différents formats
+    const newTrack = data.trackInfo || data.track || data.newTrack || null;
+    setSpotifyTrackInfo(newTrack);
+    setFoundArtist(false);
+    setFoundTitle(false);
+    // Clear le buzz car nouvelle piste
+    setBuzzedBy('');
+    
+    // ✅ Lancer le décompte de 5 secondes pour les spectateurs
+    setTrackChangeCountdown(5);
+    
+    // ✅ Décrémenter chaque seconde
+    const countdownInterval = setInterval(() => {
+      setTrackChangeCountdown((prev) => {
+        if (prev === null || prev <= 1) {
+          clearInterval(countdownInterval);
+          return null;
+        }
+        return prev - 1;
+      });
+    }, 1000);
+    
+    // ✅ Nettoyer après 5 secondes
+    setTimeout(() => {
+      setTrackChangeCountdown(null);
+      clearInterval(countdownInterval);
+    }, 5000);
+  });
+
+  const handleJudgeAnswer = useEffectEvent((data) => {
+    //console.log('⚖️ Judge answer:', data);
+    setFoundArtist(data.artistFound || false);
+    setFoundTitle(data.titleFound || false);
+    // Clear le buzz après jugement
+    setBuzzedBy('');
+  });
+
+  const handleGamePaused = useEffectEvent((data) => {
+    //console.log('⏸️ Game paused:', data);
+    setGameStatus(data.paused ? 'paused' : 'playing');
+  });
+
+  const handleRoomOptionsUpdated = useEffectEvent((options) => {
+    //console.log('⚙️ Room options updated:', options);
+    setRoomOptions(options);
+  });
+
+  const handlePlayerDisconnected = useEffectEvent((data) => {
+    //console.log('🔴 Player disconnected:', data);
+    setPlayers(prevPlayers => {
+      const playerKey = Object.keys(prevPlayers).find(key => 
+        prevPlayers[key].pseudo === data.pseudo || key === data.playerId
+      );
+      
+      if (playerKey) {
+        return {
+          ...prevPlayers,
+          [playerKey]: {
+            ...prevPlayers[playerKey],
+            connected: false
+          }
+        };
+      }
+      return prevPlayers;
+    });
+  });
+
+  const handlePlayerConnected = useEffectEvent((data) => {
+    //console.log('🟢 Player connected:', data);
+    setPlayers(prevPlayers => {
+      const playerKey = Object.keys(prevPlayers).find(key => 
+        prevPlayers[key].pseudo === data.pseudo || key === data.playerId
+      );
+      
+      if (playerKey) {
+        return {
+          ...prevPlayers,
+          [playerKey]: {
+            ...prevPlayers[playerKey],
+            connected: true
+          }
+        };
+      }
+      return prevPlayers;
+    });
+  });
+
+  const handleNextQuestion = useEffectEvent((data) => {
+    //console.log('⏭️ Next question:', data);
+    setBuzzedBy('');
+    setFoundArtist(false);
+    setFoundTitle(false);
+    if (data.currentTrack) {
+      setSpotifyTrackInfo(data.currentTrack);
+    }
+  });
+
+  const handleBuzzerReset = useEffectEvent(() => {
+    //console.log('🔄 Buzzer reset - Admin a passé');
+    setBuzzedBy('');
+  });
+
+  const handleSpectatorError = useEffectEvent((error) => {
+    console.error('Erreur spectateur:', error);
+    setRoomError(error.message || 'Une erreur est survenue');
+  });
 
   useEffect(() => {
     if (!socket || !roomCode) return;
@@ -62,277 +306,15 @@ function SpectatorView() {
         return;
       }
       
-      // Si pas d'erreur, traiter la réponse
+      // Si pas d'erreur, traiter la réponse via le handler
       if (response) {
-        setRoomData(response);
-        
-        // Initialiser les scores précédents
-        const initialScores = {};
-        Object.keys(response.players || {}).forEach(playerId => {
-          const player = response.players[playerId];
-          if (!player.isAdmin) {
-            initialScores[player.pseudo] = player.score;
-          }
-        });
-        setPreviousScores(initialScores);
-        
-        // Traiter les joueurs avec leurs statuts de connexion
-        const playersWithConnection = {};
-        Object.keys(response.players || {}).forEach(playerId => {
-          playersWithConnection[playerId] = {
-            ...response.players[playerId],
-            connected: response.players[playerId].connected !== false
-          };
-        });
-        
-        setPlayers(playersWithConnection);
-        setRoomOptions(response.options);
-        setSpotifyTrackInfo(response.currentTrack);
-        setFoundArtist(response.artistFound || false);
-        setFoundTitle(response.titleFound || false);
-        setBuzzedBy(response.buzzedBy || '');
-        setGameStatus(response.paused ? 'paused' : 'playing');
-        
-        // Réinitialiser l'erreur si tout va bien
-        setRoomError('');
+        handleSpectatorRoomData(response);
       }
     });
 
-    // === HANDLERS POUR TOUS LES ÉVÉNEMENTS DYNAMIQUES ===
-    
-    const handleSpectatorRoomData = (data) => {
-      //console.log('Spectator room data (événement):', data);
-      
-      // Vérifier s'il y a une erreur dans la réponse
-      if (data && data.error) {
-        setRoomError(data.error);
-        return;
-      }
-      
-      // TRAITER LES DONNÉES ICI (au lieu d'attendre le callback)
-      if (data) {
-        setRoomData(data);
-        
-        // Initialiser les scores précédents
-        const initialScores = {};
-        Object.keys(data.players || {}).forEach(playerId => {
-          const player = data.players[playerId];
-          if (!player.isAdmin) {
-            initialScores[player.pseudo] = player.score;
-          }
-        });
-        setPreviousScores(initialScores);
-        
-        // Traiter les joueurs avec leurs statuts de connexion
-        const playersWithConnection = {};
-        Object.keys(data.players || {}).forEach(playerId => {
-          playersWithConnection[playerId] = {
-            ...data.players[playerId],
-            connected: data.players[playerId].connected !== false
-          };
-        });
-        
-        setPlayers(playersWithConnection);
-        setRoomOptions(data.options);
-        setSpotifyTrackInfo(data.currentTrack);
-        setFoundArtist(data.artistFound || false);
-        setFoundTitle(data.titleFound || false);
-        setBuzzedBy(data.buzzedBy || '');
-        setGameStatus(data.paused ? 'paused' : 'playing');
-        
-        // Réinitialiser l'erreur si tout va bien
-        setRoomError('');
-      }
-    };
-
-    const handleUpdatePlayers = (newPlayers) => {
-      //console.log('🔄 Update players:', newPlayers);
-      
-      // Convertir disconnected en connected pour cohérence
-      const playersWithConnectionStatus = {};
-      Object.keys(newPlayers || {}).forEach(playerId => {
-        const player = newPlayers[playerId];
-        playersWithConnectionStatus[playerId] = {
-          ...player,
-          connected: !player.disconnected
-        };
-      });
-      
-      // Mise à jour des joueurs AVANT de traiter les scores
-      setPlayers(playersWithConnectionStatus);
-      
-      // Traiter les changements de score avec les scores précédents
-      setPreviousScores(prevScores => {
-        const currentScores = {};
-        let hasScoreChanges = false;
-        
-        Object.keys(newPlayers || {}).forEach(playerId => {
-          const player = newPlayers[playerId];
-          if (!player.isAdmin) {
-            currentScores[player.pseudo] = player.score;
-            
-            // Comparer avec le score précédent
-            const previousScore = prevScores[player.pseudo];
-            if (previousScore !== undefined) {
-              const scoreDiff = player.score - previousScore;
-              
-              if (scoreDiff !== 0) {
-                hasScoreChanges = true;
-                
-                // Traiter les changements de score
-                setScoreChanges(prevChanges => {
-                  const existingChange = prevChanges[player.pseudo];
-                  let finalChange = scoreDiff;
-                  let animationType = scoreDiff > 0 ? 'positive' : 'negative';
-                  
-                  // Si une animation est déjà en cours, additionner les changements
-                  if (existingChange) {
-                    const timeSinceStart = Date.now() - existingChange.timestamp;
-                    // Si l'animation précédente a moins de 3 secondes, on cumule
-                    if (timeSinceStart < 3000) {
-                      finalChange = existingChange.cumulativeChange + scoreDiff;
-                      animationType = finalChange > 0 ? 'positive' : 'negative';
-                      //console.log(`📊 Cumulating score change for ${player.pseudo}: ${existingChange.cumulativeChange} + ${scoreDiff} = ${finalChange}`);
-                    }
-                  }
-                  
-                  const updatedChanges = {
-                    ...prevChanges,
-                    [player.pseudo]: {
-                      change: finalChange,
-                      cumulativeChange: finalChange,
-                      type: animationType,
-                      timestamp: Date.now(),
-                      isUpdated: !!existingChange
-                    }
-                  };
-                  
-                  //console.log(`📊 ${existingChange ? 'Updated' : 'New'} score change for ${player.pseudo}: ${finalChange > 0 ? '+' : ''}${finalChange}`);
-                  
-                  return updatedChanges;
-                });
-              }
-            }
-          }
-        });
-        
-        // Retourner les nouveaux scores seulement s'il y a eu des changements
-        return currentScores;
-      });
-    };
-
-    // === GESTION DES BUZZ - CES ÉVÉNEMENTS ARRIVENT DÉJÀ ===
-    const handleBuzzed = (data) => {
-        //console.log('🔴 Buzz reçu:', data);
-        const buzzedPlayer = data.buzzedBy || '';
-      setBuzzedBy(buzzedPlayer);
-    };
-
-    const handleBuzzCleared = () => {
-      //console.log('🔄 Buzz cleared');
-      setBuzzedBy('');
-    };
-
-    // === GESTION SPOTIFY - CES ÉVÉNEMENTS ARRIVENT DÉJÀ ===
-    const handleSpotifyTrackChanged = (data) => {
-      //console.log('🎵 Spotify track changed:', data);
-      // Les données peuvent venir dans différents formats
-      const newTrack = data.trackInfo || data.track || data.newTrack || null;
-      setSpotifyTrackInfo(newTrack);
-      setFoundArtist(false);
-      setFoundTitle(false);
-      // Clear le buzz car nouvelle piste
-      setBuzzedBy('');
-    };
-
-    const handleJudgeAnswer = (data) => {
-      //console.log('⚖️ Judge answer:', data);
-      setFoundArtist(data.artistFound || false);
-      setFoundTitle(data.titleFound || false);
-      // Clear le buzz après jugement
-      setBuzzedBy('');
-    };
-
-    // === GESTION DU JEU - CES ÉVÉNEMENTS ARRIVENT DÉJÀ ===
-    const handleGamePaused = (data) => {
-      //console.log('⏸️ Game paused:', data);
-      setGameStatus(data.paused ? 'paused' : 'playing');
-    };
-
-    const handleRoomOptionsUpdated = (options) => {
-      //console.log('⚙️ Room options updated:', options);
-      setRoomOptions(options);
-    };
-
-    // === GESTION DES CONNEXIONS - CES ÉVÉNEMENTS ARRIVENT DÉJÀ ===
-    const handlePlayerDisconnected = (data) => {
-      //console.log('🔴 Player disconnected:', data);
-      setPlayers(prevPlayers => {
-        const playerKey = Object.keys(prevPlayers).find(key => 
-          prevPlayers[key].pseudo === data.pseudo || key === data.playerId
-        );
-        
-        if (playerKey) {
-          return {
-            ...prevPlayers,
-            [playerKey]: {
-              ...prevPlayers[playerKey],
-              connected: false
-            }
-          };
-        }
-        return prevPlayers;
-      });
-    };
-    
-    const handlePlayerConnected = (data) => {
-      //console.log('🟢 Player connected:', data);
-      setPlayers(prevPlayers => {
-        const playerKey = Object.keys(prevPlayers).find(key => 
-          prevPlayers[key].pseudo === data.pseudo || key === data.playerId
-        );
-        
-        if (playerKey) {
-          return {
-            ...prevPlayers,
-            [playerKey]: {
-              ...prevPlayers[playerKey],
-              connected: true
-            }
-          };
-        }
-        return prevPlayers;
-      });
-    };
-
-    // === GESTION DES QUESTIONS/ROUNDS - CES ÉVÉNEMENTS ARRIVENT DÉJÀ ===
-    const handleNextQuestion = (data) => {
-      //console.log('⏭️ Next question:', data);
-      setBuzzedBy('');
-      setFoundArtist(false);
-      setFoundTitle(false);
-      if (data.currentTrack) {
-        setSpotifyTrackInfo(data.currentTrack);
-      }
-    };
-
-    // === AJOUT DU NOUVEAU HANDLER ===
-    const handleBuzzerReset = () => {
-      //console.log('🔄 Buzzer reset - Admin a passé');
-      setBuzzedBy('');
-    };
-
-    // === GESTION DES ERREURS - NOUVEAU HANDLER ===
-    const handleSpectatorError = (error) => {
-      console.error('Erreur spectateur:', error);
-      setRoomError(error.message || 'Une erreur est survenue');
-    };
-
-    // === ÉCOUTER TOUS LES ÉVÉNEMENTS (ils arrivent déjà car les spectateurs sont dans la room) ===
+    // === ÉCOUTER TOUS LES ÉVÉNEMENTS avec Effect Events stables ===
     socket.on('spectator_room_data', handleSpectatorRoomData);
     socket.on('update_players', handleUpdatePlayers);
-    
-    // Ces événements arrivent déjà automatiquement car les spectateurs rejoignent la room normale
     socket.on('buzzed', handleBuzzed);
     socket.on('buzz_cleared', handleBuzzCleared);
     socket.on('spotify_track_changed', handleSpotifyTrackChanged);
@@ -342,9 +324,7 @@ function SpectatorView() {
     socket.on('next_question', handleNextQuestion);
     socket.on('player_disconnected', handlePlayerDisconnected);
     socket.on('player_connected', handlePlayerConnected);
-    // === AJOUT DE L'ÉVÉNEMENT reset_buzzer ===
     socket.on('reset_buzzer', handleBuzzerReset);
-    // === AJOUT DE L'ÉVÉNEMENT d'erreur ===
     socket.on('spectator_error', handleSpectatorError);
 
     // === NETTOYAGE ===
@@ -360,9 +340,7 @@ function SpectatorView() {
       socket.off('next_question', handleNextQuestion);
       socket.off('player_disconnected', handlePlayerDisconnected);
       socket.off('player_connected', handlePlayerConnected);
-      // === NETTOYAGE DE L'ÉVÉNEMENT reset_buzzer ===
       socket.off('reset_buzzer', handleBuzzerReset);
-      // === NETTOYAGE DE L'ÉVÉNEMENT d'erreur ===
       socket.off('spectator_error', handleSpectatorError);
     };
   }, [socket, roomCode]);
@@ -691,22 +669,44 @@ useEffect(() => {
         <div className="qr-modal-overlay" onClick={closeQRModal}>
           <div className="qr-modal-content" onClick={(e) => e.stopPropagation()}>
             <div className="qr-modal-header">
-              <h3>QR Code de la salle</h3>
+              <h3>QR Codes</h3>
               <button className="qr-modal-close" onClick={closeQRModal}>
                 ✕
               </button>
             </div>
             <div className="qr-modal-body">
-              <img 
-                src="/qr-code.png" 
-                alt="QR Code de la salle" 
-                className="qr-code-image"
-                onClick={closeQRModal}
-              />
-              <p className="qr-code-info">
-                Scannez ce QR code pour rejoindre la salle <span className="qr-room-code">{roomCode}</span>
-              </p>
+              <div className="qr-codes-container">
+                <div className="qr-code-item">
+                  <img 
+                    src="/qr-code-rdv.png" 
+                    alt="QR Code de la salle" 
+                    className="qr-code-image"
+                  />
+                  <p className="qr-code-label">QR Code du jeu</p>
+                </div>
+                <div className="qr-code-item">
+                  <img 
+                    src="/qr-code-wifi.png" 
+                    alt="QR Code WiFi" 
+                    className="qr-code-image"
+                  />
+                  <p className="qr-code-label">QR Code WiFi</p>
+                </div>
+              </div>
+              <div className="qr-room-code-display">
+                Code de la salle : <span className="qr-room-code">{roomCode}</span>
+              </div>
             </div>
+          </div>
+        </div>
+      )}
+
+      {/* ✅ COUNTDOWN OVERLAY - Décompte changement de piste */}
+      {trackChangeCountdown !== null && (
+        <div className="countdown-overlay">
+          <div className="countdown-content">
+            <div className="countdown-message">🎵 Préparez-vous...</div>
+            <div className="countdown-number">{trackChangeCountdown}</div>
           </div>
         </div>
       )}

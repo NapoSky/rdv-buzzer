@@ -4,6 +4,7 @@ const { generateRoomCode } = require('../../utils/helpers');
 const logger = require('../../utils/logger');
 const roomService = require('../../services/roomService'); // Assurez-vous que c'est importé
 const { startSpotifyPolling, stopSpotifyPolling } = require('../../services/spotifyService'); // Importer les fonctions de polling
+const analyticsService = require('../../services/analyticsService');
 
 // Importer l'intégration Spotify seulement quand nécessaire
 let spotifyIntegrationHandler;
@@ -69,6 +70,9 @@ function handleCreateRoom(socket, options, callback) {
     
     // Initialiser la salle avec les options validées
     Room.create(roomCode, socket.id, validatedOptions);
+    
+    // Initialiser les analytics pour cette room
+    analyticsService.initRoomAnalytics(roomCode);
     
     // Faire rejoindre la salle au créateur
     socket.join(roomCode);

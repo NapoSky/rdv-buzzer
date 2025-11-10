@@ -1,0 +1,188 @@
+/* src/pages/RoomAnalytics/components/SyncTable.css */
+
+.sync-table {
+  width: 100%;
+}
+
+.sync-table__empty {
+  text-align: center;
+  padding: 2rem;
+  color: var(--text-secondary);
+  font-style: italic;
+}
+
+.sync-table__summary {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 1rem;
+  padding: 0.75rem 1rem;
+  background-color: var(--background-secondary);
+  border-radius: 8px;
+  font-size: 0.95rem;
+}
+
+.sync-table__synced {
+  font-weight: bold;
+  color: var(--primary-color);
+}
+
+.sync-table__container {
+  overflow-x: auto;
+  border-radius: 8px;
+  border: 1px solid var(--border-color);
+}
+
+.sync-table__table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.9rem;
+}
+
+.sync-table__table thead {
+  background-color: var(--background-secondary);
+  font-weight: bold;
+}
+
+.sync-table__table th,
+.sync-table__table td {
+  padding: 0.75rem 1rem;
+  text-align: left;
+  border-bottom: 1px solid var(--border-color);
+}
+
+.sync-table__table th {
+  color: var(--text-secondary);
+  font-size: 0.85rem;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.sync-table__table tbody tr:hover {
+  background-color: var(--hover-background);
+}
+
+.sync-table__row--unsynced {
+  background-color: rgba(255, 152, 0, 0.1);
+}
+
+.sync-table__pseudo {
+  font-weight: 600;
+  color: var(--text-primary);
+}
+
+.sync-table__score {
+  font-weight: bold;
+  color: var(--primary-color);
+}
+
+.sync-table__sync-status {
+  text-align: center;
+}
+
+.sync-table__badge {
+  display: inline-block;
+  padding: 0.25rem 0.75rem;
+  border-radius: 12px;
+  font-size: 0.8rem;
+  font-weight: 600;
+}
+
+.sync-table__badge--synced {
+  background-color: rgba(0, 200, 81, 0.2);
+  color: #00c851;
+}
+
+.sync-table__badge--unsynced {
+  background-color: rgba(244, 67, 54, 0.2);
+  color: #f44336;
+}
+
+.sync-table__offset,
+.sync-table__latency,
+.sync-table__jitter {
+  font-family: monospace;
+  text-align: right;
+}
+
+.sync-table__samples {
+  text-align: center;
+  color: var(--text-secondary);
+}
+
+.sync-table__quality {
+  text-align: center;
+}
+
+.sync-table__quality-badge {
+  display: inline-block;
+  padding: 0.25rem 0.75rem;
+  border-radius: 12px;
+  font-size: 0.8rem;
+  font-weight: 600;
+  color: white;
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+  .sync-table__summary {
+    flex-direction: column;
+    gap: 0.5rem;
+    align-items: flex-start;
+    padding: 0.6rem 0.75rem;
+    font-size: 0.85rem;
+  }
+
+  .sync-table__table {
+    font-size: 0.8rem;
+  }
+
+  .sync-table__table th,
+  .sync-table__table td {
+    padding: 0.6rem 0.5rem;
+  }
+
+  .sync-table__table th {
+    font-size: 0.75rem;
+  }
+
+  .sync-table__badge,
+  .sync-table__quality-badge {
+    font-size: 0.75rem;
+    padding: 0.2rem 0.6rem;
+  }
+}
+
+@media (max-width: 480px) {
+  .sync-table__summary {
+    padding: 0.5rem;
+    font-size: 0.8rem;
+  }
+
+  .sync-table__table {
+    font-size: 0.7rem;
+  }
+
+  .sync-table__table th,
+  .sync-table__table td {
+    padding: 0.4rem 0.3rem;
+  }
+
+  .sync-table__table th {
+    font-size: 0.7rem;
+  }
+
+  .sync-table__badge,
+  .sync-table__quality-badge {
+    font-size: 0.7rem;
+    padding: 0.15rem 0.5rem;
+  }
+
+  /* Masquer certaines colonnes moins importantes sur très petit écran */
+  .sync-table__table th:nth-child(3), /* OFFSET */
+  .sync-table__table td:nth-child(3),
+  .sync-table__table th:nth-child(6), /* SAMPLES */
+  .sync-table__table td:nth-child(6) {
+    display: none;
+  }
+}

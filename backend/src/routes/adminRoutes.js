@@ -3,6 +3,7 @@ const express = require('express');
 const { verifyAdminAuth } = require('../middlewares/auth');
 const roomController = require('../controllers/roomController');
 const rankingController = require('../controllers/rankingController');
+const analyticsController = require('../controllers/analyticsController');
 
 const router = express.Router();
 
@@ -13,6 +14,12 @@ router.use(verifyAdminAuth);
 router.get('/sessions', roomController.listAllRooms);
 router.post('/closeRoom', roomController.closeRoom);
 router.post('/kickPlayer', roomController.kickPlayer);
+
+// Routes pour les analytics de salle
+router.get('/rooms/:roomCode/analytics', analyticsController.getFullAnalytics);
+router.get('/rooms/:roomCode/analytics/sync', analyticsController.getSyncAnalytics);
+router.get('/rooms/:roomCode/analytics/buzz-history', analyticsController.getBuzzHistory);
+router.get('/rooms/:roomCode/analytics/summary', analyticsController.getStatsSummary);
 
 // Routes pour la gestion du classement
 router.post('/saveGlobalRanking', rankingController.saveGlobalRanking);

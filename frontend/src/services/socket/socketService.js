@@ -1,5 +1,6 @@
 // src/services/socket/socketService.js
 import { io } from 'socket.io-client';
+import { getServerTime } from './serverTimeManager';
 
 const SOCKET_SERVER_URL = import.meta.env.VITE_BACKEND_URL;
 let socket = null;
@@ -224,7 +225,7 @@ export const buzz = (roomCode, pseudo, callback = () => {}) => {
   socket.emit('buzz', { 
     roomCode, 
     pseudo,
-    clientTimestamp: Date.now()
+    clientTimestamp: getServerTime() // ⏱️ UTILISE LE TEMPS SERVEUR SYNCHRONISÉ
   }, callback);
 };
 

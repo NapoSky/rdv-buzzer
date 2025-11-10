@@ -312,7 +312,13 @@ function AdminPanelContent({ sessions, fetchSessions }) {
               {Object.entries(sessions).map(([roomCode, roomData]) => (
                 <li key={roomCode} className="session-item">
                   <div className="session-header">
-                    <h3 className="room-code">Salle : {roomCode}</h3>
+                    <h3 
+                      className="room-code room-code--clickable" 
+                      onClick={() => navigate(`/room/${roomCode}/analytics`)}
+                      title="Cliquer pour voir les analytics"
+                    >
+                      Salle : {roomCode} 📊
+                    </h3>
                     <div className="session-actions">
                       <button
                         className="btn btn-primary"

@@ -1,4 +1,4 @@
-import React, { createContext, useContext, useEffect, useState, useRef } from 'react';
+import React, { createContext, useContext, useEffect, useState, useRef, useEffectEvent } from 'react';
 import { toast } from 'react-toastify';
 import { ThemeContext } from './ThemeContext';
 
@@ -11,15 +11,18 @@ export function NotificationProvider({ children }) {
   // Référence pour suivre les notifications récentes
   const recentNotificationsRef = useRef({});
   
+  // ✅ Effect Event pour gérer le resize
+  const onResize = useEffectEvent(() => {
+    setIsMobile(window.innerWidth < 768);
+  });
+  
   // Détecter les changements de taille d'écran
   useEffect(() => {
-    const handleResize = () => {
-      setIsMobile(window.innerWidth < 768);
-    };
+    const handleResize = () => onResize();
     
     window.addEventListener('resize', handleResize);
     return () => window.removeEventListener('resize', handleResize);
-  }, []);
+  }, []); // ✅ Pas de dépendances
   
   // Méthodes de notification avec style moderne 2025 et dédoublonnage
   const showNotification = (type, message) => {

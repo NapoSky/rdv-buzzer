@@ -11,6 +11,46 @@ function Changelog() {
   // Données du changelog - vous pouvez les externaliser dans un fichier JSON plus tard
   const changelogEntries = [
     {
+      version: "2.3.0",
+      date: "2025-11-10",
+      type: "minor",
+      title: "Buzzers plus précis et mode spectateur amélioré",
+      changes: [
+        {
+          type: "feature",
+          text: "Affichage d'un compte à rebours de 5 secondes avant chaque changement de musique"
+        },
+        {
+          type: "feature",
+          text: "Admin : Nouvelle page d'analytiques détaillées pour suivre l'activité des salles"
+        },
+        {
+          type: "improvement",
+          text: "Client : Amélioration majeure de la précision des buzzers grâce à la synchronisation temporelle serveur"
+        },
+        {
+          type: "improvement",
+          text: "Client : Optimisation de la compatibilité avec React 19.2 pour de meilleures performances"
+        },
+        {
+          type: "improvement",
+          text: "Spectateur : Ajout du QR Code WiFi dans la modale (à côté du QR Code de la salle)"
+        },
+        {
+          type: "improvement",
+          text: "Spectateur : Agrandissement de la modale des QR Codes (+20%) pour une meilleure visibilité"
+        },
+        {
+          type: "improvement",
+          text: "Spectateur : Le code de la salle est maintenant beaucoup plus visible et lisible"
+        },
+        {
+          type: "fix",
+          text: "Spectateur : Les titres et artistes trop longs ne déforment plus l'affichage Spotify"
+        },
+      ]
+    },
+    {
       version: "2.2.5",
       date: "2025-08-07",
       type: "patch",
