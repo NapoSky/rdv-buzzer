@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useContext, useRef } from 'react';
+import React, { useState, useEffect, useContext, useRef, useEffectEvent, useMemo } from 'react';
 import { useSearchParams, useNavigate } from 'react-router-dom';
 import * as Dialog from '@radix-ui/react-dialog';
 import * as Tooltip from '@radix-ui/react-tooltip';
@@ -35,6 +35,35 @@ function ClientView({ setActiveRoomCode }) {
   const { isDarkMode } = useContext(ThemeContext);
   // Correction: utiliser les fonctions spécifiques du contexte
   const { success, error, warning, info } = useNotification();
+  
+  // Effect Events pour les notifications (React 19.2)
+  const onSuccess = useEffectEvent((message) => {
+    success(message);
+  });
+
+  const onError = useEffectEvent((message) => {
+    error(message);
+  });
+
+  const onWarning = useEffectEvent((message) => {
+    warning(message);
+  });
+
+  const onInfo = useEffectEvent((message) => {
+    info(message);
+  });
+  
+  // Effect Event pour vérifier et activer le buzzer (toujours les dernières valeurs)
+  const checkAndActivateBuzzer = useEffectEvent((notify = false) => {
+    const trackFullyFound = 
+      (roomOptions?.roomType === 'Standard' && (foundArtist || foundTitle)) ||
+      (roomOptions?.roomType === 'Titre/Artiste' && foundArtist && foundTitle);
+    
+    if (!gamePaused && !trackFullyFound) {
+      setIsDisabled(false);
+      if (notify) onInfo('Le buzzer est à nouveau disponible');
+    }
+  });
   
   // Navigation et paramètres URL
   const [searchParams] = useSearchParams();
@@ -77,6 +106,7 @@ function ClientView({ setActiveRoomCode }) {
   const lastAdminDisconnectRef = useRef(false);
   const lastPauseEventRef = useRef(false);
   const lastSocketIdRef = useRef(null);
+  const buzzerDelayActiveRef = useRef(false); // ✅ Track si un délai de buzzer est en cours
   
   // Socket
   const socket = getSocket();
@@ -98,7 +128,7 @@ function ClientView({ setActiveRoomCode }) {
     // Vérifier d'abord si l'utilisateur a été expulsé
     if (localStorage.getItem('kicked_from_' + roomCode) === 'true') {
       // Correction
-      error('Vous avez été expulsé de cette salle par l\'administrateur.');
+      onError('Vous avez été expulsé de cette salle par l\'administrateur.');
       navigateToHome();
       return;
     }
@@ -107,7 +137,7 @@ function ClientView({ setActiveRoomCode }) {
       if (response && response.error) {
         setRoomError(response.error);
         // Correction
-        error(response.error);
+        onError(response.error);
       } else if (response) {
 
         // Mettre à jour l'état de pause
@@ -159,12 +189,12 @@ function ClientView({ setActiveRoomCode }) {
         // ----------------------------------------------------
 
         setRoomError('');
-        success(`Vous avez rejoint la salle ${roomCode}`);
+        onSuccess(`Vous avez rejoint la salle ${roomCode}`);
       }
     }).catch(err => {
       setRoomError("Erreur de connexion au serveur");
       // Correction
-      error('Impossible de se connecter au serveur');
+      onError('Impossible de se connecter au serveur');
     });
   };
 
@@ -193,7 +223,7 @@ const handleBuzz = () => {
 
   // ---> CORRECTION : Vérifier SI LA PISTE EST TROUVÉE EN PREMIER <---
   if (trackFullyFound && !gamePaused) {
-    warning('La piste a déjà été trouvée !');
+    onWarning('La piste a déjà été trouvée !');
     return; // Arrêter ici, ne pas envoyer de buzz
   }
   // ----------------------------------------------------------------
@@ -227,7 +257,7 @@ const handleBuzz = () => {
             setShowBuzzedDialog(true);
           }
         } else {
-          error(response.error);
+          onError(response.error);
           // Réactiver SEULEMENT si l'erreur n'est pas "late" ET que la piste n'est PAS trouvée
           // Recalculer trackFullyFound au cas où l'état aurait changé très vite
           const currentTrackFullyFound =
@@ -261,20 +291,22 @@ const handleBuzz = () => {
   };
 
   // Fonction pour réinitialiser l'état local du buzzer
-  const resetLocalBuzzerState = (notify = false) => {
+  const resetLocalBuzzerState = (notify = false, delay = 0) => {
     setBuzzedBy('');
     setShowBuzzedDialog(false);
     
-    // Activer le buzzer seulement si le jeu n'est pas en pause ET piste non trouvée
-    const trackFullyFound = 
-      (roomOptions?.roomType === 'Standard' && (foundArtist || foundTitle)) ||
-      (roomOptions?.roomType === 'Titre/Artiste' && foundArtist && foundTitle);
-    
-    if (!gamePaused && !trackFullyFound) {
-      setIsDisabled(false);
+    // Si délai demandé, désactiver immédiatement puis réactiver après le délai
+    if (delay > 0) {
+      setIsDisabled(true);
+      buzzerDelayActiveRef.current = true; // ✅ Activer le flag de délai
+      setTimeout(() => {
+        buzzerDelayActiveRef.current = false; // ✅ Désactiver le flag
+        checkAndActivateBuzzer(notify); // ✅ Effect Event = toujours les dernières valeurs
+      }, delay);
+    } else {
+      // Activation immédiate (comportement original)
+      checkAndActivateBuzzer(notify);
     }
-    
-    if (notify) info('Le buzzer est à nouveau disponible');
   };
 
   // Configuration des écouteurs d'événements socket
@@ -290,7 +322,7 @@ const handleBuzz = () => {
   
       // Vérifier d'abord si l'utilisateur a été expulsé
       if (localStorage.getItem('kicked_from_' + roomCode) === 'true') {
-        error('Vous avez été expulsé de cette salle par l\'administrateur.');
+        onError('Vous avez été expulsé de cette salle par l\'administrateur.');
         navigateToHome();
         return;
       }
@@ -298,7 +330,7 @@ const handleBuzz = () => {
       joinRoom(roomCode, pseudo).then(response => {
         if (response && response.error) {
           setRoomError(response.error);
-          error(response.error);
+          onError(response.error);
         } else if (response) {
           setJoined(true);
           setActiveRoomCode(roomCode);
@@ -355,11 +387,11 @@ const handleBuzz = () => {
           // --- Fin Initialisation Spotify ---
           
           setRoomError('');
-          success(`Vous avez rejoint la salle ${roomCode}`);
+          onSuccess(`Vous avez rejoint la salle ${roomCode}`);
         }
       }).catch(err => {
         setRoomError("Erreur de connexion au serveur");
-        error('Impossible de se connecter au serveur');
+        onError('Impossible de se connecter au serveur');
       });
     };
     
@@ -374,7 +406,7 @@ const handleBuzz = () => {
       setShowBuzzedDialog(false);
       
       if (showNotification) {
-        info('Le buzzer est à nouveau disponible');
+        onInfo('Le buzzer est à nouveau disponible');
       }
     };
   
@@ -383,12 +415,12 @@ const handleBuzz = () => {
       
       if (isPaused) {
         setIsDisabled(true);
-        if (message) info(message);
+        if (message) onInfo(message);
       } else {
         if (!buzzedBy) {
           setIsDisabled(false);
         }
-        if (message) info(message);
+        if (message) onInfo(message);
       }
     };
   
@@ -397,10 +429,10 @@ const handleBuzz = () => {
       setShowAdminMissingDialog(!isPresent);
       
       if (isPresent) {
-          if (customMessage) success(customMessage);
+          if (customMessage) onSuccess(customMessage);
       } else {
         handleGamePauseState(true);
-        if (customMessage) warning(customMessage);
+        if (customMessage) onWarning(customMessage);
       }
     };
   
@@ -412,7 +444,7 @@ const handleBuzz = () => {
       setIsDisabled(true);
       
       if (data.buzzedBy !== pseudo) {
-        warning(`${data.buzzedBy} a buzzé en premier`);
+        onWarning(`${data.buzzedBy} a buzzé en premier`);
       }
     };
   
@@ -432,7 +464,7 @@ const handleBuzz = () => {
       setIsDisabled(true);
       resetBuzzerState(false);
       
-      error(`Le buzzer sera réactivé dans ${duration/1000} secondes`);
+      onError(`Le buzzer sera réactivé dans ${duration/1000} secondes`);
       
       setTimeout(() => {
         // AVANT de réactiver le buzzer, vérifier si d'autres conditions l'empêchent
@@ -443,7 +475,7 @@ const handleBuzz = () => {
         // Ne réactiver que si la piste n'est pas trouvée et le jeu n'est pas en pause
         if (!trackFullyFound && !gamePaused) {
           setIsDisabled(false);
-          success('Le buzzer est à nouveau disponible');
+          onSuccess('Le buzzer est à nouveau disponible');
         } else {
           //console.log("Buzzer reste désactivé après pénalité car piste trouvée ou jeu en pause");
         }
@@ -471,7 +503,7 @@ const handleBuzz = () => {
       if (!playerExists && joined) {
         socket.emit('check_if_kicked', { roomCode, pseudo }, (response) => {
           if (response && response.kicked) {
-            error('Vous avez été expulsé de la salle par l\'administrateur.');
+            onError('Vous avez été expulsé de la salle par l\'administrateur.');
             navigateToHome();
           } else {
             joinCurrentRoom();
@@ -497,14 +529,14 @@ const handleBuzz = () => {
           setShowFinalRanking(true);
         }, 50);
         
-        info('L\'administrateur a fermé la salle');
+        onInfo('L\'administrateur a fermé la salle');
       } else {
         joinCurrentRoom();
       }
     };
   
     const onDisconnect = (reason) => {
-      warning('Connexion au serveur perdue. Tentative de reconnexion...');
+      onWarning('Connexion au serveur perdue. Tentative de reconnexion...');
     };
   
     const onKicked = () => {
@@ -517,7 +549,7 @@ const handleBuzz = () => {
       setJoined(false);
       setPlayers({});
   
-      error('Vous avez été expulsé de la salle par l\'administrateur.');
+      onError('Vous avez été expulsé de la salle par l\'administrateur.');
       
       navigateToHome();
     };
@@ -561,9 +593,19 @@ const handleBuzz = () => {
         setIsDisabled(true);
       } else if (!gamePaused) {
         // Introduire un délai avant de réactiver le buzzer
-        setIsDisabled(true); // Garder désactivé pendant le délai
+        // ✅ IMPORTANT : Ne désactiver QUE si pas déjà désactivé (pour ne pas écraser une pénalité en cours)
+        const wasAlreadyDisabled = isDisabled;
+        if (!wasAlreadyDisabled) {
+          setIsDisabled(true); // Garder désactivé pendant le délai
+        }
         //console.log("Jugement reçu, application d'un délai avant réactivation du buzzer.");
         setTimeout(() => {
+          // ✅ Ne réactiver QUE si on n'était pas déjà désactivé (= pas de pénalité)
+          if (wasAlreadyDisabled) {
+            //console.log("Buzzer reste désactivé (pénalité en cours pour ce joueur).");
+            return;
+          }
+          
           // Re-vérifier les conditions au moment de la réactivation
           const currentTrackFullyFoundAfterDelay = 
             (roomOptions?.roomType === 'Standard' && (foundArtist || foundTitle)) ||
@@ -572,7 +614,7 @@ const handleBuzz = () => {
           if (!currentTrackFullyFoundAfterDelay && !gamePaused) {
             setIsDisabled(false);
             //console.log("Buzzer réactivé après délai post-jugement.");
-            info('Le buzzer est à nouveau disponible.');
+            onInfo('Le buzzer est à nouveau disponible.');
           } else {
             //console.log("Buzzer reste désactivé après délai post-jugement (piste/question trouvée ou jeu en pause).");
           }
@@ -592,15 +634,10 @@ const handleBuzz = () => {
       setFoundArtist(false);
       setFoundTitle(false);
     
-      // Note: resetSpotifyDisplay() ici est redondant si on set les états juste au-dessus
-      // resetSpotifyDisplay(); // Peut être supprimé
-    
-      resetLocalBuzzerState(false);
-    
-      if (!gamePaused) {
-        setIsDisabled(false);
-      }
-      info("Nouvelle piste !");
+      // Reset le buzzer avec un délai de 5 secondes
+      resetLocalBuzzerState(false, 5000);
+
+      info("Nouvelle piste ! Buzzer disponible dans 5 secondes...");
     };
 
     const handleRoomOptionsUpdated = (options) => {
@@ -627,7 +664,7 @@ const handleBuzz = () => {
       const now = Date.now();
       if (now - lastAdminDisconnectRef.current > 500) {
         // Pas de notification si déconnexion admin récente
-        info('L\'administrateur a mis la partie en pause');
+        onInfo('L\'administrateur a mis la partie en pause');
       }
 
     });
@@ -637,7 +674,7 @@ const handleBuzz = () => {
       if (!buzzedBy) {
         setIsDisabled(false);
       }
-      info('La partie a repris');
+      onInfo('La partie a repris');
     });
     
    
@@ -654,7 +691,7 @@ const handleBuzz = () => {
         setIsDisabled(true);
       
         // Une seule notification
-        warning('L\'administrateur s\'est déconnecté. Partie en pause.');
+        onWarning('L\'administrateur s\'est déconnecté. Partie en pause.');
     });
     
     on('admin_connected', () => {
@@ -664,7 +701,7 @@ const handleBuzz = () => {
         setShowAdminMissingDialog(false);
         
         // Une seule notification, uniquement si l'admin était réellement absent auparavant
-        success('L\'administrateur est de retour');
+        onSuccess('L\'administrateur est de retour');
       } 
     });
     
@@ -679,13 +716,13 @@ const handleBuzz = () => {
         // N'afficher la notification que si ce n'est pas lié à une déconnexion admin
         const now = Date.now();
         if (now - lastAdminDisconnectRef.current > 500) {
-          info('L\'administrateur a mis la partie en pause');
+          onInfo('L\'administrateur a mis la partie en pause');
         }
       } else {
         if (!buzzedBy) {
           setIsDisabled(false);
         }
-        info('La partie a repris');
+        onInfo('La partie a repris');
       }
     });
     on('buzzed', onBuzzed);
@@ -733,7 +770,7 @@ const handleBuzz = () => {
       off('room_options_updated');
       off('next_question');
     };
-  }, [socket, roomCode, pseudo, setActiveRoomCode, navigate, joined, gamePaused, buzzedBy, roomOptions, firstBuzzer, foundArtist, foundTitle, resetSpotifyDisplay, resetLocalBuzzerState]);
+  }, [socket, roomCode, pseudo, setActiveRoomCode, navigate, joined, gamePaused, buzzedBy, roomOptions, firstBuzzer, foundArtist, foundTitle]);
 
   // Gestion de la reconnexion après mise en veille
   useEffect(() => {
@@ -749,7 +786,7 @@ const handleBuzz = () => {
       // ✅ Forcer une reconnexion immédiate AVEC DÉLAI
       if (!reconnectAttemptRef.current) {
         reconnectAttemptRef.current = true;
-        info('Nouvelle connexion détectée, reconnexion à la salle...');
+        onInfo('Nouvelle connexion détectée, reconnexion à la salle...');
         
         // ✅ SOLUTION : Attendre que la socket soit complètement prête
         setTimeout(() => {
@@ -759,7 +796,7 @@ const handleBuzz = () => {
               reconnectAttemptRef.current = false;
               
               if (response && response.success) {
-                success('Reconnexion automatique réussie');
+                onSuccess('Reconnexion automatique réussie');
                 
                 // ✅ Mettre à jour tous les états
                 if (response.paused !== undefined) {
@@ -826,7 +863,7 @@ const handleBuzz = () => {
     const { downtime } = event.detail;
     
     if (downtime > 5) {
-      info(`Reconnexion après ${downtime.toFixed(1)} secondes`);
+      onInfo(`Reconnexion après ${downtime.toFixed(1)} secondes`);
       
       // ✅ CORRECTION : Utiliser la même logique que les autres reconnexions
       if (socket && socket.connected && !reconnectAttemptRef.current) {
@@ -845,7 +882,7 @@ const handleBuzz = () => {
               setPlayers(response.players);
             }
           } else {
-            error(response?.error || 'Erreur lors de la reconnexion globale');
+            onError(response?.error || 'Erreur lors de la reconnexion globale');
           }
         });
       }
@@ -865,7 +902,8 @@ const handleBuzz = () => {
       setIsDisabled(true);
     }
     
-    if (isConnected && joined) {
+    // ✅ Ne pas réactiver le buzzer si un délai est en cours (changement de piste)
+    if (isConnected && joined && !buzzerDelayActiveRef.current) {
       const currentPlayer = Object.values(players).find(player => player.pseudo === pseudo);
       if (currentPlayer && !currentPlayer.buzzed) {
         setIsDisabled(false);
@@ -888,7 +926,7 @@ const handleBuzz = () => {
         .catch(() => {
           reconnectAttemptRef.current = false;
           // Correction
-          error('Impossible d\'établir une connexion avec le serveur');
+          onError('Impossible d\'établir une connexion avec le serveur');
         })
         .finally(() => {
         reconnectAttemptRef.current = false; // ✅ Toujours reset le flag
@@ -1081,9 +1119,11 @@ const handleBuzz = () => {
   }, []); // Le tableau vide assure que l'effet s'exécute seulement au montage/démontage
 
   // Calculer le rang du joueur actuel (à placer avant le return)
-  const sortedPlayers = Object.values(players)
-    .filter(player => !player.isAdmin)
-    .sort((a, b) => b.score - a.score);
+  const sortedPlayers = useMemo(() => {
+    return Object.values(players)
+      .filter(player => !player.isAdmin)
+      .sort((a, b) => b.score - a.score);
+  }, [players]);
 
   const myRankIndex = sortedPlayers.findIndex(p => p.pseudo === pseudo);
   const myRank = myRankIndex !== -1 ? myRankIndex + 1 : null;

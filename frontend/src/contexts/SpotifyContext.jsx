@@ -1,5 +1,5 @@
 // frontend/src/contexts/SpotifyContext.js
-import React, { createContext, useState, useEffect, useContext } from 'react';
+import React, { createContext, useState, useEffect, useContext, useEffectEvent } from 'react';
 import { isSpotifyAuthenticated, getAvailableDevices } from '../services/api/spotifyService';
 
 const SpotifyContext = createContext();
@@ -36,6 +36,11 @@ export const SpotifyProvider = ({ children }) => {
     }
   };
 
+  // ✅ Effect Event pour rafraîchir le statut Spotify
+  const onSpotifyMessage = useEffectEvent(() => {
+    refreshStatus(); // ✅ Toujours la dernière version de refreshStatus
+  });
+
   // Effet initial pour vérifier le statut
   useEffect(() => {
     refreshStatus();
@@ -45,13 +50,13 @@ export const SpotifyProvider = ({ children }) => {
       if (event.origin === window.location.origin && 
           event.data && 
           event.data.type === 'SPOTIFY_CONNECTED') {
-        refreshStatus(); // Actualiser l'état plutôt que de simplement setter à true
+        onSpotifyMessage(); // ✅ Utiliser l'Effect Event
       }
     };
     
     window.addEventListener('message', messageHandler);
     return () => window.removeEventListener('message', messageHandler);
-  }, []);
+  }, [refreshStatus]); // ✅ refreshStatus en dépendance pour l'appel initial
 
   return (
     <SpotifyContext.Provider value={{ 

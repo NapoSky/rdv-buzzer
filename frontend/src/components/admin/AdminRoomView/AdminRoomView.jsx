@@ -1,5 +1,5 @@
 // src/components/admin/AdminRoomView/AdminRoomView.js
-import React, { useState, useEffect, useRef, useContext, useCallback } from 'react';
+import React, { useState, useEffect, useRef, useContext, useCallback, useEffectEvent, useMemo } from 'react';
 import { useSearchParams, useNavigate, useLocation } from 'react-router-dom';
 import { ThemeContext } from '../../../contexts/ThemeContext';
 import './AdminRoomView.css';
@@ -141,283 +141,233 @@ function AdminRoomView() {
     }
   };
 
+  // Effect Events pour les handlers socket (React 19.2)
+  const onUpdatePlayers = useEffectEvent((newPlayers) => {
+    console.log("[AdminRoomView] Mise à jour des joueurs reçue:", newPlayers);
+    setPlayers(newPlayers);
+  });
+  
+  const onGamePaused = useEffectEvent((data) => {
+    console.log("[AdminRoomView] Événement game_paused reçu:", data);
+    const pausedState = data.paused;
+    console.log("[AdminRoomView] État pause mis à jour:", pausedState);
+    setPaused(pausedState);
+  });
+  
+  const onRoomClosed = useEffectEvent(() => {
+    setCloseStatus({ roomClosed: true, dataSaved: true });
+    setShowPostCloseModal(true);
+  });
+  
+  const onBuzzed = useEffectEvent(async (data) => {
+    console.log("[AdminRoomView] 🚨 ÉVÉNEMENT BUZZED REÇU 🚨:", {
+      data,
+      dataType: typeof data,
+      dataKeys: Object.keys(data || {}),
+      currentBuzzedPlayer: buzzedPlayer,
+      isProcessingJudgment,
+      timestamp: Date.now()
+    });
+    
+    if (!data || !data.buzzedBy) {
+      console.error("[AdminRoomView] ❌ Données d'événement buzzed invalides:", data);
+      return;
+    }
+    
+    if (isProcessingJudgment) {
+      console.log("[AdminRoomView] Buzz reçu pendant jugement - on continue quand même");
+    }
+    
+    const buzzKey = `${data.playerId}-${data.buzzedBy}`;
+    const now = Date.now();
+    if (lastProcessedBuzzRef.current && 
+        lastProcessedBuzzRef.current.key === buzzKey && 
+        (now - lastProcessedBuzzRef.current.timestamp) < 100) {
+      console.log("[AdminRoomView] 🚫 Buzz spam ignoré:", { 
+        player: data.buzzedBy, 
+        deltaTime: now - lastProcessedBuzzRef.current.timestamp 
+      });
+      return;
+    }
+    
+    if (buzzedPlayer && buzzedPlayer.playerId !== data.playerId) {
+      console.log("[AdminRoomView] ⚠️ Nouveau buzz reçu alors qu'un autre joueur a déjà buzzé:", {
+        existingPlayer: buzzedPlayer.pseudo,
+        newPlayer: data.buzzedBy,
+        action: "REMPLACE_BUZZ"
+      });
+    }
+    
+    lastProcessedBuzzRef.current = { key: buzzKey, timestamp: now };
+    
+    if (clearBuzzTimeoutRef.current) {
+      console.log("[AdminRoomView] 🛑 Annulation timeout précédent");
+      clearTimeout(clearBuzzTimeoutRef.current);
+      clearBuzzTimeoutRef.current = null;
+    }
+    
+    const newBuzzedPlayer = { pseudo: data.buzzedBy, playerId: data.playerId };
+    console.log("[AdminRoomView] 🎯 Définition buzzedPlayer:", newBuzzedPlayer);
+    
+    forceModalRef.current = newBuzzedPlayer;
+    isModalForcedRef.current = true;
+    
+    setBuzzedPlayer(null);
+    setTimeout(() => {
+      setBuzzedPlayer(newBuzzedPlayer);
+      console.log("[AdminRoomView] ✅ Buzz player défini de manière robuste:", newBuzzedPlayer);
+    }, 1);
+    
+    try {
+      const currentlyConnected = await refreshStatus();
+      if (currentlyConnected) {
+        await pausePlayback();
+      }
+    } catch (error) {
+      console.error('Erreur pause Spotify:', error);
+    }
+    
+    try {
+      if (audioRef.current) audioRef.current.play();
+      if (navigator.vibrate) navigator.vibrate(300);
+    } catch (error) {
+      console.error('Erreur effets sonores:', error);
+    }
+  });
+  
+  const onConnect = useEffectEvent(() => {
+    console.log('Reconnexion admin détectée');
+    if (roomCode && !isConnectedToRoom) {
+      setIsConnectedToRoom(true);
+      joinRoom(roomCode, 'Admin', true, true).then((response) => {
+        console.log('Réponse complète de joinRoom:', response);
+        if (response && response.paused !== undefined) {
+          setPaused(response.paused);
+          console.log(`État de pause synchronisé: ${response.paused}`);
+        }
+        if (response && response.options) {
+          setCurrentRoomOptions(response.options);
+          console.log("Options de salle synchronisées lors de la reconnexion:", response.options);
+        } else {
+          console.warn("Les options de la salle n'ont pas été récupérées lors de la reconnexion.");
+        }
+      }).catch(error => {
+        console.error("Erreur lors de la reconnexion admin:", error);
+      });
+    }
+  });
+
+  const onPlayerKicked = useEffectEvent((data) => {
+    console.log('Joueur kické:', data);
+    if (data.playerId) {
+      setPlayers(prev => {
+        const updatedPlayers = {...prev};
+        delete updatedPlayers[data.playerId];
+        return updatedPlayers;
+      });
+    }
+  });
+
+  const onRoomOptionsUpdated = useEffectEvent((options) => {
+    console.log("[AdminRoomView] Événement room_options_updated REÇU (stringifié):", JSON.stringify(options));
+    if (options) {
+      console.log("[AdminRoomView] AVANT setCurrentRoomOptions, options reçu:", JSON.stringify(options));
+      setCurrentRoomOptions(options);
+    } else {
+      console.warn("[AdminRoomView] Événement room_options_updated reçu avec payload vide ou falsy.");
+    }
+  });
+
+  const onSpotifyTrackChanged = useEffectEvent((data) => {
+    const newTrack = data.track || data.newTrack || null;
+    setCurrentTrackInfo(newTrack);
+    
+    if (isProcessingJudgment) {
+      console.log('[AdminRoomView] Changement de piste Spotify ignoré - jugement en cours');
+      return;
+    }
+    
+    if (buzzedPlayer && lastProcessedBuzzRef.current && 
+        (Date.now() - lastProcessedBuzzRef.current.timestamp) < 2000) {
+      console.log('[AdminRoomView] Changement de piste Spotify ignoré - buzz récent actif');
+      return;
+    }
+    
+    setFoundArtist(false);
+    setFoundTitle(false);
+    setBuzzedPlayer(null);
+    
+    console.log('[AdminRoomView] Changement de piste Spotify détecté', {
+      track: newTrack ? `${newTrack.artist} - ${newTrack.title}` : 'Aucune',
+      hasPlaylist: !!(newTrack?.playlistInfo),
+      position: newTrack?.playlistInfo ? `${newTrack.playlistInfo.position}/${newTrack.playlistInfo.total}` : 'N/A'
+    });
+  });
+
+  const onJudgeAnswerUpdate = useEffectEvent((data) => {
+    if (data && data.artistFound !== undefined && data.titleFound !== undefined) {
+      console.log(`[AdminRoomView] Mise à jour locale via judge_answer: artist=${data.artistFound}, title=${data.titleFound}`);
+      setFoundArtist(data.artistFound);
+      setFoundTitle(data.titleFound);
+    }
+  });
+
+  const onNextQuestion = useEffectEvent(() => {
+    console.log("[AdminRoomView] Question suivante - réinitialisation des états");
+    
+    if (isProcessingJudgment) {
+      console.log('[AdminRoomView] Question suivante ignorée - jugement en cours');
+      return;
+    }
+    
+    if (buzzedPlayer && lastProcessedBuzzRef.current && 
+        (Date.now() - lastProcessedBuzzRef.current.timestamp) < 2000) {
+      console.log('[AdminRoomView] Question suivante ignorée - buzz récent actif');
+      return;
+    }
+    
+    setFoundArtist(false);
+    setFoundTitle(false);
+    setBuzzedPlayer(null);
+    setIsProcessingJudgment(false);
+    
+    lastProcessedBuzzRef.current = null;
+    if (clearBuzzTimeoutRef.current) {
+      clearTimeout(clearBuzzTimeoutRef.current);
+      clearBuzzTimeoutRef.current = null;
+    }
+  });
+
   // Configuration des écouteurs d'événements
   useEffect(() => {
-    // Fonctions de gestion des événements
-    // ✅ LOG CRITIQUE : Vérifier si on reçoit l'événement buzzed
     console.log("[AdminRoomView] Configuration des event listeners...");
-    
-    const handleUpdatePlayers = (newPlayers) => {
-      console.log("[AdminRoomView] Mise à jour des joueurs reçue:", newPlayers);
-      setPlayers(newPlayers);
-    };
-    
-    const handleGamePaused = (data) => {
-      console.log("[AdminRoomView] Événement game_paused reçu:", data);
-      // ✅ CORRECTION : Le serveur envoie { paused: boolean }, pas un boolean direct
-      const pausedState = data.paused;
-      console.log("[AdminRoomView] État pause mis à jour:", pausedState);
-      setPaused(pausedState);
-    };
-    
-    const handleRoomClosed = () => {
-      setCloseStatus({ roomClosed: true, dataSaved: true });
-      setShowPostCloseModal(true);
-    };
-    
-    const handleBuzzed = async (data) => {
-      // ✅ LOG CRITIQUE : Vérifier si on reçoit l'événement
-      console.log("[AdminRoomView] 🚨 ÉVÉNEMENT BUZZED REÇU 🚨:", {
-        data,
-        dataType: typeof data,
-        dataKeys: Object.keys(data || {}),
-        currentBuzzedPlayer: buzzedPlayer,
-        isProcessingJudgment,
-        timestamp: Date.now()
-      });
-      
-      if (!data || !data.buzzedBy) {
-        console.error("[AdminRoomView] ❌ Données d'événement buzzed invalides:", data);
-        return;
-      }
-      
-      // ✅ PROTECTION : Permettre les nouveaux buzzs même pendant le traitement
-      // L'important est que la modal reste affichée jusqu'à ce que l'admin prenne une décision
-      if (isProcessingJudgment) {
-        console.log("[AdminRoomView] Buzz reçu pendant jugement - on continue quand même");
-        // Ne pas return, permettre le traitement
-      }
-      
-      // ✅ PROTECTION ANTI-SPAM : Ignorer les événements identiques reçus rapidement
-      const buzzKey = `${data.playerId}-${data.buzzedBy}`;
-      const now = Date.now();
-      if (lastProcessedBuzzRef.current && 
-          lastProcessedBuzzRef.current.key === buzzKey && 
-          (now - lastProcessedBuzzRef.current.timestamp) < 100) { // Réduit à 100ms pour être plus permissif
-        console.log("[AdminRoomView] 🚫 Buzz spam ignoré:", { 
-          player: data.buzzedBy, 
-          deltaTime: now - lastProcessedBuzzRef.current.timestamp 
-        });
-        return;
-      }
-      
-      // ✅ PROTECTION : Si un buzzedPlayer existe déjà, permettre la mise à jour si c'est un nouveau joueur
-      // mais avec un log pour comprendre ce qui se passe
-      if (buzzedPlayer && buzzedPlayer.playerId !== data.playerId) {
-        console.log("[AdminRoomView] ⚠️ Nouveau buzz reçu alors qu'un autre joueur a déjà buzzé:", {
-          existingPlayer: buzzedPlayer.pseudo,
-          newPlayer: data.buzzedBy,
-          action: "REMPLACE_BUZZ"
-        });
-        // On continue au lieu de return pour permettre le remplacement
-      }
-      
-      // Marquer ce buzz comme traité
-      lastProcessedBuzzRef.current = { key: buzzKey, timestamp: now };
-      
-      // ✅ ANNULER tout timeout précédent qui pourrait remettre buzzedPlayer à null
-      if (clearBuzzTimeoutRef.current) {
-        console.log("[AdminRoomView] 🛑 Annulation timeout précédent");
-        clearTimeout(clearBuzzTimeoutRef.current);
-        clearBuzzTimeoutRef.current = null;
-      }
-      
-      // ✅ SOLUTION ROBUSTE : Utiliser une référence pour garantir l'affichage
-      const newBuzzedPlayer = { pseudo: data.buzzedBy, playerId: data.playerId };
-      console.log("[AdminRoomView] 🎯 Définition buzzedPlayer:", newBuzzedPlayer);
-      
-      // Forcer l'affichage de la modal via une référence
-      forceModalRef.current = newBuzzedPlayer;
-      isModalForcedRef.current = true;
-      
-      // Utiliser une approche en deux étapes pour garantir la cohérence
-      setBuzzedPlayer(null); // Reset d'abord
-      // Puis définir le nouveau player dans le prochain tick
-      setTimeout(() => {
-        setBuzzedPlayer(newBuzzedPlayer);
-        console.log("[AdminRoomView] ✅ Buzz player défini de manière robuste:", newBuzzedPlayer);
-      }, 1);
-      
-      // Gérer Spotify si connecté
-      try {
-        const currentlyConnected = await refreshStatus();
-        if (currentlyConnected) {
-          await pausePlayback();
-        }
-      } catch (error) {
-        console.error('Erreur pause Spotify:', error);
-      }
-      
-      // Effets sonores et vibration
-      try {
-        if (audioRef.current) audioRef.current.play();
-        if (navigator.vibrate) navigator.vibrate(300);
-      } catch (error) {
-        console.error('Erreur effets sonores:', error);
-      }
-    };
-    
-    const handleConnect = () => {
-      console.log('Reconnexion admin détectée');
-      // Uniquement se reconnecter si la socket a été déconnectée
-      if (roomCode && !isConnectedToRoom) {
-        setIsConnectedToRoom(true);
-        joinRoom(roomCode, 'Admin', true, true).then((response) => {
-          console.log('Réponse complète de joinRoom:', response);
-          // À la reconnexion, synchroniser l'état de pause avec le serveur
-          if (response && response.paused !== undefined) {
-            setPaused(response.paused);
-            console.log(`État de pause synchronisé: ${response.paused}`);
-          }
-          // ---> AJOUT: Synchroniser aussi les options de la salle <---
-          if (response && response.options) {
-            setCurrentRoomOptions(response.options);
-            console.log("Options de salle synchronisées lors de la reconnexion:", response.options);
-          } else {
-            console.warn("Les options de la salle n'ont pas été récupérées lors de la reconnexion.");
-            // Optionnel: Tenter de recharger depuis location.state ou défauts ?
-            // setCurrentRoomOptions(location.state?.roomOptions || DEFAULT_ROOM_OPTIONS);
-          }
-          // ---------------------------------------------------------
-        }).catch(error => {
-          console.error("Erreur lors de la reconnexion admin:", error);
-        });
-      }
-    };
 
-
-    const handlePlayerKicked = (data) => {
-      console.log('Joueur kické:', data);
-      // Si vous gérez manuellement la liste des joueurs, vous pourriez faire:
-      if (data.playerId) {
-        setPlayers(prev => {
-          const updatedPlayers = {...prev};
-          delete updatedPlayers[data.playerId];
-          return updatedPlayers;
-        });
-      }
-    };
-
-    // ---> GESTIONNAIRE MODIFIÉ <---
-    const handleRoomOptionsUpdated = (options) => {
-      console.log("[AdminRoomView] Événement room_options_updated REÇU (stringifié):", JSON.stringify(options)); // Log stringifié
-
-      if (options) {
-        // ---> AJOUTER LOG AVANT SET <---
-        console.log("[AdminRoomView] AVANT setCurrentRoomOptions, options reçu:", JSON.stringify(options));
-        // -----------------------------
-
-        setCurrentRoomOptions(options); // Met à jour l'état local
-
-        // ---> AJOUTER LOG APRÈS SET (via callback pour voir la valeur appliquée) <---
-        // Note: setCurrentRoomOptions est asynchrone, pour voir la valeur *après* mise à jour,
-        // il faudrait logguer dans un autre useEffect dépendant de currentRoomOptions,
-        // ou utiliser le log avant le rendu de BuzzReceivedModal comme point de contrôle.
-        // Le log avant le rendu (ligne 741) est déjà en place et montre 'undefined'.
-        // --------------------------------------------------------------------------
-      } else {
-        console.warn("[AdminRoomView] Événement room_options_updated reçu avec payload vide ou falsy.");
-      }
-    };
-    // -----------------------------
-
-    // ---> NOUVEAU GESTIONNAIRE POUR LE CHANGEMENT DE PISTE SPOTIFY <---
-    const handleSpotifyTrackChanged = (data) => {
-      const newTrack = data.track || data.newTrack || null;
-      
-      // NOUVEAU : Stocker les infos de piste pour la modal
-      setCurrentTrackInfo(newTrack);
-      
-      // ✅ PROTECTION : Ne pas réinitialiser si un buzz est en cours de traitement
-      if (isProcessingJudgment) {
-        console.log('[AdminRoomView] Changement de piste Spotify ignoré - jugement en cours');
-        return;
-      }
-      
-      // ✅ PROTECTION : Ne pas réinitialiser si un joueur a buzzé récemment
-      if (buzzedPlayer && lastProcessedBuzzRef.current && 
-          (Date.now() - lastProcessedBuzzRef.current.timestamp) < 2000) { // 2 secondes de protection
-        console.log('[AdminRoomView] Changement de piste Spotify ignoré - buzz récent actif');
-        return;
-      }
-      
-      // Réinitialiser les états de découverte
-      setFoundArtist(false);
-      setFoundTitle(false);
-      setBuzzedPlayer(null);
-      
-      console.log('[AdminRoomView] Changement de piste Spotify détecté', {
-        track: newTrack ? `${newTrack.artist} - ${newTrack.title}` : 'Aucune',
-        hasPlaylist: !!(newTrack?.playlistInfo),
-        position: newTrack?.playlistInfo ? `${newTrack.playlistInfo.position}/${newTrack.playlistInfo.total}` : 'N/A'
-      });
-    };
-    // --------------------------------------------------------------------
-
-    const handleJudgeAnswerUpdate = (data) => {
-      if (data && data.artistFound !== undefined && data.titleFound !== undefined) {
-        console.log(`[AdminRoomView] Mise à jour locale via judge_answer: artist=${data.artistFound}, title=${data.titleFound}`);
-        setFoundArtist(data.artistFound);
-        setFoundTitle(data.titleFound);
-      }
-    };
-
-    // NOUVEAU : Gestion du passage à la question suivante
-    const handleNextQuestionEvent = () => {
-      console.log("[AdminRoomView] Question suivante - réinitialisation des états");
-      
-      // ✅ PROTECTION : Ne pas réinitialiser si un buzz est en cours de traitement
-      if (isProcessingJudgment) {
-        console.log('[AdminRoomView] Question suivante ignorée - jugement en cours');
-        return;
-      }
-      
-      // ✅ PROTECTION : Ne pas réinitialiser si un joueur a buzzé récemment
-      if (buzzedPlayer && lastProcessedBuzzRef.current && 
-          (Date.now() - lastProcessedBuzzRef.current.timestamp) < 2000) { // 2 secondes de protection
-        console.log('[AdminRoomView] Question suivante ignorée - buzz récent actif');
-        return;
-      }
-      
-      setFoundArtist(false);
-      setFoundTitle(false);
-      setBuzzedPlayer(null);
-      setIsProcessingJudgment(false); // ✅ RESET aussi le flag de traitement
-      
-      // Réinitialiser les références anti-spam
-      lastProcessedBuzzRef.current = null;
-      if (clearBuzzTimeoutRef.current) {
-        clearTimeout(clearBuzzTimeoutRef.current);
-        clearBuzzTimeoutRef.current = null;
-      }
-    };
-
-    // Abonnement aux événements
-    on('update_players', handleUpdatePlayers);
-    on('game_paused', handleGamePaused);
-    on('room_closed', handleRoomClosed);
-    on('buzzed', handleBuzzed);
-    on('connect', handleConnect);
-    on('player_kicked', handlePlayerKicked);
-    on('room_options_updated', handleRoomOptionsUpdated);
-    on('spotify_track_changed', handleSpotifyTrackChanged); 
-    on('judge_answer', handleJudgeAnswerUpdate);
-    on('next_question', handleNextQuestionEvent);
+    // Abonnement aux événements (utilisation des Effect Events)
+    on('update_players', onUpdatePlayers);
+    on('game_paused', onGamePaused);
+    on('room_closed', onRoomClosed);
+    on('buzzed', onBuzzed);
+    on('connect', onConnect);
+    on('player_kicked', onPlayerKicked);
+    on('room_options_updated', onRoomOptionsUpdated);
+    on('spotify_track_changed', onSpotifyTrackChanged); 
+    on('judge_answer', onJudgeAnswerUpdate);
+    on('next_question', onNextQuestion);
 
     // Nettoyage des abonnements
     return () => {
-      off('update_players', handleUpdatePlayers);
-      off('game_paused', handleGamePaused);
-      off('room_closed', handleRoomClosed);
-      off('buzzed', handleBuzzed);
-      off('connect', handleConnect);
-      off('player_kicked', handlePlayerKicked);
-      off('room_options_updated', handleRoomOptionsUpdated); 
-      off('spotify_track_changed', handleSpotifyTrackChanged);
-      off('judge_answer', handleJudgeAnswerUpdate);
-      off('next_question', handleNextQuestionEvent);
+      off('update_players', onUpdatePlayers);
+      off('game_paused', onGamePaused);
+      off('room_closed', onRoomClosed);
+      off('buzzed', onBuzzed);
+      off('connect', onConnect);
+      off('player_kicked', onPlayerKicked);
+      off('room_options_updated', onRoomOptionsUpdated); 
+      off('spotify_track_changed', onSpotifyTrackChanged);
+      off('judge_answer', onJudgeAnswerUpdate);
+      off('next_question', onNextQuestion);
     };
-  }, [roomCode, refreshStatus, spotifyConnected]);
+  }, [roomCode]);
 
   // Vérification de l'authentification admin
   useEffect(() => {
@@ -943,6 +893,17 @@ const handleIncrementScore = (playerId, adjustment) => { // Renommer 'increment'
     }
   }, [buzzedPlayer, isProcessingJudgment]);
 
+  // Calcul des joueurs triés avec useMemo (React 19.2 optimization)
+  const sortedPlayers = useMemo(() => {
+    return Object.entries(players)
+      .filter(([, player]) => !player.isAdmin)
+      .sort(([, playerA], [, playerB]) =>
+        sortByScore
+          ? (sortDescending ? playerB.score - playerA.score : playerA.score - playerB.score)
+          : (sortDescending ? playerB.pseudo.localeCompare(playerA.pseudo) : playerA.pseudo.localeCompare(playerB.pseudo))
+      );
+  }, [players, sortByScore, sortDescending]);
+
   return (
     <div className={`admin-container ${isDarkMode ? 'dark-mode' : ''}`}>
       <div className="admin-header">
@@ -995,23 +956,16 @@ const handleIncrementScore = (playerId, adjustment) => { // Renommer 'increment'
                 </tr>
               </thead>
               <tbody>
-                {Object.entries(players)
-                  .filter(([, player]) => !player.isAdmin)
-                  .sort(([, playerA], [, playerB]) =>
-                    sortByScore
-                      ? (sortDescending ? playerB.score - playerA.score : playerA.score - playerB.score)
-                      : (sortDescending ? playerB.pseudo.localeCompare(playerA.pseudo) : playerA.pseudo.localeCompare(playerB.pseudo))
-                  )
-                  .map(([playerId, player]) => (
-                    <tr key={playerId}>
-                      <td className="pseudo-column">{player.pseudo}</td>
-                      <td>{player.score}</td>
-                      <td className="status-column">
-                        {/* Remplacer l'emoji par les icônes Radix */}
-                        <span className={`status-icon ${player.disconnected ? 'disconnected' : 'connected'}`}>
-                          {player.disconnected ? <ExclamationTriangleIcon /> : <CheckIcon />}
-                        </span>
-                      </td>
+                {sortedPlayers.map(([playerId, player]) => (
+                  <tr key={playerId}>
+                    <td className="pseudo-column">{player.pseudo}</td>
+                    <td>{player.score}</td>
+                    <td className="status-column">
+                      {/* Remplacer l'emoji par les icônes Radix */}
+                      <span className={`status-icon ${player.disconnected ? 'disconnected' : 'connected'}`}>
+                        {player.disconnected ? <ExclamationTriangleIcon /> : <CheckIcon />}
+                      </span>
+                    </td>
                       <td>
                         <button
                           className="btn btn-sm btn-success me-2"
