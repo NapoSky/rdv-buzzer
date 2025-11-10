@@ -2,6 +2,7 @@
 const { Room, defaultRoomOptions } = require('../../models/Room'); // Importer defaultRoomOptions
 const logger = require('../../utils/logger');
 const timeSyncService = require('../../services/timeSyncService');
+const analyticsService = require('../../services/analyticsService');
 
 // Stockage des périodes de grâce pour les buzzers
 const buzzerGracePeriods = {};
@@ -29,6 +30,13 @@ function attachEvents(socket, io) {
 
   // Synchronisation temporelle (time_sync)
   socket.on('time_sync', (clientTimestamp, callback) => handleTimeSync(socket, clientTimestamp, callback));
+
+  // Réception de l'offset calculé par le client (pour analytics)
+  socket.on('time_sync_offset', (data) => {
+    if (data && typeof data.offset === 'number' && typeof data.rtt === 'number') {
+      timeSyncService.recordOffset(socket.id, data.offset, data.rtt);
+    }
+  });
 
   // Nettoyage lors de la déconnexion
   socket.on('disconnect', () => {
@@ -69,7 +77,24 @@ function cleanupPlayerData(socketId) {
  */
 function handlePing(socket, clientTimestamp, callback) {
   const serverTimestamp = Date.now();
-  const latency = Math.max(0, serverTimestamp - clientTimestamp);
+  
+  // Gérer les deux formats : timestamp direct OU objet { clientTime: timestamp }
+  const actualTimestamp = typeof clientTimestamp === 'object' && clientTimestamp.clientTime 
+    ? clientTimestamp.clientTime 
+    : clientTimestamp;
+  
+  // Valider le timestamp
+  if (!actualTimestamp || typeof actualTimestamp !== 'number' || actualTimestamp <= 0) {
+    logger.warn('PING', 'Timestamp invalide reçu', {
+      socketId: socket.id,
+      receivedData: clientTimestamp,
+      type: typeof clientTimestamp
+    });
+    if (callback) callback({ serverTimestamp, latency: null, ignored: true, reason: 'invalid_timestamp' });
+    return;
+  }
+  
+  const latency = Math.max(0, serverTimestamp - actualTimestamp);
   
   // 🚀 FILTRER LES PINGS ABERRANTS
   // Ignorer les latences impossibles (>2000ms = connexion morte)
@@ -120,7 +145,16 @@ function handlePing(socket, clientTimestamp, callback) {
     const values = playerLatencies[socket.id].values;
     values.push(latency);
     if (values.length > 3) values.shift(); // Garder seulement les 3 dernières
-    playerLatencies[socket.id].average = values.reduce((a, b) => a + b, 0) / values.length;
+    
+    // Filtrer les valeurs null/undefined avant de calculer la moyenne
+    const validValues = values.filter(v => v != null && typeof v === 'number' && !isNaN(v));
+    
+    if (validValues.length > 0) {
+      playerLatencies[socket.id].average = validValues.reduce((a, b) => a + b, 0) / validValues.length;
+    } else {
+      playerLatencies[socket.id].average = null;
+    }
+
     
     // Incrémenter le compteur de pics si c'était un pic ignoré
     if (shouldIgnoreSpike) {
@@ -152,10 +186,26 @@ function calculateGracePeriod(roomCode) {
 
   const roomLatencies = [];
   
+  // DEBUG: Afficher les clés disponibles
+  const playerKeys = Object.keys(room.players);
+  const latencyKeys = Object.keys(playerLatencies);
+  logger.info('GRACE_PERIOD_DEBUG', 'Clés disponibles', {
+    roomCode,
+    playerKeys,
+    latencyKeys,
+    playersCount: playerKeys.length,
+    latenciesCount: latencyKeys.length
+  });
+  
   // Collecter les latences des joueurs de cette salle
   for (const socketId in room.players) {
-    if (playerLatencies[socketId]) {
-      roomLatencies.push(playerLatencies[socketId].average);
+    const latencyData = playerLatencies[socketId];
+    logger.info('GRACE_PERIOD_DEBUG', `Lookup pour ${socketId}`, {
+      found: !!latencyData,
+      data: latencyData
+    });
+    if (latencyData) {
+      roomLatencies.push(latencyData.average);
     }
   }
 
@@ -457,6 +507,7 @@ function processBuzzers(roomCode, io) {
     }
 
     const candidates = buzzerGracePeriods[roomCode].candidates;
+    const gracePeriod = buzzerGracePeriods[roomCode].gracePeriod;
 
     logger.info('BUZZ_PROCESS', 'Traitement des buzzers après période de grâce', {
       roomCode,
@@ -489,6 +540,7 @@ function processBuzzers(roomCode, io) {
     validCandidates.sort((a, b) => a.compensatedTime - b.compensatedTime);
 
     let winner = validCandidates[0];
+    let tied = null; // Déclaration pour usage ultérieur
 
     // 🚀 AMÉLIORATION 5: Seuil d'égalité adaptatif
     const roomLatencies = validCandidates.map(c => c.latency);
@@ -499,7 +551,7 @@ function processBuzzers(roomCode, io) {
     if (second && Math.abs(winner.compensatedTime - second.compensatedTime) < equalityThreshold) {
       
       // Départage aléatoire entre les ex-aequo
-      const tied = validCandidates.filter(c => 
+      tied = validCandidates.filter(c => 
         Math.abs(c.compensatedTime - winner.compensatedTime) < equalityThreshold
       );
       
@@ -518,6 +570,9 @@ function processBuzzers(roomCode, io) {
     Room.setFirstBuzz(roomCode, winner.socketId);
     room.players[winner.socketId].buzzed = true;
 
+    const hadEquality = second && Math.abs(winner.compensatedTime - second.compensatedTime) < equalityThreshold;
+    const hadRandomTiebreak = tied && tied.length > 1;
+
     const buzzData = {
       buzzedBy: winner.pseudo,
       playerId: winner.socketId,
@@ -527,7 +582,7 @@ function processBuzzers(roomCode, io) {
         compensatedTime: winner.compensatedTime,
         candidateCount: validCandidates.length,
         equalityThreshold,
-        wasRandomTieBreak: second && Math.abs(winner.compensatedTime - second.compensatedTime) < equalityThreshold,
+        wasRandomTieBreak: hadRandomTiebreak,
         isSynced: winner.isSynced, // ℹ️ Indiquer si le gagnant était synchronisé
         syncedCount: validCandidates.filter(c => c.isSynced).length // 📊 Combien de clients étaient synchronisés
       }
@@ -535,6 +590,27 @@ function processBuzzers(roomCode, io) {
 
     Room.setLastBuzz(roomCode, buzzData);
     io.to(roomCode).emit('buzzed', buzzData);
+
+    // 📊 Enregistrer l'event dans les analytics
+    analyticsService.recordBuzzEvent(roomCode, {
+      winner: winner.pseudo,
+      gracePeriod: gracePeriod,
+      equalityThreshold: equalityThreshold,
+      candidates: validCandidates.map((c, idx) => ({
+        pseudo: c.pseudo,
+        socketId: c.socketId,
+        clientTimestamp: c.clientTimestamp,
+        serverTimestamp: c.serverTimestamp,
+        compensatedTime: c.compensatedTime,
+        latency: c.latency,
+        isSynced: c.isSynced,
+        delta: c.compensatedTime - winner.compensatedTime,
+        wasEqual: idx > 0 && Math.abs(c.compensatedTime - winner.compensatedTime) < equalityThreshold
+      })),
+      hadEquality: hadEquality,
+      hadRandomTiebreak: hadRandomTiebreak,
+      syncedCount: validCandidates.filter(c => c.isSynced).length
+    });
 
     // --- NOUVEAU : Émettre un événement générique pour les intégrations externes ---
     io.to(roomCode).emit('player_buzzed', {
@@ -697,5 +773,5 @@ module.exports = {
   attachEvents,
   handleResetBuzzer, // Exporter si utilisé par playerHandlers
   handleDisableBuzzer, // Exporter si utilisé par playerHandlers
-  // buzzerGracePeriods n'a pas besoin d'être exporté
+  playerLatencies // Exporter pour les analytics
 };

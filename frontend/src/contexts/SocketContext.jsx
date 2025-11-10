@@ -120,7 +120,7 @@ export const SocketProvider = ({ children }) => {
     on('reconnect_failed', onReconnectFailed);
 
     // Intervalle de ping avec Effect Event
-    const pingInterval = setInterval(onPingCheck, 30000);
+    const pingInterval = setInterval(onPingCheck, 10000);
 
     return () => {
       clearInterval(pingInterval);

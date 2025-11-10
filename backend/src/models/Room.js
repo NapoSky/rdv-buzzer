@@ -25,6 +25,7 @@ class Room {
     };
 
     rooms[roomCode] = {
+      code: roomCode, // ✅ AJOUT : Stocker le code dans l'objet room
       adminId,
       players: {}, // { socketId: { pseudo, score, isAdmin, disconnected, buzzed } }
       paused: false,

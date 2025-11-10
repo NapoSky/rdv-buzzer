@@ -1121,9 +1121,9 @@ const handleBuzz = () => {
   
     // Ping initial
     sendPing();
-  
-    // Ping périodique toutes les 15 secondes
-    const pingInterval = setInterval(sendPing, 15000);
+
+    // Ping périodique toutes les 10 secondes
+    const pingInterval = setInterval(sendPing, 10000);
   
     return () => {
       clearInterval(pingInterval);
@@ -1369,14 +1369,6 @@ const handleBuzz = () => {
               {/* Indicateur de synchronisation temporelle */}
               <Tooltip.Provider>
                 <Tooltip.Root>
-                  <Tooltip.Trigger asChild>
-                    <div className={`time-sync-status ${isSynced ? 'synced' : 'syncing'}`}>
-                      <span className="sync-indicator">⏱️</span>
-                      <span className="sync-text">
-                        {isSynced ? 'Synchro' : 'Sync...'}
-                      </span>
-                    </div>
-                  </Tooltip.Trigger>
                   <Tooltip.Portal>
                     <Tooltip.Content className="tooltip-content" side="bottom">
                       {isSynced ? (
@@ -1461,6 +1453,11 @@ const handleBuzz = () => {
               )}
             </div>
             <div className="ranking-header-right">
+              <div className={`time-sync-status ${isSynced ? 'synced' : 'syncing'}`}>
+                <span className="sync-text">
+                  {isSynced ? '⏱️OK' : '⏱️Sync...'}
+                </span>
+              </div>
               <div className={`game-status ${gamePaused ? 'paused' : 'active'}`}>
                 {gamePaused ? <span>Partie en pause</span> : <span>Partie active</span>}
               </div>

@@ -35,34 +35,8 @@ function handleTimeSync(socketId, clientTimestamp) {
   
   // Validation du timestamp client
   if (!clientTimestamp || typeof clientTimestamp !== 'number') {
-    logger.warn('TIME_SYNC', 'Timestamp client invalide', { socketId, clientTimestamp });
     return { serverTimestamp, clientTimestamp: serverTimestamp };
   }
-  
-  // Vérifier si le timestamp client est dans le futur (horloge client en avance)
-  const timeDifference = clientTimestamp - serverTimestamp;
-  if (timeDifference > 60000) { // Plus de 1 minute dans le futur
-    logger.warn('TIME_SYNC', 'Horloge client fortement désynchronisée (avance)', {
-      socketId,
-      clientTimestamp,
-      serverTimestamp,
-      differenceMs: timeDifference
-    });
-  } else if (timeDifference < -60000) { // Plus de 1 minute dans le passé
-    logger.warn('TIME_SYNC', 'Horloge client fortement désynchronisée (retard)', {
-      socketId,
-      clientTimestamp,
-      serverTimestamp,
-      differenceMs: Math.abs(timeDifference)
-    });
-  }
-  
-  logger.debug('TIME_SYNC', 'Synchronisation temporelle traitée', {
-    socketId,
-    serverTimestamp,
-    clientTimestamp,
-    estimatedLatency: Math.max(0, serverTimestamp - clientTimestamp)
-  });
   
   return {
     serverTimestamp,
@@ -105,24 +79,6 @@ function recordOffset(socketId, offset, rtt) {
   
   const avgRtt = stats.rtts.reduce((a, b) => a + b, 0) / stats.rtts.length;
   
-  logger.debug('TIME_SYNC', 'Offset enregistré', {
-    socketId,
-    offset,
-    rtt,
-    medianOffset: median,
-    averageRtt: avgRtt,
-    sampleCount: stats.offsets.length
-  });
-  
-  // Alerter si dérive importante
-  if (Math.abs(median) > 5000) { // Dérive > 5 secondes
-    logger.warn('TIME_SYNC', '⚠️ Dérive temporelle importante détectée', {
-      socketId,
-      medianOffset: median,
-      offsetSeconds: (median / 1000).toFixed(2)
-    });
-  }
-  
   return { medianOffset: median, averageRtt: avgRtt };
 }
 
@@ -133,7 +89,6 @@ function recordOffset(socketId, offset, rtt) {
  */
 function cleanupSocket(socketId) {
   if (syncStats[socketId]) {
-    logger.debug('TIME_SYNC', 'Nettoyage des stats de synchronisation', { socketId });
     delete syncStats[socketId];
   }
 }

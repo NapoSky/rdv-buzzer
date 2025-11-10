@@ -128,6 +128,19 @@
  margin: 0;
 }
 
+.room-code--clickable {
+ cursor: pointer;
+ transition: all 0.3s ease;
+ padding: 0.25rem 0.5rem;
+ border-radius: 6px;
+}
+
+.room-code--clickable:hover {
+ background-color: var(--primary-color);
+ color: white;
+ transform: translateX(5px);
+}
+
 .session-actions {
  display: flex;
 

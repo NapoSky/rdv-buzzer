@@ -14,6 +14,7 @@ import PublicRanking from './pages/PublicRanking/PublicRanking';
 import AdminPanel from './components/admin/AdminPanel/AdminPanel';
 import Changelog from './pages/Changelog/Changelog';
 import SpectatorView from './pages/SpectatorView/SpectatorView';
+import RoomAnalytics from './pages/RoomAnalytics/RoomAnalytics';
 import { SpotifyProvider } from './contexts/SpotifyContext';
 import SpotifyCallback from './pages/SpotifyCallBack/SpotifyCallback';
 
@@ -68,6 +69,10 @@ function App() {
             <Route
               path="/admin-panel"
               element={<AdminPanel />}
+            />
+            <Route
+              path="/room/:roomCode/analytics"
+              element={<RoomAnalytics />}
             />
             <Route path="*" element={<Navigate to="/" replace />} />
           </Routes>

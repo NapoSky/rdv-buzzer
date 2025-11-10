@@ -4,6 +4,7 @@ const Ranking = require('../models/Ranking');
 const { getFormattedTimestamp } = require('../utils/helpers');
 const logger = require('../utils/logger');
 const spotifyService = require('./spotifyService'); // <-- AJOUTER L'IMPORT
+const analyticsService = require('./analyticsService');
 
 /**
  * Ferme une salle et sauvegarde les scores des joueurs si demandé
@@ -64,6 +65,8 @@ async function closeRoom(roomCode, io, saveScores = true) { // Ajout du paramèt
     // Arrêter le polling Spotify pour cette salle avant de la supprimer
     spotifyService.stopSpotifyPolling(roomCode);
 
+    // Nettoyer les analytics de la salle
+    analyticsService.cleanupRoomAnalytics(roomCode);
     
     // Supprimer la salle de la mémoire
     Room.delete(roomCode);

@@ -543,7 +543,6 @@ async function checkAndNotifyTrackChange(roomCode) {
             };
             
             try {
-                console.log('[Backend][checkAndNotify] Émission spotify_track_changed avec playlist info:', JSON.stringify(payload));
                 io.to(roomCode).emit('spotify_track_changed', payload);
                 io.to(roomCode).emit('update_players', updatedRoom.players);
                 

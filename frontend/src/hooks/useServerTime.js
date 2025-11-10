@@ -19,7 +19,7 @@ import { getSocket } from '../services/socket/socketService';
  */
 export function useServerTime(options = {}) {
   const {
-    syncInterval = 30000, // Resync toutes les 30 secondes
+    syncInterval = 10000, // Resync toutes les 10 secondes
     initialSyncCount = 3, // 3 mesures initiales pour stabiliser
     enabled = true
   } = options;
@@ -102,6 +102,9 @@ export function useServerTime(options = {}) {
         setTimeOffset(medianOffset);
         setSyncQuality({ rtt: avgRtt, accuracy: Math.abs(rtt / 2), samples: offsets.length });
         setIsSynced(true);
+        
+        // Notifier le serveur de l'offset calculé pour monitoring
+        socket.emit('time_sync_offset', { offset: medianOffset, rtt: avgRtt });
         
         console.log('[useServerTime] Synchronisation réussie:', {
           offset: medianOffset,

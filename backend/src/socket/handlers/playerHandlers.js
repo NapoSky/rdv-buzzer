@@ -3,6 +3,7 @@ const { Room, defaultRoomOptions } = require('../../models/Room');
 const logger = require('../../utils/logger');
 const { handleDisableBuzzer, handleResetBuzzer } = require('./buzzHandlers'); // Garder ces imports
 const { syncSpectatorsAfterScoreUpdate } = require('./spectatorHandlers'); // NOUVEAU: Import pour sync spectateurs
+const analyticsService = require('../../services/analyticsService'); // NOUVEAU: Import pour analytics
 
 /**
  * Gère l'ajustement manuel du score par l'admin
@@ -130,6 +131,10 @@ function handleJudgeAnswer(socket, io, data) {
     io.to(roomCode).emit('update_players', room.players);
     // NOUVEAU: Synchroniser les spectateurs après mise à jour score
     syncSpectatorsAfterScoreUpdate(io, roomCode, room);
+    
+    // 📊 ANALYTICS: Mettre à jour le verdict du buzz dans l'historique
+    analyticsService.updateBuzzVerdict(roomCode, playerId, judgment);
+    
     logger.info('PLAYERS', 'Score mis à jour après jugement', { // Ce log reflète maintenant le scoreChange correct
       roomCode, playerId, pseudo: player.pseudo, judgment, isCorrect: isCorrectJudgment, scoreChange, newScore
     });
@@ -397,7 +402,7 @@ function handleNextQuestion(socket, io, data) {
     }
 
     logger.info('PLAYERS', 'Admin passe à la question suivante', { roomCode });
-
+    
     // Réinitialiser complètement l'état de la question/piste
     Room.resetQuestionState(roomCode, null); // null = pas de piste Spotify
     
