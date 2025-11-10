@@ -669,21 +669,33 @@ useEffect(() => {
         <div className="qr-modal-overlay" onClick={closeQRModal}>
           <div className="qr-modal-content" onClick={(e) => e.stopPropagation()}>
             <div className="qr-modal-header">
-              <h3>QR Code de la salle</h3>
+              <h3>QR Codes</h3>
               <button className="qr-modal-close" onClick={closeQRModal}>
                 ✕
               </button>
             </div>
             <div className="qr-modal-body">
-              <img 
-                src="/qr-code.png" 
-                alt="QR Code de la salle" 
-                className="qr-code-image"
-                onClick={closeQRModal}
-              />
-              <p className="qr-code-info">
-                Scannez ce QR code pour rejoindre la salle <span className="qr-room-code">{roomCode}</span>
-              </p>
+              <div className="qr-codes-container">
+                <div className="qr-code-item">
+                  <img 
+                    src="/qr-code-rdv.png" 
+                    alt="QR Code de la salle" 
+                    className="qr-code-image"
+                  />
+                  <p className="qr-code-label">QR Code du jeu</p>
+                </div>
+                <div className="qr-code-item">
+                  <img 
+                    src="/qr-code-wifi.png" 
+                    alt="QR Code WiFi" 
+                    className="qr-code-image"
+                  />
+                  <p className="qr-code-label">QR Code WiFi</p>
+                </div>
+              </div>
+              <div className="qr-room-code-display">
+                Code de la salle : <span className="qr-room-code">{roomCode}</span>
+              </div>
             </div>
           </div>
         </div>

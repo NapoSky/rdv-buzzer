@@ -668,8 +668,8 @@
   border-radius: 16px;
   border: 2px solid var(--border-light);
   box-shadow: 0 20px 40px rgba(0, 0, 0, 0.3);
-  max-width: 90vw;
-  max-height: 90vh;
+  max-width: 95vw;
+  max-height: 95vh;
   overflow: hidden;
   animation: modalSlideIn 0.3s ease-out;
 }
@@ -724,11 +724,29 @@
 }
 
 .qr-modal-body {
-  padding: 2rem;
+  padding: 2.5rem;
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 1.5rem;
+  gap: 2.5rem;
+}
+
+/* Container horizontal pour les QR codes */
+.qr-codes-container {
+  display: flex;
+  flex-direction: row;
+  gap: 4rem;
+  align-items: flex-start;
+  justify-content: center;
+  flex-wrap: wrap;
+}
+
+/* Chaque QR code avec son label */
+.qr-code-item {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 1.2rem;
 }
 
 .qr-code-image {
@@ -738,20 +756,47 @@
   height: auto;
   border-radius: 12px;
   box-shadow: 0 8px 24px rgba(0, 0, 0, 0.15);
-  cursor: pointer;
   transition: transform 0.2s ease;
 }
 
 .qr-code-image:hover {
-  transform: scale(1.02);
+  transform: scale(1.05);
 }
 
-.qr-code-info {
+/* Labels sous les QR codes */
+.qr-code-label {
   text-align: center;
   color: var(--text-secondary);
-  font-size: 0.9rem;
+  font-size: 1.1rem;
+  font-weight: 500;
   margin: 0;
-  max-width: 280px;
+}
+
+/* Affichage du code de salle amélioré - en gros et bien visible */
+.qr-room-code-display {
+  text-align: center;
+  color: var(--text-primary);
+  font-size: 1.3rem;
+  font-weight: 500;
+  margin-top: 0.5rem;
+}
+
+.qr-room-code {
+  display: inline-block;
+  font-size: 3rem;
+  font-weight: 700;
+  color: #ffffff;
+  background: linear-gradient(135deg, #4a90e2, #63b3ed);
+  padding: 0.6rem 1.8rem;
+  border-radius: 12px;
+  letter-spacing: 0.15em;
+  margin-left: 0.5rem;
+  box-shadow: 0 4px 12px rgba(74, 144, 226, 0.3);
+}
+
+.dark-mode .qr-room-code {
+  background: linear-gradient(135deg, #4a90e2, #63b3ed);
+  color: #ffffff;
 }
 
 /* Badge Spectateur cliquable */
@@ -804,21 +849,29 @@
 
   .qr-modal-body {
     padding: 1.5rem;
-    gap: 1rem;
+    gap: 1.5rem;
+  }
+
+  .qr-codes-container {
+    gap: 2rem;
   }
 
   .qr-code-image {
-    max-width: 250px;
-    max-height: 250px;
+    max-width: 180px;
+    max-height: 180px;
   }
 
-  .qr-code-info {
+  .qr-code-label {
     font-size: 0.85rem;
   }
 
+  .qr-room-code-display {
+    font-size: 1rem;
+  }
+
   .qr-room-code {
-    font-size: 1.3em;
-    padding: 0.25rem 0.6rem;
+    font-size: 1.8rem;
+    padding: 0.4rem 1rem;
   }
 }
 
@@ -837,24 +890,31 @@
   }
 
   .qr-modal-body {
-    padding: 1rem;
+    padding: 1.2rem;
+    gap: 1.5rem;
+  }
+
+  .qr-codes-container {
+    flex-direction: column;
+    gap: 2rem;
   }
 
   .qr-code-image {
-    max-width: 200px;
-    max-height: 200px;
+    max-width: 220px;
+    max-height: 220px;
   }
 
-  .qr-code-info {
-    font-size: 0.8rem;
-    max-width: 220px;
+  .qr-code-label {
+    font-size: 0.9rem;
+  }
+
+  .qr-room-code-display {
+    font-size: 1rem;
   }
 
   .qr-room-code {
-    font-size: 1.2em;
-    padding: 0.2rem 0.5rem;
-    display: inline-block;
-    margin-top: 0.25rem;
+    font-size: 1.6rem;
+    padding: 0.4rem 0.8rem;
   }
 }
 
