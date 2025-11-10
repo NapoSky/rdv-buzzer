@@ -45,6 +45,10 @@ function Changelog() {
           text: "Spectateur : Le code de la salle est maintenant beaucoup plus visible et lisible"
         },
         {
+          type: "improvement",
+          text: "Spectateur : Ajout du nom de la playlist Spotify en cours dans l'affichage"
+        },
+        {
           type: "fix",
           text: "Spectateur : Les titres et artistes trop longs ne déforment plus l'affichage Spotify"
         },

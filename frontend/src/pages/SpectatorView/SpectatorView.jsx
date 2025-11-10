@@ -533,14 +533,37 @@ useEffect(() => {
         {/* ZONE VERTE - Spotify Display agrandi */}
         <div className="spectator-spotify-big-zone">
           {roomOptions?.spotifyEnabled && spotifyTrackInfo ? (
-            <div className="spotify-display-wrapper">
-              <SpotifyDisplay 
-                trackInfo={spotifyTrackInfo}
-                foundArtist={foundArtist}
-                foundTitle={foundTitle}
-                roomType={roomOptions.roomType}
-              />
-            </div>
+            <>
+              {/* En-tête avec jaquette et nom de playlist */}
+              {(spotifyTrackInfo.playlistInfo?.artworkUrl || spotifyTrackInfo.playlistInfo?.name) && (
+                <div className="spectator-spotify-header">
+                  {spotifyTrackInfo.playlistInfo?.artworkUrl && (
+                    <div className="spectator-album-art">
+                      <img 
+                        src={spotifyTrackInfo.playlistInfo.artworkUrl} 
+                        alt="Jaquette de la playlist"
+                        onError={(e) => { e.target.src = '/default-album-art.png'; }}
+                      />
+                    </div>
+                  )}
+                  {spotifyTrackInfo.playlistInfo?.name && (
+                    <div className="spectator-playlist-info">
+                      <span className="playlist-icon">📀</span>
+                      <span className="playlist-name">{spotifyTrackInfo.playlistInfo.name}</span>
+                    </div>
+                  )}
+                </div>
+              )}
+              
+              <div className="spotify-display-wrapper">
+                <SpotifyDisplay 
+                  trackInfo={spotifyTrackInfo}
+                  foundArtist={foundArtist}
+                  foundTitle={foundTitle}
+                  roomType={roomOptions.roomType}
+                />
+              </div>
+            </>
           ) : (
             <div className="spectator-status-big">
               <div className="status-card-big">

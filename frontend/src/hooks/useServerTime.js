@@ -50,7 +50,7 @@ export function useServerTime(options = {}) {
     const socket = getSocket();
     
     if (!socket || !socket.connected) {
-      console.warn('[useServerTime] Socket non connecté, synchronisation impossible');
+      //console.warn('[useServerTime] Socket non connecté, synchronisation impossible');
       syncInProgressRef.current = false;
       return;
     }
@@ -62,7 +62,7 @@ export function useServerTime(options = {}) {
         const t1 = Date.now(); // Timestamp client après réception
         
         if (!response || !response.serverTimestamp) {
-          console.error('[useServerTime] Réponse invalide du serveur:', response);
+          //console.error('[useServerTime] Réponse invalide du serveur:', response);
           syncInProgressRef.current = false;
           return;
         }
@@ -72,7 +72,7 @@ export function useServerTime(options = {}) {
         
         // Ignorer les mesures avec RTT trop élevé (connexion instable)
         if (rtt > 1000) {
-          console.warn('[useServerTime] RTT trop élevé, mesure ignorée:', rtt);
+          //console.warn('[useServerTime] RTT trop élevé, mesure ignorée:', rtt);
           syncInProgressRef.current = false;
           return;
         }
@@ -105,37 +105,20 @@ export function useServerTime(options = {}) {
         
         // Notifier le serveur de l'offset calculé pour monitoring
         socket.emit('time_sync_offset', { offset: medianOffset, rtt: avgRtt });
-        
-        console.log('[useServerTime] Synchronisation réussie:', {
-          offset: medianOffset,
-          rtt,
-          avgRtt,
-          samples: offsets.length,
-          offsetSeconds: (medianOffset / 1000).toFixed(3)
-        });
-        
-        // Alerter si dérive importante
-        if (Math.abs(medianOffset) > 5000) {
-          console.warn('⚠️ [useServerTime] DÉRIVE TEMPORELLE IMPORTANTE DÉTECTÉE:', {
-            offsetMs: medianOffset,
-            offsetSeconds: (medianOffset / 1000).toFixed(2),
-            message: 'Votre horloge système est désynchronisée'
-          });
-        }
-        
+                
         syncInProgressRef.current = false;
       });
       
       // Timeout de sécurité
       setTimeout(() => {
         if (syncInProgressRef.current) {
-          console.warn('[useServerTime] Timeout de synchronisation');
+          //console.warn('[useServerTime] Timeout de synchronisation');
           syncInProgressRef.current = false;
         }
       }, 5000);
       
     } catch (error) {
-      console.error('[useServerTime] Erreur lors de la synchronisation:', error);
+      //console.error('[useServerTime] Erreur lors de la synchronisation:', error);
       syncInProgressRef.current = false;
     }
   }, [enabled]);
@@ -144,7 +127,7 @@ export function useServerTime(options = {}) {
    * Effectue une synchronisation manuelle immédiate
    */
   const syncNow = useCallback(() => {
-    console.log('[useServerTime] Synchronisation manuelle déclenchée');
+    //console.log('[useServerTime] Synchronisation manuelle déclenchée');
     performSync();
   }, [performSync]);
 
@@ -167,7 +150,7 @@ export function useServerTime(options = {}) {
 
     const socket = getSocket();
     if (!socket) {
-      console.warn('[useServerTime] Socket non disponible');
+      //console.warn('[useServerTime] Socket non disponible');
       return;
     }
 
@@ -175,7 +158,7 @@ export function useServerTime(options = {}) {
     const performInitialSync = async () => {
       if (initialSyncDoneRef.current) return;
       
-      console.log(`[useServerTime] Démarrage synchronisation initiale (${initialSyncCount} mesures)`);
+      //console.log(`[useServerTime] Démarrage synchronisation initiale (${initialSyncCount} mesures)`);
       
       for (let i = 0; i < initialSyncCount; i++) {
         await performSync();
@@ -186,7 +169,7 @@ export function useServerTime(options = {}) {
       }
       
       initialSyncDoneRef.current = true;
-      console.log('[useServerTime] Synchronisation initiale terminée');
+      //console.log('[useServerTime] Synchronisation initiale terminée');
     };
 
     // Lancer la sync initiale dès que le socket est connecté
@@ -196,7 +179,7 @@ export function useServerTime(options = {}) {
 
     // Écouter la connexion/reconnexion
     const onConnect = () => {
-      console.log('[useServerTime] Socket connecté, resynchronisation');
+      //console.log('[useServerTime] Socket connecté, resynchronisation');
       initialSyncDoneRef.current = false;
       offsetSamplesRef.current = [];
       setIsSynced(false);

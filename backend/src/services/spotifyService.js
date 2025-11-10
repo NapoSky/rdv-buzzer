@@ -163,6 +163,7 @@ async function getPlaylistDetails(roomCode, playlistId) {
         const playlist = {
             id: playlistId,
             name: playlistData.body.name,
+            artworkUrl: playlistData.body.images?.[0]?.url || null, // AJOUT : Artwork de la playlist
             total: playlistData.body.tracks.total,
             tracks: playlistData.body.tracks.items.map((item, index) => ({
                 id: item.track.id,
@@ -176,7 +177,8 @@ async function getPlaylistDetails(roomCode, playlistId) {
         playlistCache[roomCode] = playlist;
         logger.info('SPOTIFY_PLAYLIST', `Playlist "${playlist.name}" mise en cache pour ${roomCode}`, {
             total: playlist.total,
-            playlistId
+            playlistId,
+            hasArtwork: !!playlist.artworkUrl // DEBUG: Vérifier si l'artwork est présent
         });
 
         return playlist;
@@ -260,16 +262,18 @@ async function getCurrentPlayback(roomCode) {
                             enrichedPlayback.playlistInfo = {
                                 id: playlist.id,
                                 name: playlist.name,
+                                artworkUrl: playlist.artworkUrl || null, // AJOUT : Artwork de la playlist
                                 position: positionInfo.position,
                                 total: positionInfo.total,
                                 remaining: positionInfo.total - positionInfo.position
                             };
                             
-                            //logger.info('SPOTIFY_PLAYLIST', `Position calculée pour ${roomCode}`, {
-                            //    track: data.body.item.name,
-                            //    position: positionInfo.position,
-                            //    total: positionInfo.total
-                            //});
+                            // DEBUG: Vérifier que l'artwork est bien transmis
+                            logger.info('SPOTIFY_PLAYLIST_INFO', `PlaylistInfo créé pour ${roomCode}`, {
+                                playlistId: playlist.id,
+                                hasArtwork: !!playlist.artworkUrl,
+                                artworkUrl: playlist.artworkUrl
+                            });
                         }
                     }
                 } else {
@@ -317,6 +321,7 @@ async function getCurrentPlayback(roomCode) {
                                         enrichedPlayback.playlistInfo = {
                                             id: playlist.id,
                                             name: playlist.name,
+                                            artworkUrl: playlist.artworkUrl || null, // AJOUT : Artwork de la playlist
                                             position: positionInfo.position,
                                             total: positionInfo.total,
                                             remaining: positionInfo.total - positionInfo.position

@@ -45,15 +45,84 @@
   box-shadow: 0 8px 20px rgba(0, 0, 0, 0.1);
   border: 1px solid rgba(0, 0, 0, 0.05);
   display: flex;
+  flex-direction: column; /* Changé de center à column pour l'en-tête */
   align-items: center;
   justify-content: center;
-  padding: 1rem; /* Réduit de 1.5rem à 1rem */
+  padding: 1rem;
+  gap: 0.5rem; /* Espace entre l'en-tête et le SpotifyDisplay */
 }
 
 .dark-mode .spectator-spotify-big-zone {
   background: rgba(30, 30, 35, 0.95);
   border-color: rgba(255, 255, 255, 0.1);
 }
+
+/* === EN-TÊTE SPOTIFY AVEC JAQUETTE ET PLAYLIST === */
+.spectator-spotify-header {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  padding: 0.5rem 1rem;
+  background: rgba(0, 0, 0, 0.02);
+  border-radius: 12px;
+  width: 90%;
+  max-width: 650px;
+  border: 1px solid rgba(0, 0, 0, 0.03);
+  transition: all 0.3s ease;
+}
+
+.dark-mode .spectator-spotify-header {
+  background: rgba(255, 255, 255, 0.03);
+  border-color: rgba(255, 255, 255, 0.05);
+}
+
+.spectator-album-art {
+  flex-shrink: 0;
+  width: 60px;
+  height: 60px;
+  border-radius: 8px;
+  overflow: hidden;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+  transition: transform 0.3s ease;
+}
+
+.spectator-album-art:hover {
+  transform: scale(1.05);
+}
+
+.spectator-album-art img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+}
+
+.spectator-playlist-info {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  flex: 1;
+  min-width: 0;
+}
+
+.playlist-icon {
+  font-size: 1.5rem;
+  flex-shrink: 0;
+}
+
+.playlist-name {
+  font-size: 1.1rem;
+  font-weight: 600;
+  color: var(--text-light);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.dark-mode .playlist-name {
+  color: var(--text-dark);
+}
+
 
 /* Spotify Display beaucoup plus petit */
 .spotify-display-wrapper {
