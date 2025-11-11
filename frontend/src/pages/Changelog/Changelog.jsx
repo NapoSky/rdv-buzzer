@@ -11,6 +11,30 @@ function Changelog() {
   // Données du changelog - vous pouvez les externaliser dans un fichier JSON plus tard
   const changelogEntries = [
     {
+      version: "2.3.1",
+      date: "2025-11-12",
+      type: "patch",
+      title: "Amélioration stabilité et expérience mobile",
+      changes: [
+        {
+          type: "feature",
+          text: "Admin : Persistance des salles en base de données en cas de crash serveur"
+        },
+        {
+          type: "improvement",
+          text: "Client : Buzzer plus sensitif sur mobile, correction rendu visuel"
+        },
+        {
+          type: "improvement",
+          text: "Admin : Amélioration de l'affichage sur Tablette Galaxy Tab S7 FE"
+        },
+        {
+          type: "improvement",
+          text: "Admin : Amélioration tableau d'analyse sur l'état des buzzs"
+        }
+      ]
+    },
+    {
       version: "2.3.0",
       date: "2025-11-10",
       type: "minor",

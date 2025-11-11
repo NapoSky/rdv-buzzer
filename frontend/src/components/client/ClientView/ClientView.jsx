@@ -212,8 +212,13 @@ function ClientView({ setActiveRoomCode }) {
     navigate('/', { replace: true });
   };
 
-  // Fonction pour buzzer (CORRIGÉE)
-const handleBuzz = () => {
+  // Fonction pour buzzer (CORRIGÉE avec support touch optimisé)
+const handleBuzz = (e) => {
+  // ✅ Sur mobile/tactile : empêcher le click émulé (évite double déclenchement)
+  if (e && e.type === 'touchstart') {
+    e.preventDefault();
+  }
+
   // ✅ ANTISPAM : Bloquer si un buzz est déjà en cours
   if (isBuzzing) {
     console.log('🚫 Buzz ignoré: déjà en cours d\'envoi');
@@ -1405,6 +1410,7 @@ const handleBuzz = () => {
           <button
             className={`buzz-button ${isDisabled ? 'disabled' : gamePaused ? 'paused' : isBuzzing ? 'buzzing' : 'active'}`}
             onClick={handleBuzz}
+            onTouchStart={handleBuzz}
             disabled={gamePaused || isDisabled || isBuzzing}
           >
             <div className="buzz-button-content">
