@@ -333,6 +333,11 @@ const handleBuzz = () => {
     }
   };
 
+  // Scroll en haut de page au montage du composant
+  useEffect(() => {
+    window.scrollTo(0, 0);
+  }, []); // Se déclenche uniquement au montage
+
   // Configuration des écouteurs d'événements socket
   useEffect(() => {
     if (!socket) {

@@ -333,7 +333,7 @@ function HomePage({ setActiveRoomCode }) {
             className="btn btn-secondary rejoin-btn" 
             onClick={handleRejoinRoom}
           >
-            Revenir dans la salle où j'étais connecté
+            Revenir dans la salle
           </button>
         )}
       </div>
