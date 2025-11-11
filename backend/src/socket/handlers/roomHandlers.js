@@ -137,10 +137,10 @@ function handleJoinRoom(socket, io, data, callback) {
         // --- CORRECTION : Utiliser getClientState ---
         const clientState = Room.getClientState(roomCode);
         if (clientState) {
-            logger.info('JOIN_ROOM_DEBUG', `Préparation de la réponse pour ADMIN RECONNECTÉ ${socket.id} dans ${roomCode}`);
+            //logger.info('JOIN_ROOM_DEBUG', `Préparation de la réponse pour ADMIN RECONNECTÉ ${socket.id} dans ${roomCode}`);
             return callback(clientState); // Envoyer l'état complet unifié
         } else {
-            logger.error('JOIN_ROOM_DEBUG', `Erreur: clientState null pour ADMIN RECONNECTÉ ${socket.id}`);
+            //logger.error('JOIN_ROOM_DEBUG', `Erreur: clientState null pour ADMIN RECONNECTÉ ${socket.id}`);
             return callback({ error: 'Erreur interne (admin reconnect)' });
         }
         // --- FIN CORRECTION ---
@@ -169,10 +169,10 @@ function handleJoinRoom(socket, io, data, callback) {
         // --- CORRECTION : Utiliser getClientState ---
         const clientState = Room.getClientState(roomCode);
         if (clientState) {
-            logger.info('JOIN_ROOM_DEBUG', `Préparation de la réponse pour NOUVEL ADMIN ${socket.id} dans ${roomCode}`);
+            //logger.info('JOIN_ROOM_DEBUG', `Préparation de la réponse pour NOUVEL ADMIN ${socket.id} dans ${roomCode}`);
             return callback(clientState); // Envoyer l'état complet unifié
         } else {
-            logger.error('JOIN_ROOM_DEBUG', `Erreur: clientState null pour NOUVEL ADMIN ${socket.id}`);
+            //logger.error('JOIN_ROOM_DEBUG', `Erreur: clientState null pour NOUVEL ADMIN ${socket.id}`);
             return callback({ error: 'Erreur interne (new admin)' });
         }
         // --- FIN CORRECTION ---
@@ -216,7 +216,7 @@ function handleJoinRoom(socket, io, data, callback) {
             return callback(clientState); // Envoyer l'état complet
         } else {
             // Sécurité : si getClientState échoue, renvoyer une erreur
-            logger.error('JOIN_ROOM_DEBUG', `Erreur: clientState est null pour ${roomCode} lors de la RECONNEXION de ${socket.id}`);
+            //logger.error('JOIN_ROOM_DEBUG', `Erreur: clientState est null pour ${roomCode} lors de la RECONNEXION de ${socket.id}`);
             return callback({ error: 'Erreur interne lors de la récupération de l\'état de la salle après reconnexion' });
         }
       }
@@ -274,7 +274,7 @@ function handleJoinRoom(socket, io, data, callback) {
         //});
         callback(clientState); // Envoyer l'état complet
     } else {
-        logger.error('JOIN_ROOM_DEBUG', `Erreur: clientState est null pour ${roomCode} lors de la réponse à ${socket.id}`);
+        //logger.error('JOIN_ROOM_DEBUG', `Erreur: clientState est null pour ${roomCode} lors de la réponse à ${socket.id}`);
         callback({ error: 'Erreur interne lors de la récupération de l\'état de la salle' }); // Sécurité
     }
     

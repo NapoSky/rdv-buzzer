@@ -53,7 +53,7 @@ async function handleCallback(req, res) {
         // *** AJOUTER : Notifier tous les clients de la mise à jour des options ***
         const io = getIO();
         io.to(roomCode).emit('room_options_updated', room.options);
-        logger.info('SPOTIFY', `Options mises à jour émises pour ${roomCode}`, room.options);
+        //logger.info('SPOTIFY', `Options mises à jour émises pour ${roomCode}`, room.options);
     } else {
         logger.warn('SPOTIFY', `Impossible de mettre à jour spotifyEnabled pour ${roomCode}: options non trouvées.`);
     }

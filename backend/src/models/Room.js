@@ -357,7 +357,7 @@ function handleJoinRoom(socket, io, data, callback) {
             //logger.info('JOIN_ROOM_DEBUG', `Préparation de la réponse pour ADMIN RECONNECTÉ ${socket.id} dans ${roomCode}`);
             return callback(clientState); // Envoyer l'état complet
         } else {
-            logger.error('JOIN_ROOM_DEBUG', `Erreur: clientState null pour ADMIN RECONNECTÉ ${socket.id}`);
+            //logger.error('JOIN_ROOM_DEBUG', `Erreur: clientState null pour ADMIN RECONNECTÉ ${socket.id}`);
             return callback({ error: 'Erreur interne (admin reconnect)' });
         }
         // --- FIN MODIFICATION ---
@@ -382,10 +382,10 @@ function handleJoinRoom(socket, io, data, callback) {
         // --- MODIFICATION : Utiliser getClientState ---
         const clientState = Room.getClientState(roomCode);
         if (clientState) {
-            logger.info('JOIN_ROOM_DEBUG', `Préparation de la réponse pour NOUVEL ADMIN ${socket.id} dans ${roomCode}`);
+            //logger.info('JOIN_ROOM_DEBUG', `Préparation de la réponse pour NOUVEL ADMIN ${socket.id} dans ${roomCode}`);
             return callback(clientState); // Envoyer l'état complet
         } else {
-            logger.error('JOIN_ROOM_DEBUG', `Erreur: clientState null pour NOUVEL ADMIN ${socket.id}`);
+            //logger.error('JOIN_ROOM_DEBUG', `Erreur: clientState null pour NOUVEL ADMIN ${socket.id}`);
             return callback({ error: 'Erreur interne (new admin)' });
         }
         // --- FIN MODIFICATION ---

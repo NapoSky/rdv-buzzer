@@ -636,12 +636,12 @@ function handleResetBuzzer(socket, io, data) {
     const room = Room.get(roomCode);
 
     if (!room) {
-      logger.warn('RESET_BUZZER', 'Salle non trouvée pour réinitialisation', { roomCode });
+      //logger.warn('RESET_BUZZER', 'Salle non trouvée pour réinitialisation', { roomCode });
       return;
     }
     // Vérifier que c'est bien l'admin qui demande la réinitialisation
     if (room.adminId !== socket.id) {
-       logger.warn('RESET_BUZZER', 'Tentative de réinitialisation non-admin', { roomCode, socketId: socket.id });
+      //logger.warn('RESET_BUZZER', 'Tentative de réinitialisation non-admin', { roomCode, socketId: socket.id });
       return;
     }
 
@@ -654,7 +654,7 @@ function handleResetBuzzer(socket, io, data) {
     }
 
     // Réinitialiser le premier/dernier buzz dans la salle
-    logger.info('RESET_BUZZER', 'Nettoyage des données de buzz de la salle', { roomCode });
+    //logger.info('RESET_BUZZER', 'Nettoyage des données de buzz de la salle', { roomCode });
     Room.clearBuzz(roomCode); // Réinitialise firstBuzz et lastBuzz
 
     // Nettoyer les périodes de grâce en cours
@@ -668,7 +668,7 @@ function handleResetBuzzer(socket, io, data) {
     io.to(roomCode).emit('update_players', room.players);
 
     // Émettre l'événement spécifique de réinitialisation pour l'UI client
-    logger.info('RESET_BUZZER', 'Émission de l\'événement reset_buzzer', { roomCode });
+    //logger.info('RESET_BUZZER', 'Émission de l\'événement reset_buzzer', { roomCode });
     io.to(roomCode).emit('reset_buzzer'); // Garder cet événement
 
     logger.info('RESET_BUZZER', 'Buzzers réinitialisés avec succès', { roomCode });
