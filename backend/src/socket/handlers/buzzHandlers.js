@@ -186,24 +186,10 @@ function calculateGracePeriod(roomCode) {
 
   const roomLatencies = [];
   
-  // DEBUG: Afficher les clés disponibles
-  const playerKeys = Object.keys(room.players);
-  const latencyKeys = Object.keys(playerLatencies);
-  logger.info('GRACE_PERIOD_DEBUG', 'Clés disponibles', {
-    roomCode,
-    playerKeys,
-    latencyKeys,
-    playersCount: playerKeys.length,
-    latenciesCount: latencyKeys.length
-  });
   
   // Collecter les latences des joueurs de cette salle
   for (const socketId in room.players) {
     const latencyData = playerLatencies[socketId];
-    logger.info('GRACE_PERIOD_DEBUG', `Lookup pour ${socketId}`, {
-      found: !!latencyData,
-      data: latencyData
-    });
     if (latencyData) {
       roomLatencies.push(latencyData.average);
     }
@@ -217,11 +203,6 @@ function calculateGracePeriod(roomCode) {
   
   // Si toutes les latences sont aberrantes, fallback
   if (validLatencies.length === 0) {
-    logger.warn('GRACE_PERIOD', 'Toutes les latences sont aberrantes, fallback 300ms', {
-      roomCode,
-      originalLatencies: roomLatencies,
-      playerCount: roomLatencies.length
-    });
     return 300;
   }
 

@@ -13,6 +13,9 @@ const roomAdminUserIds = {}; // { roomCode: spotifyUserId }
 // TODO FUTUR : Implémenter une vérification périodique pour détecter les modifications de playlist
 const playlistCache = {}; // { roomCode: { id, name, total, tracks: [...] } }
 
+// Dead queue : Playlists inaccessibles par room (ne plus essayer de les récupérer)
+const playlistDeadQueue = {}; // { roomCode: Set<playlistId> }
+
 // Initialiser l'API Spotify avec le token de la salle - existant
 const initSpotifyApiForRoom = async (roomCode) => {
   if (!roomTokens[roomCode]) {
@@ -155,6 +158,17 @@ const getUserProfile = async (roomCode) => {
  * @returns {Promise<object|null>} Informations de la playlist ou null
  */
 async function getPlaylistDetails(roomCode, playlistId) {
+    // Initialiser la dead queue pour cette room si nécessaire
+    if (!playlistDeadQueue[roomCode]) {
+        playlistDeadQueue[roomCode] = new Set();
+    }
+
+    // Vérifier si la playlist est dans la dead queue (inaccessible)
+    if (playlistDeadQueue[roomCode].has(playlistId)) {
+        // Ne plus essayer, ne plus logger : skip silencieux
+        return null;
+    }
+
     const spotifyApi = await initSpotifyApiForRoom(roomCode);
     if (!spotifyApi) return null;
 
@@ -183,7 +197,14 @@ async function getPlaylistDetails(roomCode, playlistId) {
 
         return playlist;
     } catch (error) {
-        logger.error('SPOTIFY_PLAYLIST', `Erreur récupération playlist ${playlistId} pour ${roomCode}`, error);
+        // Log l'erreur UNE SEULE FOIS puis mettre en dead queue
+        logger.warn('SPOTIFY_PLAYLIST', `Playlist ${playlistId} inaccessible pour ${roomCode} (mise en dead queue)`, {
+            error: error.message || error.toString()
+        });
+        
+        // Ajouter à la dead queue pour ne plus réessayer
+        playlistDeadQueue[roomCode].add(playlistId);
+        
         return null;
     }
 }
@@ -246,34 +267,47 @@ async function getCurrentPlayback(roomCode) {
                 const playlistId = extractPlaylistId(contextUri);
                 
                 if (playlistId) {
-                    // Vérifier le cache d'abord
-                    let playlist = playlistCache[roomCode];
-                    
-                    // Si pas en cache OU playlist différente, récupérer les détails
-                    if (!playlist || playlist.id !== playlistId) {
-                        logger.info('SPOTIFY_PLAYLIST', `Nouvelle playlist détectée pour ${roomCode}`, { playlistId });
-                        playlist = await getPlaylistDetails(roomCode, playlistId);
+                    // Initialiser la dead queue pour cette room si nécessaire
+                    if (!playlistDeadQueue[roomCode]) {
+                        playlistDeadQueue[roomCode] = new Set();
                     }
                     
-                    // Calculer la position dans la playlist
-                    if (playlist) {
-                        const positionInfo = calculateTrackPosition(data.body.item.id, playlist);
-                        if (positionInfo) {
-                            enrichedPlayback.playlistInfo = {
-                                id: playlist.id,
-                                name: playlist.name,
-                                artworkUrl: playlist.artworkUrl || null, // AJOUT : Artwork de la playlist
-                                position: positionInfo.position,
-                                total: positionInfo.total,
-                                remaining: positionInfo.total - positionInfo.position
-                            };
+                    // Vérifier si la playlist est dans la dead queue AVANT tout
+                    if (playlistDeadQueue[roomCode].has(playlistId)) {
+                        // Skip silencieux : playlist déjà connue comme inaccessible
+                        // Ne pas logger, ne pas essayer de récupérer
+                    } else {
+                        // Vérifier le cache
+                        let playlist = playlistCache[roomCode];
+                        
+                        // Si pas en cache OU playlist différente, récupérer les détails
+                        if (!playlist || playlist.id !== playlistId) {
+                            logger.info('SPOTIFY_PLAYLIST', `Nouvelle playlist détectée pour ${roomCode}`, { playlistId });
+                            playlist = await getPlaylistDetails(roomCode, playlistId);
                             
-                            // DEBUG: Vérifier que l'artwork est bien transmis
-                            logger.info('SPOTIFY_PLAYLIST_INFO', `PlaylistInfo créé pour ${roomCode}`, {
-                                playlistId: playlist.id,
-                                hasArtwork: !!playlist.artworkUrl,
-                                artworkUrl: playlist.artworkUrl
-                            });
+                            // DEBUG: Log seulement quand une NOUVELLE playlist est chargée avec succès
+                            if (playlist) {
+                                logger.info('SPOTIFY_PLAYLIST_INFO', `PlaylistInfo créé pour ${roomCode}`, {
+                                    playlistId: playlist.id,
+                                    hasArtwork: !!playlist.artworkUrl,
+                                    artworkUrl: playlist.artworkUrl
+                                });
+                            }
+                        }
+                        
+                        // Calculer la position dans la playlist (seulement si playlist valide)
+                        if (playlist) {
+                            const positionInfo = calculateTrackPosition(data.body.item.id, playlist);
+                            if (positionInfo) {
+                                enrichedPlayback.playlistInfo = {
+                                    id: playlist.id,
+                                    name: playlist.name,
+                                    artworkUrl: playlist.artworkUrl || null, // AJOUT : Artwork de la playlist
+                                    position: positionInfo.position,
+                                    total: positionInfo.total,
+                                    remaining: positionInfo.total - positionInfo.position
+                                };
+                            }
                         }
                     }
                 } else {
@@ -310,22 +344,30 @@ async function getCurrentPlayback(roomCode) {
                             const playlistId = extractPlaylistId(contextUri);
                             
                             if (playlistId) {
-                                let playlist = playlistCache[roomCode];
-                                if (!playlist || playlist.id !== playlistId) {
-                                    playlist = await getPlaylistDetails(roomCode, playlistId);
+                                // Initialiser la dead queue pour cette room si nécessaire
+                                if (!playlistDeadQueue[roomCode]) {
+                                    playlistDeadQueue[roomCode] = new Set();
                                 }
                                 
-                                if (playlist) {
-                                    const positionInfo = calculateTrackPosition(data.body.item.id, playlist);
-                                    if (positionInfo) {
-                                        enrichedPlayback.playlistInfo = {
-                                            id: playlist.id,
-                                            name: playlist.name,
-                                            artworkUrl: playlist.artworkUrl || null, // AJOUT : Artwork de la playlist
-                                            position: positionInfo.position,
-                                            total: positionInfo.total,
-                                            remaining: positionInfo.total - positionInfo.position
-                                        };
+                                // Vérifier si la playlist est dans la dead queue
+                                if (!playlistDeadQueue[roomCode].has(playlistId)) {
+                                    let playlist = playlistCache[roomCode];
+                                    if (!playlist || playlist.id !== playlistId) {
+                                        playlist = await getPlaylistDetails(roomCode, playlistId);
+                                    }
+                                    
+                                    if (playlist) {
+                                        const positionInfo = calculateTrackPosition(data.body.item.id, playlist);
+                                        if (positionInfo) {
+                                            enrichedPlayback.playlistInfo = {
+                                                id: playlist.id,
+                                                name: playlist.name,
+                                                artworkUrl: playlist.artworkUrl || null, // AJOUT : Artwork de la playlist
+                                                position: positionInfo.position,
+                                                total: positionInfo.total,
+                                                remaining: positionInfo.total - positionInfo.position
+                                            };
+                                        }
                                     }
                                 }
                             }
@@ -372,8 +414,18 @@ function removeTokenForRoom(roomCode) { // Existant, modifier
 // NOUVEAU : Fonction de nettoyage du cache (à appeler lors de la déconnexion)
 function clearPlaylistCache(roomCode) {
     if (playlistCache[roomCode]) {
+        const playlistId = playlistCache[roomCode].id;
         delete playlistCache[roomCode];
-        logger.info('SPOTIFY_PLAYLIST', `Cache playlist effacé pour ${roomCode}`);
+        logger.info('SPOTIFY_PLAYLIST', `Cache playlist effacé pour ${roomCode}`, { playlistId });
+    }
+    
+    // Nettoyer la dead queue de cette room
+    if (playlistDeadQueue[roomCode]) {
+        const deadCount = playlistDeadQueue[roomCode].size;
+        delete playlistDeadQueue[roomCode];
+        if (deadCount > 0) {
+            logger.info('SPOTIFY_PLAYLIST', `Dead queue purgée pour ${roomCode}`, { deadPlaylistsCount: deadCount });
+        }
     }
 }
 
