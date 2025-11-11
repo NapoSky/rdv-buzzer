@@ -31,6 +31,14 @@ function Changelog() {
         {
           type: "improvement",
           text: "Admin : Amélioration tableau d'analyse sur l'état des buzzs"
+        },
+        {
+          type: "fix",
+          text: "Admin : L'admin récupère correctement le dernier buzz en cas de reconnexion dans une salle en cours"
+        },
+        {
+          type: "fix",
+          text: "Classement : Correction d'un bug d'affichage du nombre d'entrées dans le classement"
         }
       ]
     },

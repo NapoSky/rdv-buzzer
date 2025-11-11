@@ -38,12 +38,17 @@ function PublicRanking() {
   const fetchGlobalRanking = async () => {
     setIsLoading(true);
     try {
+      // Récupérer le classement agrégé pour l'affichage
       const res = await axios.get(`${BACKEND_URL}/api/ranking`);
+      
+      // Récupérer les données brutes pour les statistiques
+      const resRaw = await axios.get(`${BACKEND_URL}/api/ranking?raw=true`);
       
       console.log("Données reçues du backend:", res.data);
       
       // S'assurer que res.data est un tableau
       const rankingData = Array.isArray(res.data) ? res.data : [];
+      const rawData = Array.isArray(resRaw.data) ? resRaw.data : [];
       
       // Examiner la structure du premier élément
       if (rankingData.length > 0) {
@@ -51,10 +56,10 @@ function PublicRanking() {
       }
       
       setGlobalRanking(rankingData);
-      setTotalEntries(rankingData.length);
       
-      // Calculer le nombre de joueurs uniques
-      const uniquePseudos = new Set(rankingData.map(entry => entry.pseudo));
+      // Statistiques basées sur les données brutes
+      setTotalEntries(rawData.length);
+      const uniquePseudos = new Set(rawData.map(entry => entry.pseudo));
       setUniquePlayers(uniquePseudos.size);
       
       // Date de statistiques
@@ -100,16 +105,21 @@ const handleFilterRanking = async (e) => {
       
     }
     
+    // Récupérer le classement agrégé pour l'affichage
     const res = await axios.get(`${BACKEND_URL}/api/ranking`, { params });
+    
+    // Récupérer les données brutes pour les statistiques
+    const resRaw = await axios.get(`${BACKEND_URL}/api/ranking?raw=true`, { params });
     
     // Vérifier si res.data est un tableau
     const rankingData = Array.isArray(res.data) ? res.data : [];
+    const rawData = Array.isArray(resRaw.data) ? resRaw.data : [];
     
     setGlobalRanking(rankingData);
     
-    // Mettre à jour les stats
-    setTotalEntries(rankingData.length);
-    const uniquePseudos = new Set(rankingData.map(entry => entry.pseudo));
+    // Mettre à jour les stats basées sur les données brutes
+    setTotalEntries(rawData.length);
+    const uniquePseudos = new Set(rawData.map(entry => entry.pseudo));
     setUniquePlayers(uniquePseudos.size);
   } catch (err) {
     console.error("Erreur lors du filtrage:", err);

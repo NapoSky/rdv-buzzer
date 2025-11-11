@@ -178,49 +178,52 @@ function handleTimeSync(socket, clientTimestamp, callback) {
 }
 
 /**
- * Calcule la période de grâce adaptative basée sur les latences de la salle
+ * Calcule la période de grâce adaptative basée sur les RTT réels de la salle
  */
 function calculateGracePeriod(roomCode) {
   const room = Room.get(roomCode);
   if (!room) return 300; // Fallback par défaut
 
-  const roomLatencies = [];
+  const roomRTTs = [];
   
-  
-  // Collecter les latences des joueurs de cette salle
+  // ✅ CORRECTION: Collecter les VRAIS RTT depuis timeSyncService (pas les pings bidon)
   for (const socketId in room.players) {
-    const latencyData = playerLatencies[socketId];
-    // Filtrer les valeurs invalides (null, undefined, NaN)
-    if (latencyData && latencyData.average != null && !isNaN(latencyData.average)) {
-      roomLatencies.push(latencyData.average);
+    const syncStats = timeSyncService.getStats(socketId);
+    // Utiliser le vrai RTT de time_sync si disponible
+    if (syncStats && syncStats.averageRtt != null && !isNaN(syncStats.averageRtt)) {
+      roomRTTs.push(syncStats.averageRtt);
+    }
+    // Sinon fallback sur une valeur par défaut (le joueur n'est pas synchronisé)
+    else {
+      roomRTTs.push(150); // Valeur conservative pour joueurs non-sync
     }
   }
 
-  if (roomLatencies.length === 0) return 300; // Pas de données de latence
+  if (roomRTTs.length === 0) return 300; // Pas de données de latence
 
-  // 🚀 FILTRAGE DES LATENCES ABERRANTES
+  // 🚀 FILTRAGE DES RTT ABERRANTS
   // Éliminer les connexions non viables (> 1000ms) et négatives
-  const validLatencies = roomLatencies.filter(lat => lat >= 0 && lat <= 1000);
+  const validRTTs = roomRTTs.filter(rtt => rtt >= 0 && rtt <= 1000);
   
-  // Si toutes les latences sont aberrantes, fallback
-  if (validLatencies.length === 0) {
+  // Si tous les RTT sont aberrants, fallback
+  if (validRTTs.length === 0) {
     return 300;
   }
 
-  // Si on a éliminé des latences aberrantes, le signaler
-  if (validLatencies.length < roomLatencies.length) {
-    const filteredOut = roomLatencies.filter(lat => lat < 0 || lat > 1000);
-    logger.info('GRACE_PERIOD', 'Latences aberrantes filtrées', {
+  // Si on a éliminé des RTT aberrants, le signaler
+  if (validRTTs.length < roomRTTs.length) {
+    const filteredOut = roomRTTs.filter(rtt => rtt < 0 || rtt > 1000);
+    logger.info('GRACE_PERIOD', 'RTT aberrants filtrés', {
       roomCode,
       filteredOut,
-      validCount: validLatencies.length,
-      totalCount: roomLatencies.length
+      validCount: validRTTs.length,
+      totalCount: roomRTTs.length
     });
   }
 
-  const maxLatency = Math.max(...validLatencies);
-  const minLatency = Math.min(...validLatencies);
-  const spread = maxLatency - minLatency;
+  const maxRTT = Math.max(...validRTTs);
+  const minRTT = Math.min(...validRTTs);
+  const spread = maxRTT - minRTT;
 
   // 🚀 AMÉLIORATION 3: Période de grâce adaptée au nombre de joueurs
   const playerCount = Object.keys(room.players).filter(id => !room.players[id].isAdmin).length;
@@ -244,12 +247,12 @@ function calculateGracePeriod(roomCode) {
     basePeriod,
     maxPeriod,
     spread,
-    minLatency,
-    maxLatency,
+    minRTT,
+    maxRTT,
     playerCount,
-    validPlayerCount: validLatencies.length,
-    totalPlayerCount: roomLatencies.length,
-    wasFiltered: validLatencies.length < roomLatencies.length
+    validPlayerCount: validRTTs.length,
+    totalPlayerCount: roomRTTs.length,
+    wasFiltered: validRTTs.length < roomRTTs.length
   });
 
   return gracePeriod;
@@ -335,8 +338,14 @@ function handleBuzz(socket, io, data, callback) {
       return callback({ error: 'Joueur introuvable dans la salle' });
     }
 
-    // 🚀 AMÉLIORATION 2: Fallback latence plus réaliste
-    const playerLatency = playerLatencies[socket.id]?.average || 150; // 150ms au lieu de 0ms
+    // 🚀 CORRECTION: Utiliser UNIQUEMENT le vrai RTT depuis time_sync
+    // NE JAMAIS utiliser playerLatencies qui contient des données bidon (offset déguisé en ping)
+    const syncStats = timeSyncService.getStats(socket.id);
+    const isClientSynced = syncStats !== null && syncStats.offsets && syncStats.offsets.length > 0;
+    
+    // ⚠️ IMPORTANT: Pour les clients non-synchronisés, on utilise un fallback de 150ms
+    // On ne peut PAS utiliser playerLatencies car le ping calcule mal la latence (mélange avec l'offset)
+    const playerRTT = syncStats?.averageRtt || 150;
     
     // 🚀 AMÉLIORATION TIME SYNC: Utiliser le timestamp client synchronisé comme base
     // Le clientTimestamp est maintenant synchronisé avec l'horloge serveur (via getServerTime())
@@ -344,15 +353,7 @@ function handleBuzz(socket, io, data, callback) {
     const serverTimestamp = Date.now(); // Timestamp de réception serveur
     
     // ⏱️ CALCUL DU TEMPS COMPENSÉ:
-    // Option A: Si clientTimestamp est fiable (synchronisé via time_sync)
-    //   → Le clientTimestamp EST DÉJÀ en temps serveur (grâce à l'offset NTP)
-    //   → Il représente le moment exact du clic en temps serveur, PAS BESOIN de compensation !
-    // Option B: Si clientTimestamp non synchronisé (fallback)
-    //   → Utiliser serverTimestamp et soustraire la demi-latence
-    //
-    // Pour détecter si le client est synchronisé, on compare l'écart client-serveur
-    const timeDifference = Math.abs(clientTimestamp - serverTimestamp);
-    const isClientSynced = timeDifference < 2000; // Écart < 2s = client probablement synchronisé
+    // Vérifier si le client est synchronisé via timeSyncService (source de vérité unique)
     
     let compensatedTime;
     if (isClientSynced) {
@@ -365,21 +366,23 @@ function handleBuzz(socket, io, data, callback) {
         socketId: socket.id,
         clientTimestamp,
         serverTimestamp,
-        timeDifference,
-        playerLatency,
-        compensatedTime
+        timeDifference: Math.abs(clientTimestamp - serverTimestamp),
+        playerRTT,
+        compensatedTime,
+        medianOffset: syncStats.medianOffset
       });
     } else {
       // ⚠️ CLIENT NON SYNCHRONISÉ: Fallback sur méthode classique
       // Utiliser le timestamp serveur et soustraire la demi-latence
-      compensatedTime = serverTimestamp - (playerLatency / 2);
+      // Note: playerRTT ici est le VRAI RTT (pas l'offset déguisé)
+      compensatedTime = serverTimestamp - (playerRTT / 2);
       
       logger.warn('BUZZ', 'Client non synchronisé, fallback méthode classique', {
         socketId: socket.id,
         clientTimestamp,
         serverTimestamp,
         timeDifference,
-        playerLatency,
+        playerRTT,
         compensatedTime
       });
     }
@@ -396,7 +399,7 @@ function handleBuzz(socket, io, data, callback) {
           pseudo: room.players[socket.id].pseudo,
           timestamp: clientTimestamp,
           serverTimestamp: serverTimestamp,
-          latency: playerLatency,
+          latency: playerRTT, // ✅ CORRECTION: Renommé de 'rtt' en 'latency' pour cohérence avec analytics
           compensatedTime: compensatedTime, // ⏱️ Utiliser le temps compensé calculé
           isSynced: isClientSynced // ℹ️ Indiquer si le client était synchronisé
         }],
@@ -411,7 +414,7 @@ function handleBuzz(socket, io, data, callback) {
         socketId: socket.id,
         roomCode,
         pseudo: room.players[socket.id].pseudo,
-        latency: playerLatency,
+        latency: playerRTT, // ✅ CORRECTION: 'latency' au lieu de 'rtt' pour cohérence
         gracePeriod: gracePeriod,
         compensatedTime: compensatedTime,
         clientTimestamp,
@@ -447,7 +450,7 @@ function handleBuzz(socket, io, data, callback) {
       pseudo: room.players[socket.id].pseudo,
       timestamp: clientTimestamp,
       serverTimestamp: serverTimestamp,
-      latency: playerLatency,
+      latency: playerRTT, // ✅ CORRECTION: Renommé de 'rtt' en 'latency' pour cohérence avec analytics
       compensatedTime: compensatedTime, // ⏱️ Utiliser le temps compensé calculé
       isSynced: isClientSynced // ℹ️ Indiquer si le client était synchronisé
     });
@@ -457,7 +460,7 @@ function handleBuzz(socket, io, data, callback) {
       roomCode,
       pseudo: room.players[socket.id].pseudo,
       candidateCount: buzzerGracePeriods[roomCode].candidates.length,
-      latency: playerLatency,
+      latency: playerRTT, // ✅ CORRECTION: 'latency' au lieu de 'rtt' pour cohérence
       compensatedTime: compensatedTime,
       isClientSynced
     });
@@ -529,22 +532,37 @@ function processBuzzers(roomCode, io) {
     const equalityThreshold = calculateEqualityThreshold(roomLatencies);
 
     // Vérifier s'il y a égalité avec seuil adaptatif
+    // ⚠️ IMPORTANT: Le départage aléatoire ne s'applique QUE si au moins un joueur n'est PAS synchronisé
+    // Si tous les joueurs sont synchronisés, leur temps est précis et on respecte l'ordre réel
     const second = validCandidates[1];
-    if (second && Math.abs(winner.compensatedTime - second.compensatedTime) < equalityThreshold) {
+    const allSynced = validCandidates.every(c => c.isSynced);
+    
+    if (second && Math.abs(winner.compensatedTime - second.compensatedTime) < equalityThreshold && !allSynced) {
       
-      // Départage aléatoire entre les ex-aequo
+      // Départage aléatoire entre les ex-aequo (uniquement si des joueurs ne sont pas synchronisés)
       tied = validCandidates.filter(c => 
         Math.abs(c.compensatedTime - winner.compensatedTime) < equalityThreshold
       );
       
       winner = tied[Math.floor(Math.random() * tied.length)];
       
-      logger.info('BUZZ_PROCESS', 'Départage aléatoire appliqué', {
+      logger.info('BUZZ_PROCESS', 'Départage aléatoire appliqué (joueurs non synchronisés)', {
         roomCode,
         tiedCount: tied.length,
         winner: winner.pseudo,
         equalityThreshold,
-        timeDifference: second ? Math.abs(winner.compensatedTime - second.compensatedTime) : 'N/A'
+        timeDifference: second ? Math.abs(winner.compensatedTime - second.compensatedTime) : 'N/A',
+        allSynced: false,
+        syncedCount: validCandidates.filter(c => c.isSynced).length
+      });
+    } else if (second && Math.abs(winner.compensatedTime - second.compensatedTime) < equalityThreshold && allSynced) {
+      // Tous synchronisés mais très proche : on garde le premier (pas de départage aléatoire)
+      logger.info('BUZZ_PROCESS', 'Pas de départage aléatoire (tous synchronisés)', {
+        roomCode,
+        winner: winner.pseudo,
+        timeDifference: Math.abs(winner.compensatedTime - second.compensatedTime),
+        equalityThreshold,
+        allSynced: true
       });
     }
 

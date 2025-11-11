@@ -134,6 +134,46 @@ function AdminRoomView() {
            console.warn("Les options de la salle n'ont pas été récupérées du serveur lors de la jointure. Utilisation des options par défaut.");
            setCurrentRoomOptions(DEFAULT_ROOM_OPTIONS);
         }
+        
+        // ✅ RESTAURATION DU BUZZ : Vérifier si un joueur a buzzé
+        if (joinResponse.players) {
+          const buzzedPlayerId = Object.keys(joinResponse.players).find(
+            id => joinResponse.players[id].buzzed === true && !joinResponse.players[id].isAdmin
+          );
+          
+          if (buzzedPlayerId) {
+            const buzzedPlayerData = joinResponse.players[buzzedPlayerId];
+            console.log("[AdminRoomView] 🔔 Restauration du buzz lors de la jointure:", {
+              playerId: buzzedPlayerId,
+              pseudo: buzzedPlayerData.pseudo
+            });
+            
+            // Restaurer l'état du buzz pour afficher la modale
+            const restoredBuzzedPlayer = {
+              pseudo: buzzedPlayerData.pseudo,
+              playerId: buzzedPlayerId
+            };
+            
+            setBuzzedPlayer(restoredBuzzedPlayer);
+            forceModalRef.current = restoredBuzzedPlayer;
+            isModalForcedRef.current = true;
+            
+            // ✅ PAUSE SPOTIFY : Si Spotify est actif, mettre en pause
+            // L'admin n'était pas là quand le buzz s'est produit, donc la musique continue
+            // Il faut la couper maintenant pour permettre le jugement
+            (async () => {
+              try {
+                const currentlyConnected = await refreshStatus();
+                if (currentlyConnected) {
+                  await pausePlayback();
+                  console.log("[AdminRoomView] 🎵 Musique Spotify mise en pause après restauration du buzz");
+                }
+              } catch (error) {
+                console.error('[AdminRoomView] Erreur pause Spotify lors de la restauration:', error);
+              }
+            })();
+          }
+        }
       }
     } catch (error) {
       console.error("Erreur lors de la jointure de salle:", error);
@@ -143,7 +183,6 @@ function AdminRoomView() {
 
   // Effect Events pour les handlers socket (React 19.2)
   const onUpdatePlayers = useEffectEvent((newPlayers) => {
-    console.log("[AdminRoomView] Mise à jour des joueurs reçue:", newPlayers);
     setPlayers(newPlayers);
   });
   
@@ -174,8 +213,21 @@ function AdminRoomView() {
       return;
     }
     
+    // ✅ PROTECTION 1 : Ignorer si un jugement est en cours
     if (isProcessingJudgment) {
-      console.log("[AdminRoomView] Buzz reçu pendant jugement - on continue quand même");
+      console.log("[AdminRoomView] 🚫 Buzz ignoré - jugement en cours");
+      return;
+    }
+    
+    // ✅ PROTECTION 2 : Ignorer si une modale est déjà affichée
+    // Cela garantit que le joueur affiché reste cohérent avec celui jugé
+    if (buzzedPlayer) {
+      console.log("[AdminRoomView] 🚫 Buzz ignoré - modale déjà ouverte:", {
+        lockedPlayer: buzzedPlayer.pseudo,
+        newPlayer: data.buzzedBy,
+        reason: "Cohérence avec SpectatorView et backend"
+      });
+      return;
     }
     
     const buzzKey = `${data.playerId}-${data.buzzedBy}`;
@@ -190,14 +242,6 @@ function AdminRoomView() {
       return;
     }
     
-    if (buzzedPlayer && buzzedPlayer.playerId !== data.playerId) {
-      console.log("[AdminRoomView] ⚠️ Nouveau buzz reçu alors qu'un autre joueur a déjà buzzé:", {
-        existingPlayer: buzzedPlayer.pseudo,
-        newPlayer: data.buzzedBy,
-        action: "REMPLACE_BUZZ"
-      });
-    }
-    
     lastProcessedBuzzRef.current = { key: buzzKey, timestamp: now };
     
     if (clearBuzzTimeoutRef.current) {
@@ -207,7 +251,7 @@ function AdminRoomView() {
     }
     
     const newBuzzedPlayer = { pseudo: data.buzzedBy, playerId: data.playerId };
-    console.log("[AdminRoomView] 🎯 Définition buzzedPlayer:", newBuzzedPlayer);
+    //console.log("[AdminRoomView] 🎯 Définition buzzedPlayer:", newBuzzedPlayer);
     
     forceModalRef.current = newBuzzedPlayer;
     isModalForcedRef.current = true;
@@ -722,19 +766,32 @@ const handleIncrementScore = (playerId, adjustment) => { // Renommer 'increment'
 
   const handleJudgeResponse = async (judgementType) => {
     if (buzzedPlayer && roomCode) {
+      // ✅ PROTECTION 3 : Verrouiller immédiatement le joueur jugé
+      // Cela garantit que même si l'état change, on juge le bon joueur
+      const lockedPlayer = {
+        playerId: buzzedPlayer.playerId,
+        pseudo: buzzedPlayer.pseudo
+      };
+      
+      console.log("[AdminRoomView] 🔒 Joueur verrouillé pour jugement:", lockedPlayer);
+      
       // ✅ MARQUER le début du traitement
       setIsProcessingJudgment(true);
       console.log("[AdminRoomView] Début traitement jugement");
-      
-      // ✅ SAUVEGARDER les infos avant de fermer la modal
-      const currentPlayer = buzzedPlayer;
       
       // ✅ FERMER IMMÉDIATEMENT la modal quand l'admin clique
       setBuzzedPlayer(null);
       forceModalRef.current = null;
       isModalForcedRef.current = false;
       
-      judgeResponse(roomCode, currentPlayer.playerId, judgementType);
+      // ✅ UTILISER lockedPlayer (pas buzzedPlayer qui pourrait changer)
+      judgeResponse(roomCode, lockedPlayer.playerId, judgementType);
+      
+      console.log("[AdminRoomView] 📤 Jugement envoyé au backend:", {
+        player: lockedPlayer.pseudo,
+        playerId: lockedPlayer.playerId,
+        judgement: judgementType
+      });
   
       // Met à jour l'état localement basé sur le jugement
       if (judgementType === 'correct_title') {
@@ -767,6 +824,14 @@ const handleIncrementScore = (playerId, adjustment) => { // Renommer 'increment'
 
   const handlePassBuzz = async () => {
     if (buzzedPlayer && roomCode) {
+      // ✅ PROTECTION 3 : Verrouiller immédiatement le joueur
+      const lockedPlayer = {
+        playerId: buzzedPlayer.playerId,
+        pseudo: buzzedPlayer.pseudo
+      };
+      
+      console.log("[AdminRoomView] 🔒 Joueur verrouillé pour pass/annulation:", lockedPlayer);
+      
       // ✅ MARQUER le début du traitement
       setIsProcessingJudgment(true);
       console.log("[AdminRoomView] Début traitement pass/annulation");
@@ -881,25 +946,6 @@ const handleIncrementScore = (playerId, adjustment) => { // Renommer 'increment'
     const socket = getSocket();
     socket.emit('next_question', { roomCode });
   };
-
-  // ✅ DEBUG : Surveiller les changements de buzzedPlayer
-  useEffect(() => {
-    console.log("[AdminRoomView] buzzedPlayer a changé:", {
-      buzzedPlayer,
-      isTruthy: !!buzzedPlayer,
-      shouldShowModal: !!buzzedPlayer,
-      isProcessingJudgment,
-      timestamp: Date.now()
-    });
-    
-    if (buzzedPlayer && !isProcessingJudgment) {
-      console.log("[AdminRoomView] ✅ Le modal DEVRAIT s'afficher maintenant");
-    } else if (!buzzedPlayer) {
-      console.log("[AdminRoomView] ❌ Pas de buzzedPlayer, modal fermé");
-    } else if (isProcessingJudgment) {
-      console.log("[AdminRoomView] ⏳ Jugement en cours, modal potentiellement bloqué");
-    }
-  }, [buzzedPlayer, isProcessingJudgment]);
 
   // Calcul des joueurs triés avec useMemo (React 19.2 optimization)
   const sortedPlayers = useMemo(() => {
@@ -1023,22 +1069,6 @@ const handleIncrementScore = (playerId, adjustment) => { // Renommer 'increment'
       {(buzzedPlayer || forceModalRef.current) && (() => {
         // ✅ Utiliser soit l'état, soit la référence forcée
         const modalPlayer = buzzedPlayer || forceModalRef.current;
-        
-        // ✅ LOG DE DEBUG : Vérifier si on arrive ici
-        console.log("[AdminRoomView] RENDU MODAL - joueur présent:", {
-          buzzedPlayer,
-          forceModalRef: forceModalRef.current,
-          modalPlayer,
-          pseudo: modalPlayer?.pseudo,
-          playerId: modalPlayer?.playerId,
-          roomType: currentRoomOptions.roomType,
-          foundArtist,
-          foundTitle,
-          isModalForced: isModalForcedRef.current,
-          isProcessingJudgment,
-          shouldShowModal: !!modalPlayer && !isProcessingJudgment, // ✅ Condition réelle d'affichage
-          timestamp: Date.now()
-        });
         
         // ✅ CORRECTION : Toujours afficher la modal si on a un joueur, peu importe le flag de traitement
         return (

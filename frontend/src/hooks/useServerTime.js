@@ -24,11 +24,15 @@ export function useServerTime(options = {}) {
     enabled = true
   } = options;
 
-  const [timeOffset, setTimeOffset] = useState(0); // Offset en ms (serveur - client)
   const [isSynced, setIsSynced] = useState(false);
-  const [syncQuality, setSyncQuality] = useState(null); // { rtt, accuracy }
+  const [syncQuality, setSyncQuality] = useState(null); // { rtt, accuracy, drift }
   
-  const offsetSamplesRef = useRef([]); // Historique des offsets mesurés
+  // ✅ NOUVEAU SYSTÈME: Référence temporelle injectée par le serveur
+  const serverTimeBaseRef = useRef(null);      // Timestamp serveur de référence
+  const localTimeAtSyncRef = useRef(null);     // Date.now() au moment de la sync
+  const [currentDrift, setCurrentDrift] = useState(0); // Dérive actuelle (pour monitoring)
+  
+  const rttSamplesRef = useRef([]); // Historique des RTT mesurés
   const syncInProgressRef = useRef(false);
   const syncIntervalRef = useRef(null);
   const initialSyncDoneRef = useRef(false);
@@ -36,12 +40,12 @@ export function useServerTime(options = {}) {
   /**
    * Effectue une mesure de synchronisation unique
    * 
-   * Algorithme NTP simplifié :
+   * NOUVEAU: Injection directe du timestamp serveur comme référence
    * 1. t0 = Date.now() (envoi)
    * 2. Serveur répond avec T1 (timestamp serveur)
    * 3. t1 = Date.now() (réception)
    * 4. RTT = t1 - t0
-   * 5. Offset = T1 - (t0 + RTT/2)
+   * 5. Réinjection: serverTimeBase = T1, localTimeAtSync = t1
    */
   const performSync = useCallback(async () => {
     if (syncInProgressRef.current || !enabled) return;
@@ -77,44 +81,52 @@ export function useServerTime(options = {}) {
           return;
         }
         
-        // Calculer l'offset : temps serveur - temps client estimé au moment de la réponse serveur
-        // On estime que le serveur a répondu au milieu du RTT
-        const estimatedClientTimeAtServer = t0 + (rtt / 2);
-        const offset = T1 - estimatedClientTimeAtServer;
+        // ✅ RÉINJECTION: Utiliser le timestamp serveur comme nouvelle référence
+        // On compense le RTT/2 pour estimer le temps serveur au moment de la réception
+        const serverTimeAtReception = T1 + (rtt / 2);
         
-        // Stocker la mesure
-        offsetSamplesRef.current.push({ offset, rtt, timestamp: Date.now() });
-        
-        // Garder seulement les 10 dernières mesures
-        if (offsetSamplesRef.current.length > 10) {
-          offsetSamplesRef.current.shift();
+        // Calculer la dérive avant réinjection (pour monitoring)
+        let drift = 0;
+        if (serverTimeBaseRef.current !== null && localTimeAtSyncRef.current !== null) {
+          const oldEstimate = serverTimeBaseRef.current + (t1 - localTimeAtSyncRef.current);
+          drift = serverTimeAtReception - oldEstimate;
+          setCurrentDrift(drift);
         }
         
-        // Calculer l'offset médian (plus robuste que la moyenne)
-        const offsets = offsetSamplesRef.current.map(s => s.offset);
-        offsets.sort((a, b) => a - b);
-        const medianOffset = offsets[Math.floor(offsets.length / 2)];
+        // ✅ RÉINJECTER la référence temporelle
+        serverTimeBaseRef.current = serverTimeAtReception;
+        localTimeAtSyncRef.current = t1;
+        
+        // Stocker le RTT pour monitoring
+        rttSamplesRef.current.push({ rtt, timestamp: Date.now() });
+        
+        // Garder seulement les 10 dernières mesures
+        if (rttSamplesRef.current.length > 10) {
+          rttSamplesRef.current.shift();
+        }
         
         // Calculer RTT moyen
-        const avgRtt = offsetSamplesRef.current.reduce((acc, s) => acc + s.rtt, 0) / offsetSamplesRef.current.length;
+        const avgRtt = rttSamplesRef.current.reduce((acc, s) => acc + s.rtt, 0) / rttSamplesRef.current.length;
         
-        // 📊 Calculer la stabilité de l'offset (écart-type)
-        const offsetVariance = offsets.reduce((acc, o) => acc + Math.pow(o - medianOffset, 2), 0) / offsets.length;
-        const offsetStdDev = Math.sqrt(offsetVariance);
+        // 📊 Calculer la stabilité du RTT (jitter)
+        const rttVariance = rttSamplesRef.current.reduce((acc, s) => 
+          acc + Math.pow(s.rtt - avgRtt, 2), 0) / rttSamplesRef.current.length;
+        const jitter = Math.sqrt(rttVariance);
         
         // Mettre à jour l'état
-        setTimeOffset(medianOffset);
         setSyncQuality({ 
           rtt: avgRtt, 
           accuracy: Math.abs(rtt / 2), 
-          samples: offsets.length,
-          stability: offsetStdDev // ✅ Ajout de la stabilité
+          samples: rttSamplesRef.current.length,
+          jitter: jitter,
+          drift: drift // Dérive mesurée avant réinjection
         });
         setIsSynced(true);
 
         
-        // Notifier le serveur de l'offset calculé pour monitoring
-        socket.emit('time_sync_offset', { offset: medianOffset, rtt: avgRtt });
+        // Notifier le serveur (pour monitoring backend)
+        // Note: On envoie toujours un "offset" de 0 conceptuellement car on réinjecte
+        socket.emit('time_sync_offset', { offset: drift, rtt: avgRtt });
                 
         syncInProgressRef.current = false;
       });
@@ -143,16 +155,16 @@ export function useServerTime(options = {}) {
 
   /**
    * Retourne le timestamp serveur actuel
-   * C'est cette fonction qui doit être utilisée partout à la place de Date.now()
+   * NOUVEAU: Basé sur la référence temporelle injectée + delta local
    */
   const getServerTime = useCallback(() => {
-    if (!isSynced) {
+    if (!isSynced || serverTimeBaseRef.current === null || localTimeAtSyncRef.current === null) {
       // Si pas encore synchronisé, retourner l'heure locale
-      // (ou on pourrait lancer une exception selon les besoins)
       return Date.now();
     }
-    return Date.now() + timeOffset;
-  }, [timeOffset, isSynced]);
+    // ✅ Temps serveur = Référence injectée + temps écoulé depuis la sync
+    return serverTimeBaseRef.current + (Date.now() - localTimeAtSyncRef.current);
+  }, [isSynced]);
 
   // Effet : Synchronisation initiale et périodique
   useEffect(() => {
@@ -191,8 +203,11 @@ export function useServerTime(options = {}) {
     const onConnect = () => {
       //console.log('[useServerTime] Socket connecté, resynchronisation');
       initialSyncDoneRef.current = false;
-      offsetSamplesRef.current = [];
+      rttSamplesRef.current = [];
+      serverTimeBaseRef.current = null;
+      localTimeAtSyncRef.current = null;
       setIsSynced(false);
+      setCurrentDrift(0);
       performInitialSync();
     };
 
@@ -216,9 +231,9 @@ export function useServerTime(options = {}) {
 
   return {
     getServerTime,    // Fonction principale : remplace Date.now()
-    timeOffset,       // Offset actuel (ms)
+    timeOffset: currentDrift, // ✅ Maintenant c'est la "dérive" mesurée (proche de 0)
     isSynced,         // true si au moins une sync réussie
-    syncQuality,      // { rtt, accuracy, samples }
+    syncQuality,      // { rtt, accuracy, samples, jitter, drift }
     syncNow           // Fonction pour forcer une sync manuelle
   };
 }

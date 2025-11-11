@@ -151,6 +151,13 @@ function getSyncAnalytics(room, playerLatencies) {
         }
       }
       
+      // ✅ CORRECTION: Utiliser le vrai RTT depuis time_sync au lieu du faux ping
+      // Si le joueur est synchronisé, on a son RTT réel mesuré par time_sync
+      // Sinon, fallback sur les anciennes données de ping (qui sont bidon mais mieux que rien)
+      const realRtt = syncData?.averageRtt ?? null;
+      const realJitter = syncData?.jitter ?? null;
+      const hasSyncData = syncData !== null && syncData.rtts && syncData.rtts.length > 0;
+      
       players.push({
         pseudo: player.pseudo,
         socketId: socketId,
@@ -159,12 +166,12 @@ function getSyncAnalytics(room, playerLatencies) {
         timeOffset: syncData?.medianOffset ?? null,
         lastSync: syncData?.lastSync ?? null,
         isSynced: syncData !== null && syncData.offsets && syncData.offsets.length > 0,
-        // Latency data
-        averageLatency: latencyData.average ?? null,
-        latencyJitter: typeof jitter === 'number' ? Math.round(jitter) : null, // Accepte 0
-        latencySamples: latencyData.values?.length || 0,
+        // Latency data (✅ CORRECTION: utiliser le vrai RTT)
+        averageLatency: hasSyncData ? realRtt : (latencyData.average ?? null),
+        latencyJitter: hasSyncData ? (typeof realJitter === 'number' ? Math.round(realJitter) : null) : (typeof jitter === 'number' ? Math.round(jitter) : null),
+        latencySamples: hasSyncData ? syncData.rtts.length : (latencyData.values?.length || 0),
         // Connection quality indicator
-        connectionQuality: getConnectionQuality(latencyData.average ?? 0, jitter ?? 0)
+        connectionQuality: getConnectionQuality(hasSyncData ? realRtt : (latencyData.average ?? 0), hasSyncData ? realJitter : (jitter ?? 0))
       });
     });
     

@@ -72,14 +72,21 @@ function recordOffset(socketId, offset, rtt) {
     stats.rtts.shift();
   }
   
-  // Calculer la moyenne (filtre les outliers)
+  // Calculer la médiane de l'offset (filtre les outliers)
   const sortedOffsets = [...stats.offsets].sort((a, b) => a - b);
-  const median = sortedOffsets[Math.floor(sortedOffsets.length / 2)];
-  stats.medianOffset = median;
+  const medianOffset = sortedOffsets[Math.floor(sortedOffsets.length / 2)];
+  stats.medianOffset = medianOffset;
   
+  // Calculer la moyenne du RTT
   const avgRtt = stats.rtts.reduce((a, b) => a + b, 0) / stats.rtts.length;
+  stats.averageRtt = avgRtt;
   
-  return { medianOffset: median, averageRtt: avgRtt };
+  // ✅ Calculer le jitter (écart-type du RTT)
+  const rttVariance = stats.rtts.reduce((sum, r) => sum + Math.pow(r - avgRtt, 2), 0) / stats.rtts.length;
+  const jitter = Math.sqrt(rttVariance);
+  stats.jitter = jitter;
+  
+  return { medianOffset, averageRtt: avgRtt, jitter };
 }
 
 /**
