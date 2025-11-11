@@ -98,10 +98,20 @@ export function useServerTime(options = {}) {
         // Calculer RTT moyen
         const avgRtt = offsetSamplesRef.current.reduce((acc, s) => acc + s.rtt, 0) / offsetSamplesRef.current.length;
         
+        // 📊 Calculer la stabilité de l'offset (écart-type)
+        const offsetVariance = offsets.reduce((acc, o) => acc + Math.pow(o - medianOffset, 2), 0) / offsets.length;
+        const offsetStdDev = Math.sqrt(offsetVariance);
+        
         // Mettre à jour l'état
         setTimeOffset(medianOffset);
-        setSyncQuality({ rtt: avgRtt, accuracy: Math.abs(rtt / 2), samples: offsets.length });
+        setSyncQuality({ 
+          rtt: avgRtt, 
+          accuracy: Math.abs(rtt / 2), 
+          samples: offsets.length,
+          stability: offsetStdDev // ✅ Ajout de la stabilité
+        });
         setIsSynced(true);
+
         
         // Notifier le serveur de l'offset calculé pour monitoring
         socket.emit('time_sync_offset', { offset: medianOffset, rtt: avgRtt });

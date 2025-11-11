@@ -62,7 +62,7 @@ function recordBuzzEvent(roomCode, buzzEvent) {
   const buzzEventData = {
     timestamp: Date.now(),
     winner: buzzEvent.winner,
-    winnerSocketId: buzzEvent.candidates[0]?.socketId, // Pour retrouver l'event lors du verdict
+    winnerSocketId: buzzEvent.winnerSocketId || buzzEvent.candidates[0]?.socketId, // ✅ Utiliser le winnerSocketId passé explicitement (fallback sur candidates[0] pour rétrocompatibilité)
     gracePeriod: buzzEvent.gracePeriod,
     equalityThreshold: buzzEvent.equalityThreshold,
     candidates: buzzEvent.candidates.map(c => ({
@@ -260,6 +260,15 @@ function updateBuzzVerdict(roomCode, winnerSocketId, verdict) {
   
   const analytics = roomAnalytics[roomCode];
   
+  // 🔍 Log de debug pour diagnostiquer les problèmes de matching
+  logger.info('ANALYTICS', 'Tentative de mise à jour verdict', {
+    roomCode,
+    winnerSocketId,
+    verdict,
+    pendingBuzzCount: analytics.buzzHistory.filter(e => e.verdict === 'pending').length,
+    totalBuzzCount: analytics.buzzHistory.length
+  });
+  
   // Trouver le buzz le plus récent de ce joueur
   const buzzEvent = analytics.buzzHistory.find(event => 
     event.winnerSocketId === winnerSocketId && event.verdict === 'pending'
@@ -268,6 +277,25 @@ function updateBuzzVerdict(roomCode, winnerSocketId, verdict) {
   if (buzzEvent) {
     buzzEvent.verdict = verdict;
     buzzEvent.judgedAt = Date.now();
+    logger.info('ANALYTICS', 'Verdict mis à jour avec succès', {
+      roomCode,
+      winnerSocketId,
+      verdict,
+      winner: buzzEvent.winner,
+      timestamp: buzzEvent.timestamp
+    });
+  } else {
+    logger.warn('ANALYTICS', 'Aucun buzz event pending trouvé pour ce joueur', {
+      roomCode,
+      winnerSocketId,
+      verdict,
+      recentBuzzEvents: analytics.buzzHistory.slice(0, 3).map(e => ({
+        winner: e.winner,
+        winnerSocketId: e.winnerSocketId,
+        verdict: e.verdict,
+        timestamp: e.timestamp
+      }))
+    });
   }
 }
 

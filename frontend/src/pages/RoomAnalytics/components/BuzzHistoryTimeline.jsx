@@ -101,30 +101,33 @@ function BuzzHistoryTimeline({ historyData }) {
                       </tr>
                     </thead>
                     <tbody>
-                      {event.candidates.map((candidate, idx) => (
-                        <tr 
-                          key={idx}
-                          className={idx === 0 ? 'buzz-timeline__candidate--winner' : ''}
-                        >
-                          <td>{idx + 1}</td>
-                          <td>
-                            {candidate.pseudo}
-                            {idx === 0 && ' 🏆'}
-                            {candidate.wasEqual && ' ≈'}
-                          </td>
-                          <td className="buzz-timeline__mono buzz-timeline__delta">
-                            {formatTimeDelta(candidate.delta)}
-                          </td>
-                          <td className="buzz-timeline__mono">{Math.round(candidate.latency)}ms</td>
-                          <td>
-                            {candidate.isSynced ? (
-                              <span className="buzz-timeline__sync-badge buzz-timeline__sync-badge--yes">✓</span>
-                            ) : (
-                              <span className="buzz-timeline__sync-badge buzz-timeline__sync-badge--no">✗</span>
-                            )}
-                          </td>
-                        </tr>
-                      ))}
+                      {event.candidates.map((candidate, idx) => {
+                        const isWinner = candidate.socketId === event.winnerSocketId;
+                        return (
+                          <tr 
+                            key={idx}
+                            className={isWinner ? 'buzz-timeline__candidate--winner' : ''}
+                          >
+                            <td>{idx + 1}</td>
+                            <td>
+                              {candidate.pseudo}
+                              {isWinner && ' 🏆'}
+                              {candidate.wasEqual && ' ≈'}
+                            </td>
+                            <td className="buzz-timeline__mono buzz-timeline__delta">
+                              {formatTimeDelta(candidate.delta)}
+                            </td>
+                            <td className="buzz-timeline__mono">{Math.round(candidate.latency)}ms</td>
+                            <td>
+                              {candidate.isSynced ? (
+                                <span className="buzz-timeline__sync-badge buzz-timeline__sync-badge--yes">✓</span>
+                              ) : (
+                                <span className="buzz-timeline__sync-badge buzz-timeline__sync-badge--no">✗</span>
+                              )}
+                            </td>
+                          </tr>
+                        );
+                      })}
                     </tbody>
                   </table>
                 </div>

@@ -190,7 +190,8 @@ function calculateGracePeriod(roomCode) {
   // Collecter les latences des joueurs de cette salle
   for (const socketId in room.players) {
     const latencyData = playerLatencies[socketId];
-    if (latencyData) {
+    // Filtrer les valeurs invalides (null, undefined, NaN)
+    if (latencyData && latencyData.average != null && !isNaN(latencyData.average)) {
       roomLatencies.push(latencyData.average);
     }
   }
@@ -344,8 +345,8 @@ function handleBuzz(socket, io, data, callback) {
     
     // ⏱️ CALCUL DU TEMPS COMPENSÉ:
     // Option A: Si clientTimestamp est fiable (synchronisé via time_sync)
-    //   → Utiliser clientTimestamp comme référence temporelle du moment du clic
-    //   → Ajouter la demi-latence pour estimer le temps "réel" du clic
+    //   → Le clientTimestamp EST DÉJÀ en temps serveur (grâce à l'offset NTP)
+    //   → Il représente le moment exact du clic en temps serveur, PAS BESOIN de compensation !
     // Option B: Si clientTimestamp non synchronisé (fallback)
     //   → Utiliser serverTimestamp et soustraire la demi-latence
     //
@@ -355,12 +356,12 @@ function handleBuzz(socket, io, data, callback) {
     
     let compensatedTime;
     if (isClientSynced) {
-      // ✅ CLIENT SYNCHRONISÉ: Utiliser le timestamp client comme référence
-      // Le clientTimestamp représente déjà le moment du clic en "temps serveur"
-      // On ajoute juste la demi-latence pour compenser le temps de transmission
-      compensatedTime = clientTimestamp + (playerLatency / 2);
+      // ✅ CLIENT SYNCHRONISÉ: Le clientTimestamp EST DÉJÀ le temps compensé
+      // Le client a envoyé Date.now() + offset, qui donne le moment du clic en temps serveur
+      // ⚠️ NE PAS ajouter de latence ici, sinon on pénalise les joueurs avec haute latence !
+      compensatedTime = clientTimestamp;
       
-      logger.debug('BUZZ', 'Utilisation timestamp client synchronisé', {
+      logger.info('BUZZ', 'Utilisation timestamp client synchronisé', {
         socketId: socket.id,
         clientTimestamp,
         serverTimestamp,
@@ -516,7 +517,7 @@ function processBuzzers(roomCode, io) {
     }
 
     // Trier par temps compensé (calculé selon la synchronisation du client)
-    // - Client synchronisé : clientTimestamp + (latency / 2)
+    // - Client synchronisé : clientTimestamp (déjà en temps serveur grâce à l'offset NTP)
     // - Client non synchronisé : serverTimestamp - (latency / 2)
     validCandidates.sort((a, b) => a.compensatedTime - b.compensatedTime);
 
@@ -575,6 +576,7 @@ function processBuzzers(roomCode, io) {
     // 📊 Enregistrer l'event dans les analytics
     analyticsService.recordBuzzEvent(roomCode, {
       winner: winner.pseudo,
+      winnerSocketId: winner.socketId, // ✅ Passer explicitement le socketId du gagnant
       gracePeriod: gracePeriod,
       equalityThreshold: equalityThreshold,
       candidates: validCandidates.map((c, idx) => ({
