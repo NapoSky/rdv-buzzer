@@ -1052,13 +1052,13 @@ const handleIncrementScore = (playerId, adjustment) => { // Renommer 'increment'
           className="btn btn-danger fixed-width-button"
           onClick={() => setShowKickList(!showKickList)}
         >
-          Kicker un joueur
+          Kick joueur
         </button>
         <button
           className="btn btn-grey fixed-width-button"
           onClick={() => setShowUpdateScoreList(!showUpdateScoreList)}
         >
-          {showUpdateScoreList ? 'Masquer la liste' : 'Modifier un score'}
+          {showUpdateScoreList ? 'Masquer la liste' : 'Modif. score'}
         </button>
         <button
           className="btn btn-warning fixed-width-button"
@@ -1081,7 +1081,7 @@ const handleIncrementScore = (playerId, adjustment) => { // Renommer 'increment'
             className="btn btn-primary fixed-width-button"
             title="Passer à la question suivante"
           >
-            Question suivante
+            Question ➡️
           </button>
         )}
       </div>
