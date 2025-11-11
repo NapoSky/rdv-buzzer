@@ -24,6 +24,9 @@ validateEnv();
 // Création de l'application Express
 const app = express();
 
+// Désactiver le header X-Powered-By pour des raisons de sécurité
+app.disable('x-powered-by');
+
 // Configuration CORS
 const corsOptions = {
   origin: process.env.CORS_ORIGIN || '*',

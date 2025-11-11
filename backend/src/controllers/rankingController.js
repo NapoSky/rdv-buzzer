@@ -34,8 +34,10 @@ async function getGlobalRanking(req, res) {
 
 async function saveGlobalRanking(req, res) {
   let { ranking } = req.body;
-  if (!ranking) {
-    return res.status(400).json({ error: 'Classement manquant' });
+  
+  // Validation stricte du type
+  if (!ranking || !Array.isArray(ranking)) {
+    return res.status(400).json({ error: 'Classement manquant ou invalide (doit être un tableau)' });
   }
   
   // Ajout du timestamp si absent

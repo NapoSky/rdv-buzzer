@@ -14,6 +14,13 @@ function getAuthUrl(req, res) {
   }
   
   const authUrl = spotifyService.getAuthorizationUrl(roomCode);
+  
+  // Validation de sécurité : vérifier que l'URL générée est bien vers Spotify
+  if (!authUrl || !authUrl.startsWith('https://accounts.spotify.com/')) {
+    logger.error('SECURITY', `URL Spotify invalide générée pour la salle ${roomCode}: ${authUrl}`);
+    return res.status(500).json({ error: 'Erreur de configuration Spotify' });
+  }
+  
   res.json({ url: authUrl });
 }
 

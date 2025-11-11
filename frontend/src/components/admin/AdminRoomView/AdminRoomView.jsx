@@ -585,7 +585,15 @@ function AdminRoomView() {
     // Stocker le chemin de redirection dans un cookie avec le domaine extrait
     // Ne pas ajouter le préfixe "." si on est sur localhost
     const cookieDomain = url.hostname === 'localhost' ? '' : `.${baseDomain}`;
-    const cookieOptions = `path=/` + (cookieDomain ? `; domain=${cookieDomain}` : '');
+    const isSecure = window.location.protocol === 'https:';
+    let cookieOptions = `path=/`;
+    if (cookieDomain) {
+      cookieOptions += `; domain=${cookieDomain}`;
+    }
+    if (isSecure) {
+      cookieOptions += `; Secure`;
+    }
+    cookieOptions += `; SameSite=Lax`;
     
     document.cookie = `spotify_redirect=${encodeURIComponent(window.location.pathname + window.location.search)}; ${cookieOptions}`;
     

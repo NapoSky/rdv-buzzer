@@ -31,8 +31,15 @@ function SpotifyCallback() {
     
     // Ne pas ajouter le préfixe "." si on est sur localhost
     const cookieDomain = url.hostname === 'localhost' ? '' : `.${baseDomain}`;
-    const cookieOptions = `path=/; expires=Thu, 01 Jan 1970 00:00:00 GMT` + 
-                         (cookieDomain ? `; domain=${cookieDomain}` : '');
+    const isSecure = window.location.protocol === 'https:';
+    let cookieOptions = `path=/; expires=Thu, 01 Jan 1970 00:00:00 GMT`;
+    if (cookieDomain) {
+      cookieOptions += `; domain=${cookieDomain}`;
+    }
+    if (isSecure) {
+      cookieOptions += `; Secure`;
+    }
+    cookieOptions += `; SameSite=Lax`;
     
     document.cookie = `${name}=; ${cookieOptions}`;
   };

@@ -589,6 +589,15 @@ async function checkAndNotifyTrackChange(roomCode) {
         const trackIdChanged = newTrack?.id !== room.currentTrack?.id;
 
         if (trackIdChanged) {
+            // Log du changement de musique détecté
+            logger.info('SPOTIFY_TRACK_CHANGE', `🎵 Changement de musique détecté pour ${roomCode}`, {
+                previousTrack: room.currentTrack ? `${room.currentTrack.artist} - ${room.currentTrack.title}` : 'Aucune',
+                newTrack: newTrack ? `${newTrack.artist} - ${newTrack.title}` : 'Aucune',
+                trackId: newTrack?.id,
+                hasPlaylist: !!newTrack?.playlistInfo,
+                playlistPosition: newTrack?.playlistInfo ? `${newTrack.playlistInfo.position}/${newTrack.playlistInfo.total}` : 'N/A'
+            });
+            
             Room.resetSpotifyState(roomCode, newTrack);
             const updatedRoom = Room.get(roomCode);
             

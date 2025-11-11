@@ -23,7 +23,19 @@ export const authenticateSpotify = (roomCode) => {
     .then(response => response.json())
     .then(data => {
       if (data.url) {
-        window.location.href = data.url;
+        // Validation de sécurité : vérifier que l'URL est bien vers Spotify
+        try {
+          const url = new URL(data.url);
+          const allowedDomains = ['accounts.spotify.com', 'spotify.com'];
+          
+          if (allowedDomains.some(domain => url.hostname === domain || url.hostname.endsWith(`.${domain}`))) {
+            window.location.href = data.url;
+          } else {
+            console.error('URL de redirection non autorisée:', data.url);
+          }
+        } catch (error) {
+          console.error('URL invalide reçue du backend:', data.url);
+        }
       }
     })
     .catch(error => console.error('Erreur lors de la récupération de l\'URL d\'authentification:', error));

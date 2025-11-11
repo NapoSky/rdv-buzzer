@@ -598,7 +598,7 @@ useEffect(() => {
                 </tr>
               </thead>
               <tbody>
-                {sortedPlayers.slice(0, 10).map((player, index) => {
+                {sortedPlayers.slice(0, 12).map((player, index) => {
                   const scoreChange = scoreChanges[player.pseudo];
                   const rowClasses = `
                     ${player.pseudo === buzzedBy ? 'player-buzzed' : ''}

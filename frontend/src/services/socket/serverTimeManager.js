@@ -25,12 +25,6 @@ export function setGetServerTime(fn, offset, synced) {
   getServerTimeFn = fn;
   timeOffset = offset;
   isSynced = synced;
-  
-  console.log('[serverTimeManager] Fonction getServerTime enregistrée', {
-    offset,
-    synced,
-    offsetSeconds: (offset / 1000).toFixed(3)
-  });
 }
 
 /**
