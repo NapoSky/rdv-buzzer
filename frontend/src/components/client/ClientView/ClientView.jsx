@@ -68,6 +68,96 @@ function ClientView({ setActiveRoomCode }) {
     }
   });
   
+  // Effect Event pour la connexion/reconnexion à la salle (toujours les dernières valeurs)
+  const connectToRoomAndUpdateState = useEffectEvent(() => {
+    if (!roomCode || !pseudo || roomClosedRef.current) return;
+
+    // Vérifier d'abord si l'utilisateur a été expulsé
+    if (localStorage.getItem('kicked_from_' + roomCode) === 'true') {
+      onError('Vous avez été expulsé de cette salle par l\'administrateur.');
+      navigateToHome();
+      return;
+    }
+  
+    joinRoom(roomCode, pseudo).then(response => {
+      if (response && response.error) {
+        setRoomError(response.error);
+        onError(response.error);
+      } else if (response) {
+        // Mettre à jour l'état de pause et de présence admin en fonction de la réponse du serveur
+        if (response.paused !== undefined) {
+          setGamePaused(response.paused);
+          
+          // Si la partie est en pause, désactiver le buzzer
+          if (response.paused) {
+            setIsDisabled(true);
+          }
+        }
+        
+        // Mettre à jour la présence de l'admin si l'information est disponible
+        if (response.adminPresent !== undefined) {
+          setAdminPresent(response.adminPresent);
+          setShowAdminMissingDialog(!response.adminPresent);
+        }
+
+        // --- Initialisation Spotify à la connexion ---
+        const receivedOptions = response.options || {};
+        setRoomOptions(receivedOptions);
+        //console.log("[ClientView] Options de salle reçues à l'init:", receivedOptions);
+
+        let initialArtistFound = false;
+        let initialTitleFound = false;
+        if (receivedOptions?.spotifyEnabled && response.currentTrack) {
+          //console.log("[ClientView] Piste actuelle reçue à l'init:", response.currentTrack);
+          setSpotifyTrackInfo(response.currentTrack);
+          initialArtistFound = response.artistFound || false;
+          initialTitleFound = response.titleFound || false;
+          setFoundArtist(initialArtistFound);
+          setFoundTitle(initialTitleFound);
+        } else {
+          // S'il n'y a pas de piste actuelle, on réinitialise
+          setSpotifyTrackInfo(null);
+          setFoundArtist(false);
+          setFoundTitle(false);
+        }
+
+        // Déterminer si la piste est déjà trouvée initialement
+        const initialTrackFullyFound =
+          (receivedOptions?.roomType === 'Standard' && (initialArtistFound || initialTitleFound)) ||
+          (receivedOptions?.roomType === 'Titre/Artiste' && initialArtistFound && initialTitleFound);
+
+        // Mettre à jour qui avait buzzé si l'info est là
+        const firstBuzzData = response.firstBuzzPlayer || response.buzzedBy; // Utiliser la donnée la plus récente
+        setBuzzedBy(firstBuzzData || '');
+        setFirstBuzzer(firstBuzzData || null); // Garder une trace du premier buzzer
+
+        // ✅ CORRECTION : Si un délai de changement de track est encore actif, l'appliquer EN PREMIER
+        if (response.trackChangeDelayRemaining > 0) {
+          //console.log(`[ClientView] 🔴 DÉLAI DÉTECTÉ: ${response.trackChangeDelayRemaining}ms restants`);
+          // Désactiver le buzzer et lancer le countdown visuel
+          resetLocalBuzzerState(false, response.trackChangeDelayRemaining);
+          const secondsRemaining = Math.ceil(response.trackChangeDelayRemaining / 1000);
+          onInfo(`Buzzer disponible dans ${secondsRemaining} seconde${secondsRemaining > 1 ? 's' : ''}...`);
+        } else {
+          //console.log("[ClientView] ✅ Pas de délai en cours, activation normale");
+          // Ajuster isDisabled seulement si pas de délai en cours: désactiver si pause OU qqn a buzzé OU piste déjà trouvée
+          setIsDisabled(response.paused || !!firstBuzzData || initialTrackFullyFound);
+        }
+        // --- Fin Initialisation Spotify ---
+                 
+        // --- Marquer comme "joined" SEULEMENT MAINTENANT (tout à la fin) ---
+        setJoined(true); // Déclenche le rendu de la vue principale
+        setActiveRoomCode(roomCode);
+        setRoomError('');
+        onSuccess(`Vous avez rejoint la salle ${roomCode}`);
+        // -------------------------------------------------------------------
+      }
+    }).catch(err => {
+      setRoomError("Erreur de connexion au serveur");
+      onError('Impossible de se connecter au serveur');
+    });
+  });
+  
   // Navigation et paramètres URL
   const [searchParams] = useSearchParams();
   const navigate = useNavigate();
@@ -127,81 +217,6 @@ function ClientView({ setActiveRoomCode }) {
   // Ajouter un state pour la connexion réseau
   const [isOnline, setIsOnline] = useState(navigator.onLine);
 
-  // Fonction pour rejoindre la salle actuelle
-  const joinCurrentRoom = () => {
-    // Vérifier d'abord si l'utilisateur a été expulsé
-    if (localStorage.getItem('kicked_from_' + roomCode) === 'true') {
-      // Correction
-      onError('Vous avez été expulsé de cette salle par l\'administrateur.');
-      navigateToHome();
-      return;
-    }
-  
-    joinRoom(roomCode, pseudo).then(response => {
-      if (response && response.error) {
-        setRoomError(response.error);
-        // Correction
-        onError(response.error);
-      } else if (response) {
-
-        // Mettre à jour l'état de pause
-        if (response.paused !== undefined) {
-          setGamePaused(response.paused);
-        }
-
-        // Mettre à jour la présence de l'admin
-        if (response.adminPresent !== undefined) {
-          setAdminPresent(response.adminPresent);
-          setShowAdminMissingDialog(!response.adminPresent);
-        }
-
-        // --- Initialisation Spotify à la connexion ---
-        const receivedOptions = response.options || {};
-        setRoomOptions(receivedOptions); // Met à jour l'état roomOptions
-        //console.log("[ClientView] Options de salle reçues à l'init (stringifié):", JSON.stringify(receivedOptions));
-
-        let initialArtistFound = false;
-        let initialTitleFound = false;
-        if (receivedOptions?.spotifyEnabled && response.currentTrack) {
-          //console.log("[ClientView] Piste actuelle reçue à l'init:", response.currentTrack);
-          setSpotifyTrackInfo(response.currentTrack);
-          initialArtistFound = response.artistFound || false;
-          initialTitleFound = response.titleFound || false;
-          setFoundArtist(initialArtistFound);
-          setFoundTitle(initialTitleFound);
-        } else {
-          setSpotifyTrackInfo(null);
-          setFoundArtist(false);
-          setFoundTitle(false);
-        }
-
-        const initialTrackFullyFound =
-          (receivedOptions?.roomType === 'Standard' && (initialArtistFound || initialTitleFound)) ||
-          (receivedOptions?.roomType === 'Titre/Artiste' && initialArtistFound && initialTitleFound);
-
-        const firstBuzzData = response.firstBuzzPlayer || response.buzzedBy;
-        setBuzzedBy(firstBuzzData || '');
-        setFirstBuzzer(firstBuzzData || null);
-
-        // Ajuster isDisabled basé sur TOUTES les infos reçues
-        const shouldBeDisabled = response.paused || !!firstBuzzData || initialTrackFullyFound;
-        setIsDisabled(shouldBeDisabled);
-
-        // --- Marquer comme "joined" SEULEMENT MAINTENANT ---
-        setJoined(true); // Déclenche le rendu de la vue principale
-        setActiveRoomCode(roomCode);
-        // ----------------------------------------------------
-
-        setRoomError('');
-        onSuccess(`Vous avez rejoint la salle ${roomCode}`);
-      }
-    }).catch(err => {
-      setRoomError("Erreur de connexion au serveur");
-      // Correction
-      onError('Impossible de se connecter au serveur');
-    });
-  };
-
   // Fonction pour revenir à l'accueil
   const navigateToHome = () => {
     if (joined && roomCode && pseudo) {
@@ -255,10 +270,13 @@ const handleBuzz = (e) => {
     setIsDisabled(true);
 
     buzz(roomCode, pseudo, (response) => {
-      // ✅ ANTISPAM : Libérer le flag de buzz en cours
-      setIsBuzzing(false);
+      // ❌ NE PAS LIBÉRER isBuzzing ICI : Trop tôt, permet le spam pendant période de grâce
+      // ✅ isBuzzing sera libéré seulement quand un événement 'buzzed' ou 'reset_buzzer' arrive
       
       if (response && response.error) {
+        // En cas d'erreur, on peut libérer isBuzzing car le buzz n'a pas été accepté
+        setIsBuzzing(false);
+        
         // Gérer les erreurs de buzz (trop tard, etc.)
         if (response.lateAttempt) {
           if (response.buzzedBy) {
@@ -277,10 +295,8 @@ const handleBuzz = (e) => {
           }
         }
       }
-      // Si le buzz réussit, l'événement 'buzzed' mettra à jour l'état isDisabled correctement
-      // Si le buzz échoue car piste trouvée (vérification serveur), le serveur ne fera rien,
-      // mais l'état local isDisabled devrait déjà être true à cause de handleJudgeAnswer.
-      // On ne réactive PAS le bouton ici si le buzz réussit, on attend les événements serveur.
+      // ✅ Si le buzz réussit ({ received: true }), NE PAS libérer isBuzzing
+      // Attendre l'événement 'buzzed' qui indiquera que le gagnant a été désigné
     });
   }
 };
@@ -290,13 +306,6 @@ const handleBuzz = (e) => {
     setShowFinalRanking(false);
     localStorage.removeItem('roomCode');
     navigate('/');
-  };
-
-  // Fonction pour réinitialiser l'affichage Spotify
-  const resetSpotifyDisplay = () => {
-    setSpotifyTrackInfo(null);
-    setFoundArtist(false);
-    setFoundTitle(false);
   };
 
   // Fonction pour réinitialiser l'état local du buzzer
@@ -345,99 +354,24 @@ const handleBuzz = (e) => {
 
   // Configuration des écouteurs d'événements socket
   useEffect(() => {
+    // ✅ Si pas de socket, l'initialiser UNE SEULE FOIS
     if (!socket) {
       initializeSocket();
+      // Sortir et attendre le prochain rendu quand socket sera disponible
       return;
     }
     
-    // Fonction de connexion à la salle qui prend également en compte l'état de la partie
-    const connectToRoomAndUpdateState = () => {
-      if (!roomCode || !pseudo || roomClosedRef.current) return;
-  
-      // Vérifier d'abord si l'utilisateur a été expulsé
-      if (localStorage.getItem('kicked_from_' + roomCode) === 'true') {
-        onError('Vous avez été expulsé de cette salle par l\'administrateur.');
-        navigateToHome();
-        return;
-      }
-    
-      joinRoom(roomCode, pseudo).then(response => {
-        if (response && response.error) {
-          setRoomError(response.error);
-          onError(response.error);
-        } else if (response) {
-          setJoined(true);
-          setActiveRoomCode(roomCode);
-  
-          // Mettre à jour l'état de pause et de présence admin en fonction de la réponse du serveur
-          if (response.paused !== undefined) {
-            setGamePaused(response.paused);
-            
-            // Si la partie est en pause, désactiver le buzzer
-            if (response.paused) {
-              setIsDisabled(true);
-            }
-          }
-          
-          // Mettre à jour la présence de l'admin si l'information est disponible
-          if (response.adminPresent !== undefined) {
-            setAdminPresent(response.adminPresent);
-            setShowAdminMissingDialog(!response.adminPresent);
-          }
-
-          // --- Initialisation Spotify à la connexion ---
-          const receivedOptions = response.options || {};
-          setRoomOptions(receivedOptions);
-          //console.log("[ClientView] Options de salle reçues à l'init:", receivedOptions);
-
-          let initialArtistFound = false;
-          let initialTitleFound = false;
-          if (receivedOptions?.spotifyEnabled && response.currentTrack) {
-            //console.log("[ClientView] Piste actuelle reçue à l'init:", response.currentTrack);
-            setSpotifyTrackInfo(response.currentTrack);
-            initialArtistFound = response.artistFound || false;
-            initialTitleFound = response.titleFound || false;
-            setFoundArtist(initialArtistFound);
-            setFoundTitle(initialTitleFound);
-          } else {
-            // S'il n'y a pas de piste actuelle, on réinitialise
-            setSpotifyTrackInfo(null);
-            setFoundArtist(false);
-            setFoundTitle(false);
-          }
-
-          // Déterminer si la piste est déjà trouvée initialement
-          const initialTrackFullyFound =
-            (receivedOptions?.roomType === 'Standard' && (initialArtistFound || initialTitleFound)) ||
-            (receivedOptions?.roomType === 'Titre/Artiste' && initialArtistFound && initialTitleFound);
-
-          // Mettre à jour qui avait buzzé si l'info est là
-          const firstBuzzData = response.firstBuzzPlayer || response.buzzedBy; // Utiliser la donnée la plus récente
-          setBuzzedBy(firstBuzzData || '');
-          setFirstBuzzer(firstBuzzData || null); // Garder une trace du premier buzzer
-
-          // Ajuster isDisabled: désactiver si pause OU qqn a buzzé OU piste déjà trouvée
-          setIsDisabled(response.paused || !!firstBuzzData || initialTrackFullyFound);
-          // --- Fin Initialisation Spotify ---
-          
-          setRoomError('');
-          onSuccess(`Vous avez rejoint la salle ${roomCode}`);
-        }
-      }).catch(err => {
-        setRoomError("Erreur de connexion au serveur");
-        onError('Impossible de se connecter au serveur');
-      });
-    };
-    
-    // Remplace l'appel à joinCurrentRoom() pour utiliser notre nouvelle fonction
-    //if (!joined && roomCode && pseudo && !roomClosedRef.current && socket.connected) {
-    //  connectToRoomAndUpdateState();
-    //}
+    // ✅ Si socket non connectée, ne pas configurer les listeners
+    // Ils seront configurés lors de la prochaine exécution du useEffect
+    if (!socket.connected) {
+      return;
+    }
   
     // Fonctions utilitaires pour les actions communes
     const resetBuzzerState = (showNotification = true) => {
       setBuzzedBy('');
       setShowBuzzedDialog(false);
+      setIsBuzzing(false); // ✅ Libérer isBuzzing : le buzzer est réinitialisé
       
       if (showNotification) {
         onInfo('Le buzzer est à nouveau disponible');
@@ -458,24 +392,13 @@ const handleBuzz = (e) => {
       }
     };
   
-    const handleAdminPresenceChange = (isPresent, customMessage = null) => {
-      setAdminPresent(isPresent);
-      setShowAdminMissingDialog(!isPresent);
-      
-      if (isPresent) {
-          if (customMessage) onSuccess(customMessage);
-      } else {
-        handleGamePauseState(true);
-        if (customMessage) onWarning(customMessage);
-      }
-    };
-  
     const onBuzzed = (data) => {
       if (!data || !data.buzzedBy) return;
       
       setBuzzedBy(data.buzzedBy);
       setShowBuzzedDialog(true);
       setIsDisabled(true);
+      setIsBuzzing(false); // ✅ Libérer isBuzzing : un gagnant a été désigné
       
       if (data.buzzedBy !== pseudo) {
         onWarning(`${data.buzzedBy} a buzzé en premier`);
@@ -513,7 +436,7 @@ const handleBuzz = (e) => {
         } else {
           //console.log("Buzzer reste désactivé après pénalité car piste trouvée ou jeu en pause");
         }
-      }, duration * 1000);
+      }, duration); // ✅ FIX: duration est déjà en millisecondes, pas besoin de * 1000
     };
   
     const onUpdatePlayers = (updatedPlayers) => {
@@ -540,7 +463,7 @@ const handleBuzz = (e) => {
             onError('Vous avez été expulsé de la salle par l\'administrateur.');
             navigateToHome();
           } else {
-            joinCurrentRoom();
+            connectToRoomAndUpdateState();
           }
         });
       }
@@ -565,7 +488,7 @@ const handleBuzz = (e) => {
         
         onInfo('L\'administrateur a fermé la salle');
       } else {
-        joinCurrentRoom();
+        connectToRoomAndUpdateState();
       }
     };
   
@@ -667,11 +590,11 @@ const handleBuzz = (e) => {
       setSpotifyTrackInfo(newTrack);
       setFoundArtist(false);
       setFoundTitle(false);
-    
-      // Reset le buzzer avec un délai de 5 secondes
-      resetLocalBuzzerState(false, 5000);
 
-      info("Nouvelle piste ! Buzzer disponible dans 5 secondes...");
+      // Reset le buzzer avec un délai de 3 secondes
+      resetLocalBuzzerState(false, 3000);
+
+      info("Nouvelle piste ! Buzzer disponible dans 3 secondes...");
     };
 
     const handleRoomOptionsUpdated = (options) => {
@@ -949,6 +872,25 @@ const handleBuzz = (e) => {
     }
   }, [isConnected, joined, players, pseudo]);
 
+  // ✅ CORRECTION : Désactiver le buzzer quand la piste est pleinement trouvée
+  // MAIS SEULEMENT si on n'est pas déjà dans un état de pénalité/délai
+  useEffect(() => {
+    if (!joined || !roomOptions?.spotifyEnabled) return;
+
+    const trackFullyFound = 
+      (roomOptions?.roomType === 'Standard' && (foundArtist || foundTitle)) ||
+      (roomOptions?.roomType === 'Titre/Artiste' && foundArtist && foundTitle);
+
+    if (trackFullyFound) {
+      // Désactiver le buzzer SEULEMENT si on est actuellement actif
+      // NE PAS interférer avec les pénalités en cours
+      if (!isDisabled) {
+        setIsDisabled(true);
+      }
+    }
+    // NE PAS réactiver automatiquement ici - laisser les autres mécanismes le faire
+  }, [foundArtist, foundTitle, roomOptions, joined, isDisabled]);
+
   // Tentative de connexion initiale
   useEffect(() => {
     if (!roomClosedRef.current && !joined && roomCode && pseudo && !reconnectAttemptRef.current) {
@@ -958,7 +900,7 @@ const handleBuzz = (e) => {
         .then((currentSocket) => {
           reconnectAttemptRef.current = false;
           if (currentSocket && currentSocket.connected) {
-            joinCurrentRoom();
+            connectToRoomAndUpdateState();
           }
         })
         .catch(() => {
@@ -1407,37 +1349,62 @@ const handleBuzz = (e) => {
         </div>
 
         <div className="buzz-zone">
-          <button
-            className={`buzz-button ${isDisabled ? 'disabled' : gamePaused ? 'paused' : isBuzzing ? 'buzzing' : 'active'}`}
-            onClick={handleBuzz}
-            onTouchStart={handleBuzz}
-            disabled={gamePaused || isDisabled || isBuzzing}
-          >
-            <div className="buzz-button-content">
-              <LightningBoltIcon className="buzz-icon" />
-              <span className="buzz-text">BUZZ</span>
-            </div>
-            {gamePaused && (
-              <div className="button-status paused-status">
-                Partie en pause
-              </div>
-            )}
-            {isBuzzing && !gamePaused && (
-              <div className="button-status buzzing-status">
-                Envoi en cours...
-              </div>
-            )}
+          <div className="buzz-button-wrapper">
             {trackChangeCountdown !== null && !gamePaused && !isBuzzing && (
-              <div className="button-status buzzing-status">
-                {trackChangeCountdown}
-              </div>
+              <svg className="countdown-circle" viewBox="0 0 220 220">
+                <circle
+                  className="countdown-circle-bg"
+                  cx="110"
+                  cy="110"
+                  r="105"
+                />
+                <circle
+                  className="countdown-circle-progress"
+                  cx="110"
+                  cy="110"
+                  r="105"
+                />
+              </svg>
             )}
-            {isDisabled && !gamePaused && !isBuzzing && trackChangeCountdown === null && (
-              <div className="button-status disabled-status">
-                Buzzer désactivé
+            <button
+              className={`buzz-button ${isDisabled ? 'disabled' : gamePaused ? 'paused' : isBuzzing ? 'buzzing' : trackChangeCountdown !== null ? 'countdown' : 'active'}`}
+              onClick={handleBuzz}
+              onTouchStart={handleBuzz}
+              disabled={gamePaused || isDisabled || isBuzzing}
+            >
+              <div className="buzz-button-content">
+                <LightningBoltIcon className="buzz-icon" />
+                <span className="buzz-text">
+                  {trackChangeCountdown !== null && !gamePaused && !isBuzzing ? trackChangeCountdown : 'BUZZ'}
+                </span>
               </div>
-            )}
-          </button>
+              {gamePaused && (
+                <div className="button-status paused-status">
+                  Partie en pause
+                </div>
+              )}
+              {isBuzzing && !gamePaused && (
+                <div className="button-status buzzing-status">
+                  Envoi en cours...
+                </div>
+              )}
+              {(() => {
+                // Calculer si la piste est trouvée pour afficher le bon message
+                const trackFullyFound = 
+                  (roomOptions?.roomType === 'Standard' && (foundArtist || foundTitle)) ||
+                  (roomOptions?.roomType === 'Titre/Artiste' && foundArtist && foundTitle);
+                
+                if (isDisabled && !gamePaused && !isBuzzing && trackChangeCountdown === null) {
+                  return (
+                    <div className="button-status disabled-status">
+                      {trackFullyFound ? 'Piste trouvée !' : 'Buzzer désactivé'}
+                    </div>
+                  );
+                }
+                return null;
+              })()}
+            </button>
+          </div>
         </div>
 
         {/* Zone SpotifyDisplay */}

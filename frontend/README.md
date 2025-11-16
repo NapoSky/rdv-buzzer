@@ -70,12 +70,29 @@ frontend/
 
 ## ⚙️ Variables d'environnement
 
-| Variable               | Description                          | Valeur par défaut         | Obligatoire |
-|------------------------|--------------------------------------|---------------------------|-------------|
-| VITE_BACKEND_URL       | URL du serveur backend               | `http://localhost:3001`   | ✅ Oui      |
-| VITE_APP_SECRET        | Clé secrète pour l'API/rdv-backend   | -                         | ✅ Oui      |
-| VITE_ADMIN_PASSWORD    | Mot de passe administrateur          | `secret`                  | ✅ Oui      |
-| VITE_SPOTIFY_CLIENT_ID | ID client Spotify pour l'intégration | -                         | ➖ Si activé|
+| Variable                  | Description                                      | Valeur par défaut         | Obligatoire |
+|---------------------------|--------------------------------------------------|---------------------------|-------------|
+| VITE_BACKEND_URL          | URL du serveur backend                           | `http://localhost:3001`   | ✅ Oui      |
+| VITE_APP_SECRET           | Clé secrète pour l'API/rdv-backend               | -                         | ✅ Oui      |
+| VITE_ADMIN_PASSWORD       | Mot de passe administrateur complet              | `secret`                  | ✅ Oui      |
+| VITE_OPERATOR_PASSWORD    | Mot de passe opérateur (droits limités)          | `operator`                | ➖ Non      |
+| VITE_SPOTIFY_CLIENT_ID    | ID client Spotify pour l'intégration             | -                         | ➖ Si activé|
+
+### 🔐 Rôles administrateurs
+
+Le système supporte deux niveaux d'accès administrateur :
+
+- **👑 Administrateur complet** (`VITE_ADMIN_PASSWORD`) :
+  - Créer des salles avec sauvegarde possible
+  - Fermer des salles
+  - Gérer le classement (modifier, supprimer, purger)
+  - Accès complet à toutes les fonctionnalités
+
+- **🔧 Opérateur** (`VITE_OPERATOR_PASSWORD`) :
+  - Créer des salles (sauvegarde désactivée)
+  - Rejoindre des sessions en cours
+  - ❌ Pas d'accès au classement
+  - ❌ Ne peut pas fermer les salles
 
 ---
 
@@ -113,6 +130,7 @@ npm start
 docker build -t rdv-buzzer-frontend \
   --build-arg VITE_BACKEND_URL=http://localhost:3001 \
   --build-arg VITE_ADMIN_PASSWORD=your_admin_password \
+  --build-arg VITE_OPERATOR_PASSWORD=your_operator_password \
   --build-arg VITE_APP_SECRET=your_backend_app_secret \
   .
 

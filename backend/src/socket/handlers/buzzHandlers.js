@@ -305,6 +305,24 @@ function handleBuzz(socket, io, data, callback) {
       return callback({ error: 'La partie est en pause' });
     }
 
+    // ✅ VALIDATION SERVEUR : Vérifier le délai de 3 secondes après changement de track Spotify
+    const TRACK_CHANGE_DELAY = 3000; // 3 secondes
+    if (room.trackChangedAt && room.options?.spotifyEnabled) {
+      const timeSinceChange = Date.now() - room.trackChangedAt;
+      if (timeSinceChange < TRACK_CHANGE_DELAY) {
+        const remainingMs = TRACK_CHANGE_DELAY - timeSinceChange;
+        logger.info('BUZZ', `Buzz rejeté pour ${socket.id}: délai de sécurité en cours`, {
+          roomCode,
+          timeSinceChange,
+          remainingMs
+        });
+        return callback({ 
+          error: 'Délai de sécurité en cours, veuillez patienter',
+          remainingMs 
+        });
+      }
+    }
+
     // ✅ SYNCHRONISATION : Vérifier si un jugement est en cours
     if (Room.isJudgmentInProgress(roomCode)) {
       return callback({ error: 'Jugement en cours, veuillez patienter' });
@@ -376,6 +394,7 @@ function handleBuzz(socket, io, data, callback) {
       // Utiliser le timestamp serveur et soustraire la demi-latence
       // Note: playerRTT ici est le VRAI RTT (pas l'offset déguisé)
       compensatedTime = serverTimestamp - (playerRTT / 2);
+      const timeDifference = Math.abs(clientTimestamp - serverTimestamp);
       
       logger.warn('BUZZ', 'Client non synchronisé, fallback méthode classique', {
         socketId: socket.id,
@@ -697,11 +716,15 @@ function handleResetBuzzer(socket, io, data) {
 
 /**
  * Gère la désactivation temporaire du buzzer pour un joueur (après mauvaise réponse)
+ * @param {Object} socket - Socket de l'admin
+ * @param {Object} io - Instance Socket.IO
+ * @param {Object} data - { roomCode, playerId, customDelay? }
+ *   - customDelay: Délai personnalisé en secondes (optionnel, sinon utilise penaltyDelay)
  */
 function handleDisableBuzzer(socket, io, data) {
   try {
     // On attend juste roomCode et playerId, la durée vient des options de la salle
-    const { roomCode, playerId } = data;
+    const { roomCode, playerId, customDelay } = data;
     const room = Room.get(roomCode);
     
     if (!room) return logger.warn('DISABLE_BUZZER', 'Salle non trouvée', { roomCode });
@@ -709,7 +732,8 @@ function handleDisableBuzzer(socket, io, data) {
     if (!room.players[playerId]) return logger.warn('DISABLE_BUZZER', 'Joueur non trouvé', { roomCode, playerId });
     
     const options = room.options || defaultRoomOptions;
-    const penaltyDurationSeconds = options.penaltyDelay; // Utiliser la durée des options
+    // Utiliser customDelay si fourni, sinon penaltyDelay des options
+    const penaltyDurationSeconds = customDelay !== undefined ? customDelay : options.penaltyDelay;
     
     // Ne rien faire si la pénalité est de 0 seconde
     if (penaltyDurationSeconds <= 0) {

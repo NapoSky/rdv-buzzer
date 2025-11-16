@@ -9,7 +9,7 @@
   --spectator-primary: #6f42c1;
   --spectator-secondary: #e83e8c;
   
-  min-height: 94.9vh;
+  min-height: calc(100vh - 73px);
   padding: 30px 1rem 1rem 1rem;
   background: var(--bg-light, #ffffff);
   color: var(--text-light);

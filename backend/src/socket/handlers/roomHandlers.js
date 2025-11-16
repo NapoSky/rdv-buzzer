@@ -58,6 +58,7 @@ function handleCreateRoom(socket, options, callback) {
       pointsCorrect: typeof options?.pointsCorrect === 'number' && options.pointsCorrect >= 0 ? options.pointsCorrect : defaultRoomOptions.pointsCorrect,
       pointsWrong: typeof options?.pointsWrong === 'number' && options.pointsWrong >= 0 ? options.pointsWrong : defaultRoomOptions.pointsWrong,
       penaltyDelay: typeof options?.penaltyDelay === 'number' && options.penaltyDelay >= 0 ? options.penaltyDelay : defaultRoomOptions.penaltyDelay,
+      correctAnswerDelay: typeof options?.correctAnswerDelay === 'number' && options.correctAnswerDelay >= 0 ? options.correctAnswerDelay : defaultRoomOptions.correctAnswerDelay,
       saveRoom: typeof options?.saveRoom === 'boolean' ? options.saveRoom : defaultRoomOptions.saveRoom,
       roomType: ['Standard', 'Titre/Artiste'].includes(options?.roomType || options?.roomType)
                 ? (options.roomType || options.roomType)

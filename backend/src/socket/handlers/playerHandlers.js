@@ -185,21 +185,69 @@ console.log('Envoi judge_answer avec:', {
     // Si la piste est maintenant entièrement trouvée OU si la réponse était correcte, reset général.
     if (room.trackIsFullyFound || isCorrectJudgment) {
       logger.info('PLAYERS', `Réponse correcte ou piste trouvée (${room.trackIsFullyFound}), réinitialisation générale des buzzers`, { roomCode });
-      // handleResetBuzzer met à jour l'état buzzed des joueurs et émet update_players + reset_buzzer
-      handleResetBuzzer(socket, io, { roomCode });
       
-      // ✅ SYNCHRONISATION : Désactiver le flag de jugement APRÈS le reset complet
-      Room.setJudgmentInProgress(roomCode, false);
-      logger.info('PLAYERS', 'Fin du jugement (piste trouvée/correcte) - buzzs débloqués', { roomCode, playerId });
+      // ✅ NOUVEAU : Déterminer si c'est une réponse partiellement correcte (correct_artist ou correct_title uniquement)
+      const isPartiallyCorrect = ['correct_artist', 'good_artist', 'correct_title', 'good_title'].includes(judgment);
+      const spotifyEnabled = room.options?.spotifyEnabled || false;
+      
+      // Appliquer le délai UNIQUEMENT si :
+      // - Spotify actif
+      // - Réponse partiellement correcte (artist OU title, pas les deux)
+      // - Piste non complètement trouvée
+      if (spotifyEnabled && isPartiallyCorrect && !room.trackIsFullyFound) {
+        logger.info('PLAYERS', 'Réponse partiellement correcte avec Spotify actif, application du délai au joueur', { 
+          roomCode, playerId, judgment, delay: options.correctAnswerDelay 
+        });
+        
+        // Débloquer tous les autres joueurs AVANT d'appliquer le délai
+        for (let id in room.players) {
+          if (id !== playerId && room.players[id]) {
+            room.players[id].buzzed = false;
+          }
+        }
+        Room.clearBuzz(roomCode); // Réinitialiser firstBuzz et lastBuzz
+        
+        // Appliquer le délai au joueur qui a répondu correctement
+        const correctAnswerDelaySeconds = options.correctAnswerDelay;
+        handleDisableBuzzer(socket, io, { roomCode, playerId, customDelay: correctAnswerDelaySeconds });
+        
+        // Émettre reset_buzzer pour débloquer l'UI des autres clients
+        logger.info('PLAYERS', 'Émission reset_buzzer pour débloquer UI des autres clients', { roomCode });
+        io.to(roomCode).emit('reset_buzzer');
+        
+        // ✅ SYNCHRONISATION : Désactiver le flag de jugement APRÈS le délai
+        Room.setJudgmentInProgress(roomCode, false);
+        logger.info('PLAYERS', 'Fin du jugement (partiellement correcte avec délai) - buzzs débloqués sauf pour le joueur', { roomCode, playerId });
+      } else {
+        // Comportement normal : reset complet si piste trouvée, réponse complète, ou Spotify non actif
+        // handleResetBuzzer met à jour l'état buzzed des joueurs et émet update_players + reset_buzzer
+        handleResetBuzzer(socket, io, { roomCode });
+        
+        // ✅ SYNCHRONISATION : Désactiver le flag de jugement APRÈS le reset complet
+        Room.setJudgmentInProgress(roomCode, false);
+        logger.info('PLAYERS', 'Fin du jugement (piste trouvée/correcte complète) - buzzs débloqués', { roomCode, playerId });
+      }
     }
     // Si la réponse était incorrecte ET que la piste n'est PAS encore trouvée
     else if (!isCorrectJudgment && !room.trackIsFullyFound) {
       // Appliquer la pénalité seulement si incorrect ET piste non trouvée
       logger.info('PLAYERS', 'Réponse incorrecte et piste non trouvée, application de la pénalité', { roomCode });
-      // handleDisableBuzzer met le joueur fautif à buzzed=true, émet update_players et buzzer_disabled
-      Room.resetBuzz(roomCode);
+      
+      // ✅ FIX: Débloquer tous les joueurs SAUF le pénalisé AVANT d'appliquer la pénalité
+      logger.info('PLAYERS', 'Déblocage des autres joueurs avant pénalité', { roomCode });
+      for (let id in room.players) {
+        if (id !== playerId && room.players[id]) {
+          room.players[id].buzzed = false;
+        }
+      }
+      Room.clearBuzz(roomCode); // Réinitialiser firstBuzz et lastBuzz
+      
+      // Appliquer la pénalité au joueur fautif (met buzzed=true, émet update_players et buzzer_disabled)
       handleDisableBuzzer(socket, io, { roomCode, playerId });
-      // Note: handleResetBuzzer n'est PAS appelé ici pour que les autres puissent buzzer
+      
+      // Émettre reset_buzzer pour débloquer l'UI des autres clients
+      logger.info('PLAYERS', 'Émission reset_buzzer pour débloquer UI des autres clients', { roomCode });
+      io.to(roomCode).emit('reset_buzzer');
       
       // ✅ SYNCHRONISATION : Désactiver le flag de jugement APRÈS la pénalité
       Room.setJudgmentInProgress(roomCode, false);

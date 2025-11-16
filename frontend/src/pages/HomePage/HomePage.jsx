@@ -1,13 +1,15 @@
 // src/components/HomePage.js
-import React, { useState, useContext, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
+import React, { useState, useContext, useEffect, useEffectEvent } from 'react';
+import { useNavigate, useSearchParams } from 'react-router-dom';
 import * as Dialog from '@radix-ui/react-dialog'
 import { AdminAuthContext } from '../../contexts/AdminAuthContext';
 import { ThemeContext } from '../../contexts/ThemeContext';
 import './HomePage.css';  // Import du CSS local
 import { useNotification } from '../../contexts/NotificationContext';
+import { storage } from '../../utils/storage';
 
 const ADMIN_PASSWORD = import.meta.env.VITE_ADMIN_PASSWORD;
+const OPERATOR_PASSWORD = import.meta.env.VITE_OPERATOR_PASSWORD;
 
 // Modifier cette fonction en dehors du composant HomePage
 const checkRoomExists = async (roomCode, error, setRoomCodeFn = null) => {
@@ -31,7 +33,7 @@ const checkRoomExists = async (roomCode, error, setRoomCodeFn = null) => {
     // Vérifier si la salle existe dans la liste
     if (!rooms[roomCode]) {
       error('La salle n\'existe pas');
-      localStorage.removeItem('roomCode');
+      storage.removeItem('roomCode');
       // Si une fonction setRoomCode est fournie, effacer l'input
       if (setRoomCodeFn) {
         setRoomCodeFn('');
@@ -48,22 +50,34 @@ const checkRoomExists = async (roomCode, error, setRoomCodeFn = null) => {
 
 function HomePage({ setActiveRoomCode }) {
   const navigate = useNavigate();
+  const [searchParams, setSearchParams] = useSearchParams();
   const [roomCode, setRoomCode] = useState('');
   const [pseudo, setPseudo] = useState('');
   const [adminPassword, setAdminPassword] = useState('');
   const [roomExists, setRoomExists] = useState(null); // null, true, false
   const [checkingRoom, setCheckingRoom] = useState(false);
-  const { isAdminAuthenticated, setIsAdminAuthenticated } = useContext(AdminAuthContext);
+  const { isAdminAuthenticated, setIsAdminAuthenticated, adminRole, isOperator } = useContext(AdminAuthContext);
   const { isDarkMode } = useContext(ThemeContext);
   const { info, warn, error, success } = useNotification();
   const [showCreateRoomDialog, setShowCreateRoomDialog] = useState(false);
   const [roomOptions, setRoomOptions] = useState({
     roomType: 'Standard',
     pointsCorrect: 10,
-    pointsWrong: 5,
-    penaltyDelay: 3,
+    pointsWrong: 9,
+    penaltyDelay: 5,
+    correctAnswerDelay: 1,
     saveRoom: true,
   });
+
+  // Forcer saveRoom à false pour les opérateurs
+  useEffect(() => {
+    if (isOperator && isOperator()) {
+      setRoomOptions(prev => ({
+        ...prev,
+        saveRoom: false
+      }));
+    }
+  }, [isOperator, isAdminAuthenticated]);
 
   // Fonction pour vérifier l'existence de la salle en temps réel
   const checkRoomExistsRealTime = async (code) => {
@@ -109,27 +123,40 @@ function HomePage({ setActiveRoomCode }) {
   }, [roomCode]);
 
   // Récupérer les valeurs de roomCode et pseudo depuis le localStorage si le client s'est déjà connecté auparavant
-  useEffect(() => {
-    const savedRoomCode = localStorage.getItem('roomCode');
-    const savedPseudo = localStorage.getItem('pseudo');
+  const handleInitialLoad = useEffectEvent(() => {
+    // D'abord, vérifier si un code de salle est passé en paramètre URL
+    const roomFromUrl = searchParams.get('room');
+    
+    const savedRoomCode = storage.getItem('roomCode');
+    const savedPseudo = storage.getItem('pseudo');
 
     // Restaurer le pseudo s'il existe
     if (savedPseudo) {
       setPseudo(savedPseudo);
     }
 
-    // Restaurer le code de la salle s'il existe (optionnel, mais conserve la logique précédente pour le code)
-    // Si vous voulez que le code de la salle soit aussi restauré indépendamment,
-    // déplacez cette ligne en dehors du 'if (savedPseudo)'
-    if (savedRoomCode) {
-       setRoomCode(savedRoomCode);
+    // Priorité au paramètre URL, sinon localStorage
+    if (roomFromUrl) {
+      setRoomCode(roomFromUrl.toUpperCase());
+      // Nettoyer l'URL pour ne pas garder le paramètre visible
+      setSearchParams({});
+      
+      // Scroller vers le champ pseudo après un court délai pour laisser le temps au rendu
+      setTimeout(() => {
+        const pseudoInput = document.querySelector('input[type="text"][maxLength="30"]');
+        if (pseudoInput) {
+          pseudoInput.scrollIntoView({ behavior: 'smooth', block: 'center' });
+          pseudoInput.focus();
+        }
+      }, 100);
+    } else if (savedRoomCode) {
+      setRoomCode(savedRoomCode);
     }
-    // L'ancien code qui nécessitait les deux :
-    // if (savedRoomCode && savedPseudo) {
-    //   setRoomCode(savedRoomCode);
-    //   setPseudo(savedPseudo);
-    // }
-  }, []);
+  });
+
+  useEffect(() => {
+    handleInitialLoad();
+  }, []); // Exécuter une seule fois au montage
 
   // Rejoindre en tant que client
   const handleJoinRoom = async () => {
@@ -150,7 +177,7 @@ function HomePage({ setActiveRoomCode }) {
     }
     
     // Vérifier si le joueur a été kické de cette salle auparavant
-    const wasKicked = localStorage.getItem('kicked_from_' + roomCode) === 'true';
+    const wasKicked = storage.getItem('kicked_from_' + roomCode) === 'true';
     
     if (wasKicked) {
       warn('Vous avez été expulsé de cette salle par l\'admin et ne pouvez pas la rejoindre à nouveau.');
@@ -165,11 +192,11 @@ function HomePage({ setActiveRoomCode }) {
     }
     
     // La salle existe, on peut continuer
-    localStorage.setItem('roomCode', roomCode);
-    localStorage.setItem('pseudo', pseudo);
+    storage.setItem('roomCode', roomCode);
+    storage.setItem('pseudo', pseudo);
     
     // Si l'on rejoint une salle, on n'est plus admin
-    localStorage.removeItem('localAdminAuthenticated');
+    storage.removeItem('localAdminAuthenticated');
     
     // Mettre à jour l'état global de la salle active
     setActiveRoomCode(roomCode);
@@ -180,11 +207,11 @@ function HomePage({ setActiveRoomCode }) {
   
   // Permettre de revenir dans une salle si les informations sont déjà enregistrées
   const handleRejoinRoom = async () => {
-    const savedRoomCode = localStorage.getItem('roomCode');
-    const savedPseudo = localStorage.getItem('pseudo');
+    const savedRoomCode = storage.getItem('roomCode');
+    const savedPseudo = storage.getItem('pseudo');
     
     // Vérifier si l'utilisateur a été kické de cette salle
-    const wasKicked = localStorage.getItem('kicked_from_' + savedRoomCode) === 'true';
+    const wasKicked = storage.getItem('kicked_from_' + savedRoomCode) === 'true';
     
     if (!savedRoomCode || !savedPseudo) {
       error('Pas d\'informations de connexion sauvegardées');
@@ -194,7 +221,7 @@ function HomePage({ setActiveRoomCode }) {
     if (wasKicked) {
       error('Vous avez été expulsé de cette salle par l\'admin.');
       // Nettoyer pour éviter de futurs problèmes
-      localStorage.removeItem('roomCode');
+      storage.removeItem('roomCode');
       return;
     }
 
@@ -202,7 +229,7 @@ function HomePage({ setActiveRoomCode }) {
     const roomExists = await checkRoomExists(savedRoomCode, error, setRoomCode);
     
     if (!roomExists) {
-      localStorage.removeItem('roomCode');
+      storage.removeItem('roomCode');
       return;
     }
     
@@ -213,14 +240,29 @@ function HomePage({ setActiveRoomCode }) {
 
   // Connexion admin
   const handleAdminLogin = () => {
+    let adminRole = null;
+    
+    // Vérifier admin complet
     if (adminPassword === ADMIN_PASSWORD) {
-      localStorage.setItem('localAdminAuthenticated', 'true');
+      adminRole = 'admin_full';
+    } 
+    // Vérifier opérateur
+    else if (OPERATOR_PASSWORD && adminPassword === OPERATOR_PASSWORD) {
+      adminRole = 'admin_operator';
+    }
+    
+    if (adminRole) {
+      storage.setItem('localAdminAuthenticated', 'true');
+      storage.setItem('adminRole', adminRole);
       setIsAdminAuthenticated(true);
       setAdminPassword('');
-      success('Connexion admin réussie!');
+      
+      const roleLabel = adminRole === 'admin_full' ? 'Administrateur' : 'Opérateur';
+      success(`Connexion ${roleLabel} réussie!`);
+      
       // Si on est admin, on n'est plus client
-      localStorage.removeItem('roomCode');
-      localStorage.removeItem('pseudo');
+      storage.removeItem('roomCode');
+      storage.removeItem('pseudo');
     } else {
       error('Mot de passe incorrect');
     }
@@ -238,7 +280,11 @@ function HomePage({ setActiveRoomCode }) {
     const { name, value, type, checked } = e.target;
     setRoomOptions(prevOptions => ({
       ...prevOptions,
-      [name]: type === 'checkbox' ? checked : (type === 'number' ? parseInt(value, 10) : value)
+      [name]: type === 'checkbox' 
+        ? checked 
+        : (type === 'number' 
+          ? (name === 'correctAnswerDelay' ? parseFloat(value) : parseInt(value, 10))
+          : value)
     }));
   };
 
@@ -328,7 +374,7 @@ function HomePage({ setActiveRoomCode }) {
           )}
         </div>
         
-        {localStorage.getItem('roomCode') && localStorage.getItem('pseudo') && (
+        {storage.getItem('roomCode') && storage.getItem('pseudo') && (
           <button 
             className="btn btn-secondary rejoin-btn" 
             onClick={handleRejoinRoom}
@@ -466,6 +512,19 @@ function HomePage({ setActiveRoomCode }) {
               />
             </div>
 
+            <div className="form-group mt-3">
+              <label className="form-label">Délai après bonne réponse (secondes) :</label>
+              <input 
+                type="number" 
+                name="correctAnswerDelay" 
+                className="form-control" 
+                value={roomOptions.correctAnswerDelay} 
+                onChange={handleOptionChange} 
+                min="0"
+                step="0.1"
+              />
+            </div>
+
             <div className="form-check mt-3">
               <input 
                 type="checkbox" 
@@ -473,10 +532,14 @@ function HomePage({ setActiveRoomCode }) {
                 className="form-check-input" 
                 id="saveRoomCheck"
                 checked={roomOptions.saveRoom} 
-                onChange={handleOptionChange} 
+                onChange={handleOptionChange}
+                disabled={isOperator && isOperator()}
               />
               <label className="form-check-label" htmlFor="saveRoomCheck">
                 Sauvegarder la session après fermeture
+                {isOperator && isOperator() && (
+                  <span className="text-muted ms-2">(Non disponible pour les opérateurs)</span>
+                )}
               </label>
             </div>
 
