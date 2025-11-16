@@ -60,8 +60,8 @@ function HomePage({ setActiveRoomCode }) {
   const [roomOptions, setRoomOptions] = useState({
     roomType: 'Standard',
     pointsCorrect: 10,
-    pointsWrong: 5,
-    penaltyDelay: 3,
+    pointsWrong: 9,
+    penaltyDelay: 5,
     saveRoom: true,
   });
 

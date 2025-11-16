@@ -5,8 +5,8 @@ let rooms = {};
 const defaultRoomOptions = {
   roomType: 'Standard', // Ajouté pour correspondre à l'usage
   pointsCorrect: 10,
-  pointsWrong: 5,
-  penaltyDelay: 3,
+  pointsWrong: 9,
+  penaltyDelay: 5,
   saveRoom: true,
   // --- Ajout pour Spotify ---
   spotifyEnabled: false, // Désactivé par défaut

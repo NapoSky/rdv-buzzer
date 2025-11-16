@@ -23,8 +23,8 @@ import SpotifyDisconnectedIcon from '../../../assets/icons/spotify-disconnected.
 const DEFAULT_ROOM_OPTIONS = {
   roomType: 'Standard',
   pointsCorrect: 10,
-  pointsWrong: 5,
-  penaltyDelay: 3,
+  pointsWrong: 9,
+  penaltyDelay: 5,
   saveRoom: true,
 };
 
