@@ -20,7 +20,7 @@ export const SocketProvider = ({ children }) => {
 
   // ===== EFFECT EVENTS - Handlers qui lisent les states sans créer de dépendances =====
   const onConnect = useEffectEvent(() => {
-    console.log('SocketContext: connecté', socket?.id);
+    //console.log('SocketContext: connecté', socket?.id);
     setIsConnected(true);
     
     try {

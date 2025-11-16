@@ -305,6 +305,24 @@ function handleBuzz(socket, io, data, callback) {
       return callback({ error: 'La partie est en pause' });
     }
 
+    // ✅ VALIDATION SERVEUR : Vérifier le délai de 3 secondes après changement de track Spotify
+    const TRACK_CHANGE_DELAY = 3000; // 3 secondes
+    if (room.trackChangedAt && room.options?.spotifyEnabled) {
+      const timeSinceChange = Date.now() - room.trackChangedAt;
+      if (timeSinceChange < TRACK_CHANGE_DELAY) {
+        const remainingMs = TRACK_CHANGE_DELAY - timeSinceChange;
+        logger.info('BUZZ', `Buzz rejeté pour ${socket.id}: délai de sécurité en cours`, {
+          roomCode,
+          timeSinceChange,
+          remainingMs
+        });
+        return callback({ 
+          error: 'Délai de sécurité en cours, veuillez patienter',
+          remainingMs 
+        });
+      }
+    }
+
     // ✅ SYNCHRONISATION : Vérifier si un jugement est en cours
     if (Room.isJudgmentInProgress(roomCode)) {
       return callback({ error: 'Jugement en cours, veuillez patienter' });

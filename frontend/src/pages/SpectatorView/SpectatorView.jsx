@@ -186,9 +186,9 @@ function SpectatorView() {
     setFoundTitle(false);
     // Clear le buzz car nouvelle piste
     setBuzzedBy('');
-    
-    // ✅ Lancer le décompte de 5 secondes pour les spectateurs
-    setTrackChangeCountdown(5);
+
+    // ✅ Lancer le décompte de 3 secondes pour les spectateurs
+    setTrackChangeCountdown(3);
     
     // ✅ Décrémenter chaque seconde
     const countdownInterval = setInterval(() => {
@@ -205,7 +205,7 @@ function SpectatorView() {
     setTimeout(() => {
       setTrackChangeCountdown(null);
       clearInterval(countdownInterval);
-    }, 5000);
+    }, 3000);
   });
 
   const handleJudgeAnswer = useEffectEvent((data) => {

@@ -6,6 +6,8 @@ const SOCKET_SERVER_URL = import.meta.env.VITE_BACKEND_URL;
 let socket = null;
 let reconnectTimer = null;
 let isInitializing = false;  // Verrou d'initialisation
+let lastSpamLogTime = 0; // Pour throttler les logs de spam
+const SPAM_LOG_THROTTLE = 2000; // Logger max toutes les 2 secondes
 
 // Initialiser ou récupérer la socket
 export const initializeSocket = (forceNew = false) => {
@@ -14,10 +16,15 @@ export const initializeSocket = (forceNew = false) => {
     return socket;
   }
 
-  // NOUVEAU: Vérifier si une initialisation est déjà en cours
+  // Si une initialisation est déjà en cours, retourner la socket actuelle (peut être null ou en cours de connexion)
   if (isInitializing) {
-    console.log('Initialisation de socket déjà en cours, attente...');
-    return socket; // Retourner la socket actuelle même si non connectée
+    // ✅ Logger seulement si plus de 2 secondes depuis le dernier log
+    const now = Date.now();
+    if (now - lastSpamLogTime > SPAM_LOG_THROTTLE) {
+      console.log('Initialisation de socket déjà en cours, attente...');
+      lastSpamLogTime = now;
+    }
+    return socket; // Retourner la socket actuelle (même si null temporairement)
   }
 
   isInitializing = true; // Activer le verrou
@@ -83,7 +90,7 @@ export const initializeSocket = (forceNew = false) => {
 export const ensureSocketConnection = () => {
   return new Promise((resolve) => {
     if (socket && socket.connected) {
-      console.log('Socket déjà connectée et prête avec ID:', socket.id);
+      //console.log('Socket déjà connectée et prête avec ID:', socket.id);
       return resolve(socket);
     }
     
@@ -120,7 +127,14 @@ export const getSocket = () => {
   if (socket && socket.connected) {
     return socket;
   }
-  return initializeSocket();
+  
+  // Si pas de socket du tout, l'initialiser
+  if (!socket) {
+    return initializeSocket();
+  }
+  
+  // Socket existe mais n'est pas connectée, la retourner quand même
+  return socket;
 };
 
 // Création de salle avec logs détaillés et gestion d'erreur

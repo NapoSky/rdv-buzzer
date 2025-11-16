@@ -184,6 +184,9 @@ class Room {
     // Mettre à jour la piste actuelle
     room.currentTrack = newTrack;
     
+    // ✅ Stocker le timestamp du changement pour le délai de 3 secondes
+    room.trackChangedAt = Date.now();
+    
     // Réinitialiser les états de découverte
     room.artistFound = false;
     room.titleFound = false;
@@ -211,6 +214,16 @@ class Room {
   static getClientState(roomCode) {
     const room = this.get(roomCode);
     if (!room) return null;
+    
+    // ✅ Calculer le délai restant depuis le changement de track (pour Spotify)
+    const TRACK_CHANGE_DELAY = 3000; // 3 secondes
+    let trackChangeDelayRemaining = 0;
+    
+    if (room.trackChangedAt && room.options?.spotifyEnabled) {
+      const timeSinceChange = Date.now() - room.trackChangedAt;
+      trackChangeDelayRemaining = Math.max(0, TRACK_CHANGE_DELAY - timeSinceChange);
+    }
+    
     return {
       options: room.options,
       paused: room.paused,
@@ -223,6 +236,7 @@ class Room {
       currentTrack: room.currentTrack,
       artistFound: room.artistFound,
       titleFound: room.titleFound,
+      trackChangeDelayRemaining, // ✅ Délai restant pour les nouveaux arrivants
       // trackIsFullyFound: room.trackIsFullyFound, // Le client le recalcule ? Non, envoyons-le.
     };
   }
