@@ -4,6 +4,7 @@ const roomHandlers = require('./handlers/roomHandlers');
 const buzzHandlers = require('./handlers/buzzHandlers');
 const playerHandlers = require('./handlers/playerHandlers');
 const spectatorHandlers = require('./handlers/spectatorHandlers');
+const { Room } = require('../models/Room');
 const logger = require('../utils/logger');
 
 let io;
@@ -100,6 +101,47 @@ function configureSocketHandlers(socket) {
   
   // Événements de spectateur
   spectatorHandlers.attachEvents(socket, io);
+
+  // Handler de test pour simuler le changement de piste Spotify
+  // Utilisé uniquement dans les tests automatisés
+  if (process.env.NODE_ENV !== 'production') {
+    socket.on('mock_spotify_track_change', (data, callback) => {
+      const { roomCode, newTrack } = data;
+      
+      logger.info('TEST', 'Mock spotify_track_changed', {
+        roomCode,
+        track: newTrack
+      });
+
+      // ✅ IMPORTANT: Réinitialiser l'état de la room comme le fait le vrai handler Spotify
+      const room = Room.get(roomCode);
+      if (room) {
+        Room.resetQuestionState(roomCode, newTrack);
+        
+        // Émettre l'événement spotify_track_changed à toute la room
+        // comme le ferait le vrai service Spotify
+        io.to(roomCode).emit('spotify_track_changed', {
+          newTrack: newTrack || {
+            title: 'Test Track',
+            artist: 'Test Artist',
+            albumArt: null
+          }
+        });
+        
+        // Émettre aussi update_players pour synchroniser les états
+        io.to(roomCode).emit('update_players', room.players);
+
+        if (typeof callback === 'function') {
+          callback({ success: true });
+        }
+      } else {
+        logger.error('TEST', 'Room non trouvée pour mock_spotify_track_change', { roomCode });
+        if (typeof callback === 'function') {
+          callback({ error: 'Room not found' });
+        }
+      }
+    });
+  }
 }
 
 /**

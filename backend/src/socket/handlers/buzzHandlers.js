@@ -376,6 +376,7 @@ function handleBuzz(socket, io, data, callback) {
       // Utiliser le timestamp serveur et soustraire la demi-latence
       // Note: playerRTT ici est le VRAI RTT (pas l'offset déguisé)
       compensatedTime = serverTimestamp - (playerRTT / 2);
+      const timeDifference = Math.abs(clientTimestamp - serverTimestamp);
       
       logger.warn('BUZZ', 'Client non synchronisé, fallback méthode classique', {
         socketId: socket.id,

@@ -255,10 +255,13 @@ const handleBuzz = (e) => {
     setIsDisabled(true);
 
     buzz(roomCode, pseudo, (response) => {
-      // ✅ ANTISPAM : Libérer le flag de buzz en cours
-      setIsBuzzing(false);
+      // ❌ NE PAS LIBÉRER isBuzzing ICI : Trop tôt, permet le spam pendant période de grâce
+      // ✅ isBuzzing sera libéré seulement quand un événement 'buzzed' ou 'reset_buzzer' arrive
       
       if (response && response.error) {
+        // En cas d'erreur, on peut libérer isBuzzing car le buzz n'a pas été accepté
+        setIsBuzzing(false);
+        
         // Gérer les erreurs de buzz (trop tard, etc.)
         if (response.lateAttempt) {
           if (response.buzzedBy) {
@@ -277,10 +280,8 @@ const handleBuzz = (e) => {
           }
         }
       }
-      // Si le buzz réussit, l'événement 'buzzed' mettra à jour l'état isDisabled correctement
-      // Si le buzz échoue car piste trouvée (vérification serveur), le serveur ne fera rien,
-      // mais l'état local isDisabled devrait déjà être true à cause de handleJudgeAnswer.
-      // On ne réactive PAS le bouton ici si le buzz réussit, on attend les événements serveur.
+      // ✅ Si le buzz réussit ({ received: true }), NE PAS libérer isBuzzing
+      // Attendre l'événement 'buzzed' qui indiquera que le gagnant a été désigné
     });
   }
 };
@@ -438,6 +439,7 @@ const handleBuzz = (e) => {
     const resetBuzzerState = (showNotification = true) => {
       setBuzzedBy('');
       setShowBuzzedDialog(false);
+      setIsBuzzing(false); // ✅ Libérer isBuzzing : le buzzer est réinitialisé
       
       if (showNotification) {
         onInfo('Le buzzer est à nouveau disponible');
@@ -476,6 +478,7 @@ const handleBuzz = (e) => {
       setBuzzedBy(data.buzzedBy);
       setShowBuzzedDialog(true);
       setIsDisabled(true);
+      setIsBuzzing(false); // ✅ Libérer isBuzzing : un gagnant a été désigné
       
       if (data.buzzedBy !== pseudo) {
         onWarning(`${data.buzzedBy} a buzzé en premier`);
@@ -513,7 +516,7 @@ const handleBuzz = (e) => {
         } else {
           //console.log("Buzzer reste désactivé après pénalité car piste trouvée ou jeu en pause");
         }
-      }, duration * 1000);
+      }, duration); // ✅ FIX: duration est déjà en millisecondes, pas besoin de * 1000
     };
   
     const onUpdatePlayers = (updatedPlayers) => {

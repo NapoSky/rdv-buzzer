@@ -196,10 +196,22 @@ console.log('Envoi judge_answer avec:', {
     else if (!isCorrectJudgment && !room.trackIsFullyFound) {
       // Appliquer la pénalité seulement si incorrect ET piste non trouvée
       logger.info('PLAYERS', 'Réponse incorrecte et piste non trouvée, application de la pénalité', { roomCode });
-      // handleDisableBuzzer met le joueur fautif à buzzed=true, émet update_players et buzzer_disabled
-      Room.resetBuzz(roomCode);
+      
+      // ✅ FIX: Débloquer tous les joueurs SAUF le pénalisé AVANT d'appliquer la pénalité
+      logger.info('PLAYERS', 'Déblocage des autres joueurs avant pénalité', { roomCode });
+      for (let id in room.players) {
+        if (id !== playerId && room.players[id]) {
+          room.players[id].buzzed = false;
+        }
+      }
+      Room.clearBuzz(roomCode); // Réinitialiser firstBuzz et lastBuzz
+      
+      // Appliquer la pénalité au joueur fautif (met buzzed=true, émet update_players et buzzer_disabled)
       handleDisableBuzzer(socket, io, { roomCode, playerId });
-      // Note: handleResetBuzzer n'est PAS appelé ici pour que les autres puissent buzzer
+      
+      // Émettre reset_buzzer pour débloquer l'UI des autres clients
+      logger.info('PLAYERS', 'Émission reset_buzzer pour débloquer UI des autres clients', { roomCode });
+      io.to(roomCode).emit('reset_buzzer');
       
       // ✅ SYNCHRONISATION : Désactiver le flag de jugement APRÈS la pénalité
       Room.setJudgmentInProgress(roomCode, false);
