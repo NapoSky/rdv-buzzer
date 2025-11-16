@@ -308,13 +308,6 @@ const handleBuzz = (e) => {
     navigate('/');
   };
 
-  // Fonction pour réinitialiser l'affichage Spotify
-  const resetSpotifyDisplay = () => {
-    setSpotifyTrackInfo(null);
-    setFoundArtist(false);
-    setFoundTitle(false);
-  };
-
   // Fonction pour réinitialiser l'état local du buzzer
   const resetLocalBuzzerState = (notify = false, delay = 0) => {
     setBuzzedBy('');
@@ -396,18 +389,6 @@ const handleBuzz = (e) => {
           setIsDisabled(false);
         }
         if (message) onInfo(message);
-      }
-    };
-  
-    const handleAdminPresenceChange = (isPresent, customMessage = null) => {
-      setAdminPresent(isPresent);
-      setShowAdminMissingDialog(!isPresent);
-      
-      if (isPresent) {
-          if (customMessage) onSuccess(customMessage);
-      } else {
-        handleGamePauseState(true);
-        if (customMessage) onWarning(customMessage);
       }
     };
   

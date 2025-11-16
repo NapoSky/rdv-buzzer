@@ -1,6 +1,6 @@
 // src/components/HomePage.js
-import React, { useState, useContext, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
+import React, { useState, useContext, useEffect, useEffectEvent } from 'react';
+import { useNavigate, useSearchParams } from 'react-router-dom';
 import * as Dialog from '@radix-ui/react-dialog'
 import { AdminAuthContext } from '../../contexts/AdminAuthContext';
 import { ThemeContext } from '../../contexts/ThemeContext';
@@ -49,6 +49,7 @@ const checkRoomExists = async (roomCode, error, setRoomCodeFn = null) => {
 
 function HomePage({ setActiveRoomCode }) {
   const navigate = useNavigate();
+  const [searchParams, setSearchParams] = useSearchParams();
   const [roomCode, setRoomCode] = useState('');
   const [pseudo, setPseudo] = useState('');
   const [adminPassword, setAdminPassword] = useState('');
@@ -121,7 +122,10 @@ function HomePage({ setActiveRoomCode }) {
   }, [roomCode]);
 
   // Récupérer les valeurs de roomCode et pseudo depuis le localStorage si le client s'est déjà connecté auparavant
-  useEffect(() => {
+  const handleInitialLoad = useEffectEvent(() => {
+    // D'abord, vérifier si un code de salle est passé en paramètre URL
+    const roomFromUrl = searchParams.get('room');
+    
     const savedRoomCode = localStorage.getItem('roomCode');
     const savedPseudo = localStorage.getItem('pseudo');
 
@@ -130,18 +134,28 @@ function HomePage({ setActiveRoomCode }) {
       setPseudo(savedPseudo);
     }
 
-    // Restaurer le code de la salle s'il existe (optionnel, mais conserve la logique précédente pour le code)
-    // Si vous voulez que le code de la salle soit aussi restauré indépendamment,
-    // déplacez cette ligne en dehors du 'if (savedPseudo)'
-    if (savedRoomCode) {
-       setRoomCode(savedRoomCode);
+    // Priorité au paramètre URL, sinon localStorage
+    if (roomFromUrl) {
+      setRoomCode(roomFromUrl.toUpperCase());
+      // Nettoyer l'URL pour ne pas garder le paramètre visible
+      setSearchParams({});
+      
+      // Scroller vers le champ pseudo après un court délai pour laisser le temps au rendu
+      setTimeout(() => {
+        const pseudoInput = document.querySelector('input[type="text"][maxLength="30"]');
+        if (pseudoInput) {
+          pseudoInput.scrollIntoView({ behavior: 'smooth', block: 'center' });
+          pseudoInput.focus();
+        }
+      }, 100);
+    } else if (savedRoomCode) {
+      setRoomCode(savedRoomCode);
     }
-    // L'ancien code qui nécessitait les deux :
-    // if (savedRoomCode && savedPseudo) {
-    //   setRoomCode(savedRoomCode);
-    //   setPseudo(savedPseudo);
-    // }
-  }, []);
+  });
+
+  useEffect(() => {
+    handleInitialLoad();
+  }, []); // Exécuter une seule fois au montage
 
   // Rejoindre en tant que client
   const handleJoinRoom = async () => {

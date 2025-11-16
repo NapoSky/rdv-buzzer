@@ -4,6 +4,7 @@ import { SocketContext } from '../../contexts/SocketContext';
 import { ThemeContext } from '../../contexts/ThemeContext';
 import SpotifyDisplay from '../../components/client/SpotifyDisplay/SpotifyDisplay';
 import { EyeOpenIcon } from '@radix-ui/react-icons';
+import { QRCodeSVG } from 'qrcode.react';
 import './SpectatorView.css';
 
 function SpectatorView() {
@@ -700,12 +701,21 @@ useEffect(() => {
             <div className="qr-modal-body">
               <div className="qr-codes-container">
                 <div className="qr-code-item">
-                  <img 
-                    src="/qr-code-rdv.png" 
-                    alt="QR Code de la salle" 
+                  <QRCodeSVG 
+                    value={`${window.location.origin}/?room=${roomCode}`}
+                    size={512}
+                    level="H"
+                    includeMargin={false}
                     className="qr-code-image"
+                    style={{ padding: '12px', background: 'white' }}
+                    imageSettings={{
+                      src: "/logo_rdv.png",
+                      height: 150,
+                      width: 150,
+                      excavate: true,
+                    }}
                   />
-                  <p className="qr-code-label">QR Code du jeu</p>
+                  <p className="qr-code-label">QR Code de la salle</p>
                 </div>
                 <div className="qr-code-item">
                   <img 

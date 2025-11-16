@@ -25,6 +25,14 @@ function Changelog() {
           text: "Client : Ajout d'un court délai après réponse partielle pour éviter les réponses précipitées d'un même joueur"
         },
         {
+          type: "feature",
+          text: "HomePage : Détection automatique du code de salle depuis l'URL (QR code) avec scroll et focus sur le champ pseudo"
+        },
+        {
+          type: "feature",
+          text: "Spectateur : QR Code dynamique généré avec le code de salle et logo RDV pour faciliter la connexion des joueurs"
+        },
+        {
           type: "fix",
           text: "Admin : Correction d'un bug critique où certains buzzs n'étaient pas reçus après un jugement"
         },
