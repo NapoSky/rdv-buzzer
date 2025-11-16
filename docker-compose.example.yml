@@ -21,6 +21,7 @@ services:
       args:
         - VITE_BACKEND_URL=http://localhost:3001
         - VITE_ADMIN_PASSWORD=secret
+        - VITE_OPERATOR_PASSWORD=operator
         - VITE_APP_SECRET=a1b2c3d4e5f67890123456789abcdef0123456789abcdef0123456789abcdef
         # Optionnel
         # - VITE_SPOTIFY_CLIENT_ID=2157f438f5034a325481be9b9f3f215a

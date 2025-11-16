@@ -8,6 +8,7 @@ import './HomePage.css';  // Import du CSS local
 import { useNotification } from '../../contexts/NotificationContext';
 
 const ADMIN_PASSWORD = import.meta.env.VITE_ADMIN_PASSWORD;
+const OPERATOR_PASSWORD = import.meta.env.VITE_OPERATOR_PASSWORD;
 
 // Modifier cette fonction en dehors du composant HomePage
 const checkRoomExists = async (roomCode, error, setRoomCodeFn = null) => {
@@ -53,7 +54,7 @@ function HomePage({ setActiveRoomCode }) {
   const [adminPassword, setAdminPassword] = useState('');
   const [roomExists, setRoomExists] = useState(null); // null, true, false
   const [checkingRoom, setCheckingRoom] = useState(false);
-  const { isAdminAuthenticated, setIsAdminAuthenticated } = useContext(AdminAuthContext);
+  const { isAdminAuthenticated, setIsAdminAuthenticated, adminRole, isOperator } = useContext(AdminAuthContext);
   const { isDarkMode } = useContext(ThemeContext);
   const { info, warn, error, success } = useNotification();
   const [showCreateRoomDialog, setShowCreateRoomDialog] = useState(false);
@@ -65,6 +66,16 @@ function HomePage({ setActiveRoomCode }) {
     correctAnswerDelay: 1,
     saveRoom: true,
   });
+
+  // Forcer saveRoom à false pour les opérateurs
+  useEffect(() => {
+    if (isOperator && isOperator()) {
+      setRoomOptions(prev => ({
+        ...prev,
+        saveRoom: false
+      }));
+    }
+  }, [isOperator, isAdminAuthenticated]);
 
   // Fonction pour vérifier l'existence de la salle en temps réel
   const checkRoomExistsRealTime = async (code) => {
@@ -214,11 +225,26 @@ function HomePage({ setActiveRoomCode }) {
 
   // Connexion admin
   const handleAdminLogin = () => {
+    let adminRole = null;
+    
+    // Vérifier admin complet
     if (adminPassword === ADMIN_PASSWORD) {
+      adminRole = 'admin_full';
+    } 
+    // Vérifier opérateur
+    else if (OPERATOR_PASSWORD && adminPassword === OPERATOR_PASSWORD) {
+      adminRole = 'admin_operator';
+    }
+    
+    if (adminRole) {
       localStorage.setItem('localAdminAuthenticated', 'true');
+      localStorage.setItem('adminRole', adminRole);
       setIsAdminAuthenticated(true);
       setAdminPassword('');
-      success('Connexion admin réussie!');
+      
+      const roleLabel = adminRole === 'admin_full' ? 'Administrateur' : 'Opérateur';
+      success(`Connexion ${roleLabel} réussie!`);
+      
       // Si on est admin, on n'est plus client
       localStorage.removeItem('roomCode');
       localStorage.removeItem('pseudo');
@@ -491,10 +517,14 @@ function HomePage({ setActiveRoomCode }) {
                 className="form-check-input" 
                 id="saveRoomCheck"
                 checked={roomOptions.saveRoom} 
-                onChange={handleOptionChange} 
+                onChange={handleOptionChange}
+                disabled={isOperator && isOperator()}
               />
               <label className="form-check-label" htmlFor="saveRoomCheck">
                 Sauvegarder la session après fermeture
+                {isOperator && isOperator() && (
+                  <span className="text-muted ms-2">(Non disponible pour les opérateurs)</span>
+                )}
               </label>
             </div>
 

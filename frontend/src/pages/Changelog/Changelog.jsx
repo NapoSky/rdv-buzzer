@@ -11,6 +11,50 @@ function Changelog() {
   // Données du changelog - vous pouvez les externaliser dans un fichier JSON plus tard
   const changelogEntries = [
     {
+      version: "2.3.2",
+      date: "2025-11-16",
+      type: "minor",
+      title: "Corrections critiques et optimisations gameplay",
+      changes: [
+        {
+          type: "feature",
+          text: "Admin : Ajout d'un mot de passe opérateur avec droits limités (création de salles sans sauvegarde, pas d'accès au classement ni fermeture de salles)"
+        },
+        {
+          type: "feature",
+          text: "Client : Ajout d'un court délai après réponse partielle pour éviter les réponses précipitées d'un même joueur"
+        },
+        {
+          type: "fix",
+          text: "Admin : Correction d'un bug critique où certains buzzs n'étaient pas reçus après un jugement"
+        },
+        {
+          type: "fix",
+          text: "Backend : Correction d'erreurs internes lors du traitement des buzzs"
+        },
+        {
+          type: "fix",
+          text: "Client : Correction des erreurs de synchronisation lors des reconnexions"
+        },
+        {
+          type: "improvement",
+          text: "Admin : Réduction du timer Spotify de 5s à 3s pour un gameplay plus fluide"
+        },
+        {
+          type: "improvement",
+          text: "Admin : Restauration correcte du timer Spotify lors des reconnexions clients"
+        },
+        {
+          type: "improvement",
+          text: "Backend : Réduction significative du spam de logs pour améliorer les performances"
+        },
+        {
+          type: "improvement",
+          text: "Paramètres : Ajustement des valeurs par défaut (pénalité de 5 à 9 points, délai de 3 à 5s)"
+        }
+      ]
+    },
+    {
       version: "2.3.1",
       date: "2025-11-12",
       type: "patch",

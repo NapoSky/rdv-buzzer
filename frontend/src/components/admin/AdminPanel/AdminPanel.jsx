@@ -3,6 +3,7 @@ import React, { useState, useEffect, useContext } from 'react';
 import axios from 'axios';
 import { useNavigate } from 'react-router-dom';
 import { ThemeContext } from '../../../contexts/ThemeContext';
+import { AdminAuthContext } from '../../../contexts/AdminAuthContext';
 import * as Tabs from '@radix-ui/react-tabs';
 import * as Dialog from '@radix-ui/react-dialog';
 import * as AlertDialog from '@radix-ui/react-alert-dialog';
@@ -17,6 +18,7 @@ function AdminPanel() {
   const [sessions, setSessions] = useState({});
   const navigate = useNavigate();
   const { isDarkMode } = useContext(ThemeContext); 
+  const { isFullAdmin } = useContext(AdminAuthContext);
 
   useEffect(() => {
     const adminAuth = localStorage.getItem("localAdminAuthenticated") === "true";
@@ -45,12 +47,13 @@ function AdminPanel() {
       <AdminPanelContent 
         sessions={sessions} 
         fetchSessions={fetchSessions}
+        isFullAdmin={isFullAdmin}
       />
     </div>
   );
 }
 
-function AdminPanelContent({ sessions, fetchSessions }) {
+function AdminPanelContent({ sessions, fetchSessions, isFullAdmin }) {
   // Récupérer directement du contexte si nécessaire
   const navigate = useNavigate();
   const [expandedSessions, setExpandedSessions] = useState({});
@@ -298,7 +301,9 @@ function AdminPanelContent({ sessions, fetchSessions }) {
       <Tabs.Root defaultValue="sessions" className="admin-tabs">
         <Tabs.List className="tabs-list" aria-label="Gérer votre espace administrateur">
           <Tabs.Trigger className="tab-trigger" value="sessions">Sessions en cours</Tabs.Trigger>
-          <Tabs.Trigger className="tab-trigger" value="ranking">Gestion du classement</Tabs.Trigger>
+          {isFullAdmin && isFullAdmin() && (
+            <Tabs.Trigger className="tab-trigger" value="ranking">Gestion du classement</Tabs.Trigger>
+          )}
         </Tabs.List>
         
         <Tabs.Content className="tab-content" value="sessions">
@@ -328,42 +333,44 @@ function AdminPanelContent({ sessions, fetchSessions }) {
                         Rejoindre
                       </button>
                       
-                      <AlertDialog.Root>
-                        <AlertDialog.Trigger asChild>
-                          <button className="btn btn-danger">
-                            <span className="btn-icon">🔒</span>
-                            Fermer
-                          </button>
-                        </AlertDialog.Trigger>
-                        <AlertDialog.Portal>
-                          <AlertDialog.Overlay className="alert-overlay" />
-                          <AlertDialog.Content className="alert-content">
-                            <AlertDialog.Title className="alert-title">
-                              Fermeture de salle
-                            </AlertDialog.Title>
-                            <AlertDialog.Description className="alert-description">
-                              Êtes-vous sûr de vouloir fermer la salle "{roomCode}" ?
-                              Cette action est irréversible.
-                            </AlertDialog.Description>
-                            <div className="alert-buttons">
-                              <AlertDialog.Cancel asChild>
-                                <button className="btn btn-secondary">Annuler</button>
-                              </AlertDialog.Cancel>
-                              <AlertDialog.Action asChild>
-                                <button
-                                  className="btn btn-danger"
-                                  onClick={() => {
-                                    setSelectedRoomCode(roomCode);
-                                    handleCloseRoom(roomCode);
-                                  }}
-                                >
-                                  Fermer la salle
-                                </button>
-                              </AlertDialog.Action>
-                            </div>
-                          </AlertDialog.Content>
-                        </AlertDialog.Portal>
-                      </AlertDialog.Root>
+                      {isFullAdmin && isFullAdmin() && (
+                        <AlertDialog.Root>
+                          <AlertDialog.Trigger asChild>
+                            <button className="btn btn-danger">
+                              <span className="btn-icon">🔒</span>
+                              Fermer
+                            </button>
+                          </AlertDialog.Trigger>
+                          <AlertDialog.Portal>
+                            <AlertDialog.Overlay className="alert-overlay" />
+                            <AlertDialog.Content className="alert-content">
+                              <AlertDialog.Title className="alert-title">
+                                Fermeture de salle
+                              </AlertDialog.Title>
+                              <AlertDialog.Description className="alert-description">
+                                Êtes-vous sûr de vouloir fermer la salle "{roomCode}" ?
+                                Cette action est irréversible.
+                              </AlertDialog.Description>
+                              <div className="alert-buttons">
+                                <AlertDialog.Cancel asChild>
+                                  <button className="btn btn-secondary">Annuler</button>
+                                </AlertDialog.Cancel>
+                                <AlertDialog.Action asChild>
+                                  <button
+                                    className="btn btn-danger"
+                                    onClick={() => {
+                                      setSelectedRoomCode(roomCode);
+                                      handleCloseRoom(roomCode);
+                                    }}
+                                  >
+                                    Fermer la salle
+                                  </button>
+                                </AlertDialog.Action>
+                              </div>
+                            </AlertDialog.Content>
+                          </AlertDialog.Portal>
+                        </AlertDialog.Root>
+                      )}
                       
                       <button
                         className="btn btn-secondary"
@@ -422,8 +429,9 @@ function AdminPanelContent({ sessions, fetchSessions }) {
           )}
         </Tabs.Content>
         
-        <Tabs.Content className="tab-content" value="ranking">
-          <div className="ranking-management">
+        {isFullAdmin && isFullAdmin() && (
+          <Tabs.Content className="tab-content" value="ranking">
+            <div className="ranking-management">
             <div className="warning-notice">
               <span className="warning-icon">⚠️</span>
               <span>Ces actions sont irréversibles et affectent le classement global.</span>
@@ -748,6 +756,7 @@ function AdminPanelContent({ sessions, fetchSessions }) {
             </div>
           </div>
         </Tabs.Content>
+        )}
       </Tabs.Root>
       
       {/* Dialog pour afficher les résultats d'opération */}

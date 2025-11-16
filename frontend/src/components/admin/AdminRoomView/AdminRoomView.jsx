@@ -397,11 +397,18 @@ function AdminRoomView() {
   const onResetBuzzer = useEffectEvent(() => {
     console.log("[AdminRoomView] 🔄 reset_buzzer reçu");
     
+    // ✅ DÉBLOQUER le traitement du jugement
+    setIsProcessingJudgment(false);
+    console.log("[AdminRoomView] Fin traitement pass/annulation");
+    
+    // ✅ Nettoyer la protection anti-spam
+    lastProcessedBuzzRef.current = null;
+    
     // Vérifier s'il y a un buzz en attente (stocké pendant isProcessingJudgment)
     if (forceModalRef.current?.pending) {
       console.log("[AdminRoomView] ✅ Traitement du buzz en attente:", forceModalRef.current);
       
-      const pendingBuzz = forceModalRef.current;
+      const pendingBuzz = { ...forceModalRef.current };
       // Retirer le flag pending
       delete pendingBuzz.pending;
       
@@ -413,7 +420,19 @@ function AdminRoomView() {
       setTimeout(() => {
         setBuzzedPlayer(pendingBuzz);
         console.log("[AdminRoomView] ✅ Buzz en attente affiché:", pendingBuzz);
+        
+        // Mettre en pause Spotify pour ce nouveau buzz
+        refreshStatus().then(async (connected) => {
+          if (connected) {
+            await pausePlayback();
+          }
+        }).catch(err => console.error('Erreur pause Spotify pour buzz en attente:', err));
       }, 1);
+    } else {
+      // Pas de buzz en attente, nettoyer complètement
+      console.log("[AdminRoomView] Aucun buzz en attente, nettoyage complet");
+      forceModalRef.current = null;
+      isModalForcedRef.current = false;
     }
   });
 
@@ -818,11 +837,9 @@ const handleIncrementScore = (playerId, adjustment) => { // Renommer 'increment'
       
       // ✅ FERMER IMMÉDIATEMENT la modal quand l'admin clique
       setBuzzedPlayer(null);
-      // ⚠️ NE PAS écraser forceModalRef si un buzz est en attente (pending)
-      const hasPendingBuzz = forceModalRef.current?.pending;
-      if (!hasPendingBuzz) {
-        forceModalRef.current = null;
-      }
+      // ⚠️ NE JAMAIS effacer forceModalRef ici !
+      // Un buzz peut arriver pendant l'émission de reset_buzzer
+      // C'est onResetBuzzer qui gérera le nettoyage
       isModalForcedRef.current = false;
       
       // ✅ UTILISER lockedPlayer (pas buzzedPlayer qui pourrait changer)
@@ -853,13 +870,9 @@ const handleIncrementScore = (playerId, adjustment) => { // Renommer 'increment'
         }
       }
   
-      // ✅ DÉLAI plus court puisque la modal est déjà fermée
-      clearBuzzTimeoutRef.current = setTimeout(() => {
-        console.log("[AdminRoomView] Fin traitement jugement");
-        setIsProcessingJudgment(false);
-        clearBuzzTimeoutRef.current = null; // Nettoyer la référence
-        lastProcessedBuzzRef.current = null; // ✅ Nettoyer la protection anti-spam
-      }, 100); // 100ms de délai seulement
+      // ⚠️ NE PLUS utiliser de timeout ici
+      // C'est onResetBuzzer qui débloquera isProcessingJudgment
+      console.log("[AdminRoomView] En attente de reset_buzzer du serveur...");
     }
   };
 
@@ -879,11 +892,10 @@ const handleIncrementScore = (playerId, adjustment) => { // Renommer 'increment'
       
       // ✅ FERMER IMMÉDIATEMENT la modal quand l'admin clique
       setBuzzedPlayer(null);
-      // ⚠️ NE PAS écraser forceModalRef si un buzz est en attente (pending)
-      const hasPendingBuzz = forceModalRef.current?.pending;
-      if (!hasPendingBuzz) {
-        forceModalRef.current = null;
-      }
+      
+      // ⚠️ NE JAMAIS effacer forceModalRef ici !
+      // Un buzz peut arriver pendant l'émission de reset_buzzer
+      // C'est onResetBuzzer qui gérera le nettoyage
       isModalForcedRef.current = false;
       
       // On pourrait juste reset le buzzer, ou informer le serveur que le buzz est annulé/passé
@@ -898,13 +910,9 @@ const handleIncrementScore = (playerId, adjustment) => { // Renommer 'increment'
         }
       }
 
-      // ✅ DÉLAI plus court puisque la modal est déjà fermée
-      clearBuzzTimeoutRef.current = setTimeout(() => {
-        console.log("[AdminRoomView] Fin traitement pass/annulation");
-        setIsProcessingJudgment(false);
-        clearBuzzTimeoutRef.current = null; // Nettoyer la référence
-        lastProcessedBuzzRef.current = null; // ✅ Nettoyer la protection anti-spam
-      }, 100); // 100ms de délai seulement
+      // ⚠️ NE PLUS utiliser de timeout ici
+      // C'est onResetBuzzer qui débloquera isProcessingJudgment
+      console.log("[AdminRoomView] En attente de reset_buzzer du serveur...");
     }
   };
 
