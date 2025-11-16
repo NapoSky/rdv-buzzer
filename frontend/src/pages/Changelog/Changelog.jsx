@@ -26,6 +26,14 @@ function Changelog() {
         },
         {
           type: "feature",
+          text: "Client : Décompte visuel circulaire lors du délai de changement de piste Spotify avec animation progressive"
+        },
+        {
+          type: "feature",
+          text: "Client : Le buzzer se grise automatiquement lorsque la musique/question est entièrement trouvée"
+        },
+        {
+          type: "feature",
           text: "HomePage : Détection automatique du code de salle depuis l'URL (QR code) avec scroll et focus sur le champ pseudo"
         },
         {

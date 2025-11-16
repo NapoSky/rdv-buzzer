@@ -872,6 +872,25 @@ const handleBuzz = (e) => {
     }
   }, [isConnected, joined, players, pseudo]);
 
+  // ✅ CORRECTION : Désactiver le buzzer quand la piste est pleinement trouvée
+  // MAIS SEULEMENT si on n'est pas déjà dans un état de pénalité/délai
+  useEffect(() => {
+    if (!joined || !roomOptions?.spotifyEnabled) return;
+
+    const trackFullyFound = 
+      (roomOptions?.roomType === 'Standard' && (foundArtist || foundTitle)) ||
+      (roomOptions?.roomType === 'Titre/Artiste' && foundArtist && foundTitle);
+
+    if (trackFullyFound) {
+      // Désactiver le buzzer SEULEMENT si on est actuellement actif
+      // NE PAS interférer avec les pénalités en cours
+      if (!isDisabled) {
+        setIsDisabled(true);
+      }
+    }
+    // NE PAS réactiver automatiquement ici - laisser les autres mécanismes le faire
+  }, [foundArtist, foundTitle, roomOptions, joined, isDisabled]);
+
   // Tentative de connexion initiale
   useEffect(() => {
     if (!roomClosedRef.current && !joined && roomCode && pseudo && !reconnectAttemptRef.current) {
@@ -1330,37 +1349,62 @@ const handleBuzz = (e) => {
         </div>
 
         <div className="buzz-zone">
-          <button
-            className={`buzz-button ${isDisabled ? 'disabled' : gamePaused ? 'paused' : isBuzzing ? 'buzzing' : 'active'}`}
-            onClick={handleBuzz}
-            onTouchStart={handleBuzz}
-            disabled={gamePaused || isDisabled || isBuzzing}
-          >
-            <div className="buzz-button-content">
-              <LightningBoltIcon className="buzz-icon" />
-              <span className="buzz-text">BUZZ</span>
-            </div>
-            {gamePaused && (
-              <div className="button-status paused-status">
-                Partie en pause
-              </div>
-            )}
-            {isBuzzing && !gamePaused && (
-              <div className="button-status buzzing-status">
-                Envoi en cours...
-              </div>
-            )}
+          <div className="buzz-button-wrapper">
             {trackChangeCountdown !== null && !gamePaused && !isBuzzing && (
-              <div className="button-status buzzing-status">
-                {trackChangeCountdown}
-              </div>
+              <svg className="countdown-circle" viewBox="0 0 220 220">
+                <circle
+                  className="countdown-circle-bg"
+                  cx="110"
+                  cy="110"
+                  r="105"
+                />
+                <circle
+                  className="countdown-circle-progress"
+                  cx="110"
+                  cy="110"
+                  r="105"
+                />
+              </svg>
             )}
-            {isDisabled && !gamePaused && !isBuzzing && trackChangeCountdown === null && (
-              <div className="button-status disabled-status">
-                Buzzer désactivé
+            <button
+              className={`buzz-button ${isDisabled ? 'disabled' : gamePaused ? 'paused' : isBuzzing ? 'buzzing' : trackChangeCountdown !== null ? 'countdown' : 'active'}`}
+              onClick={handleBuzz}
+              onTouchStart={handleBuzz}
+              disabled={gamePaused || isDisabled || isBuzzing}
+            >
+              <div className="buzz-button-content">
+                <LightningBoltIcon className="buzz-icon" />
+                <span className="buzz-text">
+                  {trackChangeCountdown !== null && !gamePaused && !isBuzzing ? trackChangeCountdown : 'BUZZ'}
+                </span>
               </div>
-            )}
-          </button>
+              {gamePaused && (
+                <div className="button-status paused-status">
+                  Partie en pause
+                </div>
+              )}
+              {isBuzzing && !gamePaused && (
+                <div className="button-status buzzing-status">
+                  Envoi en cours...
+                </div>
+              )}
+              {(() => {
+                // Calculer si la piste est trouvée pour afficher le bon message
+                const trackFullyFound = 
+                  (roomOptions?.roomType === 'Standard' && (foundArtist || foundTitle)) ||
+                  (roomOptions?.roomType === 'Titre/Artiste' && foundArtist && foundTitle);
+                
+                if (isDisabled && !gamePaused && !isBuzzing && trackChangeCountdown === null) {
+                  return (
+                    <div className="button-status disabled-status">
+                      {trackFullyFound ? 'Piste trouvée !' : 'Buzzer désactivé'}
+                    </div>
+                  );
+                }
+                return null;
+              })()}
+            </button>
+          </div>
         </div>
 
         {/* Zone SpotifyDisplay */}
