@@ -6,6 +6,7 @@ import { AdminAuthContext } from '../../contexts/AdminAuthContext';
 import { ThemeContext } from '../../contexts/ThemeContext';
 import './HomePage.css';  // Import du CSS local
 import { useNotification } from '../../contexts/NotificationContext';
+import { storage } from '../../utils/storage';
 
 const ADMIN_PASSWORD = import.meta.env.VITE_ADMIN_PASSWORD;
 const OPERATOR_PASSWORD = import.meta.env.VITE_OPERATOR_PASSWORD;
@@ -32,7 +33,7 @@ const checkRoomExists = async (roomCode, error, setRoomCodeFn = null) => {
     // Vérifier si la salle existe dans la liste
     if (!rooms[roomCode]) {
       error('La salle n\'existe pas');
-      localStorage.removeItem('roomCode');
+      storage.removeItem('roomCode');
       // Si une fonction setRoomCode est fournie, effacer l'input
       if (setRoomCodeFn) {
         setRoomCodeFn('');
@@ -126,8 +127,8 @@ function HomePage({ setActiveRoomCode }) {
     // D'abord, vérifier si un code de salle est passé en paramètre URL
     const roomFromUrl = searchParams.get('room');
     
-    const savedRoomCode = localStorage.getItem('roomCode');
-    const savedPseudo = localStorage.getItem('pseudo');
+    const savedRoomCode = storage.getItem('roomCode');
+    const savedPseudo = storage.getItem('pseudo');
 
     // Restaurer le pseudo s'il existe
     if (savedPseudo) {
@@ -176,7 +177,7 @@ function HomePage({ setActiveRoomCode }) {
     }
     
     // Vérifier si le joueur a été kické de cette salle auparavant
-    const wasKicked = localStorage.getItem('kicked_from_' + roomCode) === 'true';
+    const wasKicked = storage.getItem('kicked_from_' + roomCode) === 'true';
     
     if (wasKicked) {
       warn('Vous avez été expulsé de cette salle par l\'admin et ne pouvez pas la rejoindre à nouveau.');
@@ -191,11 +192,11 @@ function HomePage({ setActiveRoomCode }) {
     }
     
     // La salle existe, on peut continuer
-    localStorage.setItem('roomCode', roomCode);
-    localStorage.setItem('pseudo', pseudo);
+    storage.setItem('roomCode', roomCode);
+    storage.setItem('pseudo', pseudo);
     
     // Si l'on rejoint une salle, on n'est plus admin
-    localStorage.removeItem('localAdminAuthenticated');
+    storage.removeItem('localAdminAuthenticated');
     
     // Mettre à jour l'état global de la salle active
     setActiveRoomCode(roomCode);
@@ -206,11 +207,11 @@ function HomePage({ setActiveRoomCode }) {
   
   // Permettre de revenir dans une salle si les informations sont déjà enregistrées
   const handleRejoinRoom = async () => {
-    const savedRoomCode = localStorage.getItem('roomCode');
-    const savedPseudo = localStorage.getItem('pseudo');
+    const savedRoomCode = storage.getItem('roomCode');
+    const savedPseudo = storage.getItem('pseudo');
     
     // Vérifier si l'utilisateur a été kické de cette salle
-    const wasKicked = localStorage.getItem('kicked_from_' + savedRoomCode) === 'true';
+    const wasKicked = storage.getItem('kicked_from_' + savedRoomCode) === 'true';
     
     if (!savedRoomCode || !savedPseudo) {
       error('Pas d\'informations de connexion sauvegardées');
@@ -220,7 +221,7 @@ function HomePage({ setActiveRoomCode }) {
     if (wasKicked) {
       error('Vous avez été expulsé de cette salle par l\'admin.');
       // Nettoyer pour éviter de futurs problèmes
-      localStorage.removeItem('roomCode');
+      storage.removeItem('roomCode');
       return;
     }
 
@@ -228,7 +229,7 @@ function HomePage({ setActiveRoomCode }) {
     const roomExists = await checkRoomExists(savedRoomCode, error, setRoomCode);
     
     if (!roomExists) {
-      localStorage.removeItem('roomCode');
+      storage.removeItem('roomCode');
       return;
     }
     
@@ -251,8 +252,8 @@ function HomePage({ setActiveRoomCode }) {
     }
     
     if (adminRole) {
-      localStorage.setItem('localAdminAuthenticated', 'true');
-      localStorage.setItem('adminRole', adminRole);
+      storage.setItem('localAdminAuthenticated', 'true');
+      storage.setItem('adminRole', adminRole);
       setIsAdminAuthenticated(true);
       setAdminPassword('');
       
@@ -260,8 +261,8 @@ function HomePage({ setActiveRoomCode }) {
       success(`Connexion ${roleLabel} réussie!`);
       
       // Si on est admin, on n'est plus client
-      localStorage.removeItem('roomCode');
-      localStorage.removeItem('pseudo');
+      storage.removeItem('roomCode');
+      storage.removeItem('pseudo');
     } else {
       error('Mot de passe incorrect');
     }
@@ -373,7 +374,7 @@ function HomePage({ setActiveRoomCode }) {
           )}
         </div>
         
-        {localStorage.getItem('roomCode') && localStorage.getItem('pseudo') && (
+        {storage.getItem('roomCode') && storage.getItem('pseudo') && (
           <button 
             className="btn btn-secondary rejoin-btn" 
             onClick={handleRejoinRoom}
