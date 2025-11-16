@@ -321,7 +321,7 @@ class Room {
       code: data.code,
       adminId: null, // Sera réattribué lors de la reconnexion
       players: {}, // Sera reconstruit lors des reconnexions
-      paused: data.paused || false,
+      paused: data.paused || true,
       firstBuzz: null,
       lastBuzz: null,
       judgmentInProgress: false,

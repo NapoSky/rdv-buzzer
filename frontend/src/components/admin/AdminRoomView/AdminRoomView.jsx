@@ -214,29 +214,41 @@ function AdminRoomView() {
       return;
     }
     
-    // ✅ PROTECTION 1 : Ignorer si un jugement est en cours
+    // ✅ PROTECTION 1 : Bloquer pendant jugement pour éviter remplacement de modal
+    // L'admin doit finir son jugement avant qu'un nouveau buzz puisse s'afficher
+    // Le backend émettra 'reset_buzzer' après jugement, ce qui débloquera
     if (isProcessingJudgment) {
-      console.log("[AdminRoomView] 🚫 Buzz ignoré - jugement en cours");
+      console.log("[AdminRoomView] 🚫 Buzz mis en attente - jugement en cours:", {
+        buzzEnCours: buzzedPlayer?.pseudo,
+        nouveauBuzz: data.buzzedBy,
+        reason: "Attente de reset_buzzer après jugement"
+      });
+      // STOCKER le buzz en attente au lieu de l'ignorer
+      forceModalRef.current = { pseudo: data.buzzedBy, playerId: data.playerId, pending: true };
       return;
     }
     
-    // ✅ PROTECTION 2 : Ignorer si une modale est déjà affichée
-    // Cela garantit que le joueur affiché reste cohérent avec celui jugé
-    if (buzzedPlayer) {
-      console.log("[AdminRoomView] 🚫 Buzz ignoré - modale déjà ouverte:", {
+    // ✅ PROTECTION 2 : Si modal déjà affichée sans jugement en cours
+    // L'admin n'a pas encore cliqué → STOCKER pour afficher après son action
+    // (Évite de remplacer la modal pendant que l'admin la regarde)
+    if (buzzedPlayer && !isProcessingJudgment) {
+      console.log("[AdminRoomView] 🚫 Buzz mis en attente - modal déjà affichée:", {
         lockedPlayer: buzzedPlayer.pseudo,
         newPlayer: data.buzzedBy,
-        reason: "Cohérence avec SpectatorView et backend"
+        reason: "Attente de l'action admin sur modal actuelle"
       });
+      // STOCKER au lieu d'ignorer pour ne pas perdre le buzz
+      forceModalRef.current = { pseudo: data.buzzedBy, playerId: data.playerId, pending: true };
       return;
     }
     
+    // ⚠️ PROTECTION ANTISPAM : Éviter les doublons réseau (100ms)
     const buzzKey = `${data.playerId}-${data.buzzedBy}`;
     const now = Date.now();
     if (lastProcessedBuzzRef.current && 
         lastProcessedBuzzRef.current.key === buzzKey && 
         (now - lastProcessedBuzzRef.current.timestamp) < 100) {
-      console.log("[AdminRoomView] 🚫 Buzz spam ignoré:", { 
+      console.log("[AdminRoomView] 🚫 Buzz spam ignoré (doublon réseau):", { 
         player: data.buzzedBy, 
         deltaTime: now - lastProcessedBuzzRef.current.timestamp 
       });
@@ -252,7 +264,6 @@ function AdminRoomView() {
     }
     
     const newBuzzedPlayer = { pseudo: data.buzzedBy, playerId: data.playerId };
-    //console.log("[AdminRoomView] 🎯 Définition buzzedPlayer:", newBuzzedPlayer);
     
     forceModalRef.current = newBuzzedPlayer;
     isModalForcedRef.current = true;
@@ -260,7 +271,7 @@ function AdminRoomView() {
     setBuzzedPlayer(null);
     setTimeout(() => {
       setBuzzedPlayer(newBuzzedPlayer);
-      console.log("[AdminRoomView] ✅ Buzz player défini de manière robuste:", newBuzzedPlayer);
+      console.log("[AdminRoomView] ✅ Buzz player défini:", newBuzzedPlayer);
     }, 1);
     
     try {
@@ -383,6 +394,29 @@ function AdminRoomView() {
     }
   });
 
+  const onResetBuzzer = useEffectEvent(() => {
+    console.log("[AdminRoomView] 🔄 reset_buzzer reçu");
+    
+    // Vérifier s'il y a un buzz en attente (stocké pendant isProcessingJudgment)
+    if (forceModalRef.current?.pending) {
+      console.log("[AdminRoomView] ✅ Traitement du buzz en attente:", forceModalRef.current);
+      
+      const pendingBuzz = forceModalRef.current;
+      // Retirer le flag pending
+      delete pendingBuzz.pending;
+      
+      // Afficher le buzz qui était en attente
+      forceModalRef.current = pendingBuzz;
+      isModalForcedRef.current = true;
+      
+      setBuzzedPlayer(null);
+      setTimeout(() => {
+        setBuzzedPlayer(pendingBuzz);
+        console.log("[AdminRoomView] ✅ Buzz en attente affiché:", pendingBuzz);
+      }, 1);
+    }
+  });
+
   // Configuration des écouteurs d'événements
   useEffect(() => {
     console.log("[AdminRoomView] Configuration des event listeners...");
@@ -392,6 +426,7 @@ function AdminRoomView() {
     on('game_paused', onGamePaused);
     on('room_closed', onRoomClosed);
     on('buzzed', onBuzzed);
+    on('reset_buzzer', onResetBuzzer);
     on('connect', onConnect);
     on('player_kicked', onPlayerKicked);
     on('room_options_updated', onRoomOptionsUpdated);
@@ -405,6 +440,7 @@ function AdminRoomView() {
       off('game_paused', onGamePaused);
       off('room_closed', onRoomClosed);
       off('buzzed', onBuzzed);
+      off('reset_buzzer', onResetBuzzer);
       off('connect', onConnect);
       off('player_kicked', onPlayerKicked);
       off('room_options_updated', onRoomOptionsUpdated); 
@@ -782,7 +818,11 @@ const handleIncrementScore = (playerId, adjustment) => { // Renommer 'increment'
       
       // ✅ FERMER IMMÉDIATEMENT la modal quand l'admin clique
       setBuzzedPlayer(null);
-      forceModalRef.current = null;
+      // ⚠️ NE PAS écraser forceModalRef si un buzz est en attente (pending)
+      const hasPendingBuzz = forceModalRef.current?.pending;
+      if (!hasPendingBuzz) {
+        forceModalRef.current = null;
+      }
       isModalForcedRef.current = false;
       
       // ✅ UTILISER lockedPlayer (pas buzzedPlayer qui pourrait changer)
@@ -839,7 +879,11 @@ const handleIncrementScore = (playerId, adjustment) => { // Renommer 'increment'
       
       // ✅ FERMER IMMÉDIATEMENT la modal quand l'admin clique
       setBuzzedPlayer(null);
-      forceModalRef.current = null;
+      // ⚠️ NE PAS écraser forceModalRef si un buzz est en attente (pending)
+      const hasPendingBuzz = forceModalRef.current?.pending;
+      if (!hasPendingBuzz) {
+        forceModalRef.current = null;
+      }
       isModalForcedRef.current = false;
       
       // On pourrait juste reset le buzzer, ou informer le serveur que le buzz est annulé/passé
