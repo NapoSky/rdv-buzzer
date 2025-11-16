@@ -716,11 +716,15 @@ function handleResetBuzzer(socket, io, data) {
 
 /**
  * Gère la désactivation temporaire du buzzer pour un joueur (après mauvaise réponse)
+ * @param {Object} socket - Socket de l'admin
+ * @param {Object} io - Instance Socket.IO
+ * @param {Object} data - { roomCode, playerId, customDelay? }
+ *   - customDelay: Délai personnalisé en secondes (optionnel, sinon utilise penaltyDelay)
  */
 function handleDisableBuzzer(socket, io, data) {
   try {
     // On attend juste roomCode et playerId, la durée vient des options de la salle
-    const { roomCode, playerId } = data;
+    const { roomCode, playerId, customDelay } = data;
     const room = Room.get(roomCode);
     
     if (!room) return logger.warn('DISABLE_BUZZER', 'Salle non trouvée', { roomCode });
@@ -728,7 +732,8 @@ function handleDisableBuzzer(socket, io, data) {
     if (!room.players[playerId]) return logger.warn('DISABLE_BUZZER', 'Joueur non trouvé', { roomCode, playerId });
     
     const options = room.options || defaultRoomOptions;
-    const penaltyDurationSeconds = options.penaltyDelay; // Utiliser la durée des options
+    // Utiliser customDelay si fourni, sinon penaltyDelay des options
+    const penaltyDurationSeconds = customDelay !== undefined ? customDelay : options.penaltyDelay;
     
     // Ne rien faire si la pénalité est de 0 seconde
     if (penaltyDurationSeconds <= 0) {

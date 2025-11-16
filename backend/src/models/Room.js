@@ -7,6 +7,7 @@ const defaultRoomOptions = {
   pointsCorrect: 10,
   pointsWrong: 9,
   penaltyDelay: 5,
+  correctAnswerDelay: 1, // Délai en secondes après une bonne réponse (quand Spotify actif)
   saveRoom: true,
   // --- Ajout pour Spotify ---
   spotifyEnabled: false, // Désactivé par défaut

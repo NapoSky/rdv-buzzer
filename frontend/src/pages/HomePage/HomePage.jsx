@@ -62,6 +62,7 @@ function HomePage({ setActiveRoomCode }) {
     pointsCorrect: 10,
     pointsWrong: 9,
     penaltyDelay: 5,
+    correctAnswerDelay: 1,
     saveRoom: true,
   });
 
@@ -238,7 +239,11 @@ function HomePage({ setActiveRoomCode }) {
     const { name, value, type, checked } = e.target;
     setRoomOptions(prevOptions => ({
       ...prevOptions,
-      [name]: type === 'checkbox' ? checked : (type === 'number' ? parseInt(value, 10) : value)
+      [name]: type === 'checkbox' 
+        ? checked 
+        : (type === 'number' 
+          ? (name === 'correctAnswerDelay' ? parseFloat(value) : parseInt(value, 10))
+          : value)
     }));
   };
 
@@ -463,6 +468,19 @@ function HomePage({ setActiveRoomCode }) {
                 value={roomOptions.penaltyDelay} 
                 onChange={handleOptionChange} 
                 min="0"
+              />
+            </div>
+
+            <div className="form-group mt-3">
+              <label className="form-label">Délai après bonne réponse (secondes) :</label>
+              <input 
+                type="number" 
+                name="correctAnswerDelay" 
+                className="form-control" 
+                value={roomOptions.correctAnswerDelay} 
+                onChange={handleOptionChange} 
+                min="0"
+                step="0.1"
               />
             </div>
 

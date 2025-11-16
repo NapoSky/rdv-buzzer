@@ -25,6 +25,7 @@ const DEFAULT_ROOM_OPTIONS = {
   pointsCorrect: 10,
   pointsWrong: 9,
   penaltyDelay: 5,
+  correctAnswerDelay: 1,
   saveRoom: true,
 };
 
