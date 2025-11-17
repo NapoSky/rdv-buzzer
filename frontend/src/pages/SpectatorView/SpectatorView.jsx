@@ -25,6 +25,7 @@ function SpectatorView() {
   const [isQRModalOpen, setIsQRModalOpen] = useState(false);
   const [roomError, setRoomError] = useState(''); // AJOUT DU STATE POUR GÉRER LES ERREURS DE SALLE
   const [trackChangeCountdown, setTrackChangeCountdown] = useState(null); // ✅ Décompte changement de piste (spectateur)
+  const [isHeaderMenuVisible, setIsHeaderMenuVisible] = useState(false); // État pour le toggle du HeaderMenu
   const navigate = useNavigate();
 
   // Vérifier que le contexte socket existe
@@ -494,8 +495,23 @@ useEffect(() => {
     setIsQRModalOpen(false);
   };
 
+  const toggleHeaderMenu = () => {
+    setIsHeaderMenuVisible(prev => !prev);
+    window.dispatchEvent(new Event('toggleSpectatorHeader'));
+  };
+
   return (
     <div className={`spectator-view ${isDarkMode ? 'dark-mode' : ''}`}>
+      {/* Bouton pour faire apparaître/disparaître le HeaderMenu */}
+      <button 
+        className="spectator-header-toggle"
+        onClick={toggleHeaderMenu}
+        title={isHeaderMenuVisible ? "Masquer le menu" : "Afficher le menu"}
+        aria-label="Toggle header menu"
+      >
+        <span className="toggle-arrow">{isHeaderMenuVisible ? '▲' : '▼'}</span>
+      </button>
+
       {/* Header Zone */}
       <div className="spectator-header-zone">
         <div className="spectator-room-info">
@@ -558,7 +574,12 @@ useEffect(() => {
               
               <div className="spotify-display-wrapper">
                 <SpotifyDisplay 
-                  trackInfo={spotifyTrackInfo}
+                  trackInfo={spotifyTrackInfo ? {
+                    ...spotifyTrackInfo,
+                    title: spotifyTrackInfo.title?.length > 60 
+                      ? spotifyTrackInfo.title.substring(0, 60) + '...' 
+                      : spotifyTrackInfo.title
+                  } : null}
                   foundArtist={foundArtist}
                   foundTitle={foundTitle}
                   roomType={roomOptions.roomType}
@@ -599,7 +620,7 @@ useEffect(() => {
                 </tr>
               </thead>
               <tbody>
-                {sortedPlayers.slice(0, 12).map((player, index) => {
+                {sortedPlayers.slice(0, 11).map((player, index) => {
                   const scoreChange = scoreChanges[player.pseudo];
                   const rowClasses = `
                     ${player.pseudo === buzzedBy ? 'player-buzzed' : ''}

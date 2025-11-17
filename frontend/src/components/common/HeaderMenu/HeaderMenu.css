@@ -10,6 +10,14 @@
  transition: all .3s ease;
 }
 
+/* Mode rétracté pour SpectatorView */
+.modern-header.retracted {
+ position: fixed;
+ top: -100%;
+ opacity: 0;
+ pointer-events: none;
+}
+
 body:not(.dark-mode) .modern-header {
  background: rgba(255, 255, 255, .8);
 

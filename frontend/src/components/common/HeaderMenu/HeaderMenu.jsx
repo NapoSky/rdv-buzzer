@@ -1,6 +1,6 @@
 // src/components/HeaderMenu.js
 import React, { useState, useContext, useEffect } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
+import { Link, useNavigate, useLocation } from 'react-router-dom';
 import * as DropdownMenu from '@radix-ui/react-dropdown-menu';
 import { AdminAuthContext } from '../../../contexts/AdminAuthContext';
 import { ThemeContext } from '../../../contexts/ThemeContext';
@@ -10,8 +10,13 @@ function HeaderMenu({ activeRoomCode }) {
   const { isAdminAuthenticated, setIsAdminAuthenticated } = useContext(AdminAuthContext);
   const { isDarkMode, toggleDarkMode } = useContext(ThemeContext); // Utiliser toggleDarkMode au lieu de setIsDarkMode
   const navigate = useNavigate();
+  const location = useLocation();
   const [storedRoomCode, setStoredRoomCode] = useState('');
   const [storedPseudo, setStoredPseudo] = useState('');
+  const [isHeaderVisible, setIsHeaderVisible] = useState(false);
+
+  // Détecter si on est en mode spectateur
+  const isSpectatorMode = location.pathname.startsWith('/spectator');
 
   useEffect(() => {
     const roomCode = localStorage.getItem('roomCode');
@@ -22,6 +27,16 @@ function HeaderMenu({ activeRoomCode }) {
     }
   }, []);
 
+  // Écouter les événements de toggle du header depuis SpectatorView
+  useEffect(() => {
+    const handleToggleHeader = () => {
+      setIsHeaderVisible(prev => !prev);
+    };
+
+    window.addEventListener('toggleSpectatorHeader', handleToggleHeader);
+    return () => window.removeEventListener('toggleSpectatorHeader', handleToggleHeader);
+  }, []);
+
   const handleAdminLogout = () => {
     localStorage.removeItem('localAdminAuthenticated');
     setIsAdminAuthenticated(false);
@@ -29,7 +44,7 @@ function HeaderMenu({ activeRoomCode }) {
   };
 
   return (
-    <header className="modern-header">
+    <header className={`modern-header ${isSpectatorMode && !isHeaderVisible ? 'retracted' : ''}`}>
       <div className="header-container">
         {/* Groupe logo + navigation principale */}
         <div className="brand-nav-group">
