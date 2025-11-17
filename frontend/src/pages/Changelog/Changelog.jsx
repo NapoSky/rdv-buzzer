@@ -67,6 +67,10 @@ function Changelog() {
         {
           type: "improvement",
           text: "Paramètres : Ajustement des valeurs par défaut (pénalité de 5 à 9 points, délai de 3 à 5s)"
+        },
+        {
+          type: "improvement",
+          text: "Spectateur : Amélioration drastique de l'affichage de tous les éléments pour une meilleure lisibilité"
         }
       ]
     },

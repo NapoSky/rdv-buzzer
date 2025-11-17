@@ -977,8 +977,8 @@ body.dark-mode .table-hover tbody tr:hover {
   }
 }
 
-/* --- Optimisation spécifique pour 640x800 (ne PAS impacter 683x1024) --- */
-@media (max-width: 682px) and (min-width: 640px) {
+/* --- Optimisation spécifique pour 640x800 viewport réel ~616px (ne PAS impacter 683x1024) --- */
+@media (max-width: 682px) and (min-width: 590px) {
   /* Conteneur principal - NE PAS TOUCHER AU 92vh */
   .admin-container {
     height: 92vh;
