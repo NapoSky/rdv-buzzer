@@ -61,7 +61,6 @@ function AdminRoomView() {
   const [sortDescending, setSortDescending] = useState(true);
   const [sortByScore, setSortByScore] = useState(true);
   const { isConnected: spotifyConnected, hasDevices, spotifyUser, refreshStatus } = useSpotify();
-  const audioRef = useRef(null);
   const clearBuzzTimeoutRef = useRef(null); // ✅ RÉFÉRENCE pour annuler les timeouts
   const lastProcessedBuzzRef = useRef(null); // ✅ RÉFÉRENCE pour éviter le spam de buzz
   const [showSpotifyModal, setShowSpotifyModal] = useState(false);
@@ -284,7 +283,6 @@ function AdminRoomView() {
     }
     
     try {
-      if (audioRef.current) audioRef.current.play();
       if (navigator.vibrate) navigator.vibrate(300);
     } catch (error) {
       console.error('Erreur effets sonores:', error);
@@ -1137,7 +1135,6 @@ const handleIncrementScore = (playerId, adjustment) => { // Renommer 'increment'
         );
       })()}
 
-      <audio ref={audioRef} src="/buzz-sound.mp3" preload="auto" />
       <div className="button-container">
         <button
           className="btn btn-danger fixed-width-button"
