@@ -45,3 +45,12 @@ Thumbs.db
 
 # Fichiers paquets
 *.tgz
+
+# Brands privés (ignorer tout sauf default)
+src/brands/*
+!src/brands/default.json
+brand-assets/*
+!brand-assets/default/
+
+# Assets générés par le build
+public/brand/

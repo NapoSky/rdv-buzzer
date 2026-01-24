@@ -1,5 +1,6 @@
 import React from 'react';
 import RankingTable from '../../RankingTable';
+import { brand } from '../../../../config/brand';
 
 const FinalRankingModal = ({ 
   show,
@@ -36,13 +37,13 @@ const FinalRankingModal = ({
               <div className="text-center mt-4 mb-2">
                 <div className="social-links">
                   <a 
-                    href="https://www.instagram.com/lerdvlille" 
+                    href={brand.instagram.url} 
                     target="_blank" 
                     rel="noopener noreferrer"
                     className={isDarkMode ? "link-light" : "link-dark"}
                     style={{ display: 'inline-flex', alignItems: 'center' }}
                   >
-                    Suivez le RDV sur Instagram
+                    Suivez {brand.name} sur Instagram
                     <img 
                       src="https://cdn.jsdelivr.net/gh/walkxcode/dashboard-icons/png/instagram.png" 
                       alt="Instagram icon" 

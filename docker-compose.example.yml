@@ -12,7 +12,7 @@ services:
       # Optionnel
       #- SPOTIFY_CLIENT_ID=
       #- SPOTIFY_CLIENT_SECRET=
-      #- SPOTIFY_REDIRECT_URI=http://localhost:3001/api/spotify/callback
+      #- SPOTIFY_REDIRECT_URI=http://127.0.0.1:3001/api/spotify/callback
 
   frontend:
     container_name: rdv-frontend
@@ -23,6 +23,7 @@ services:
         - VITE_ADMIN_PASSWORD=secret
         - VITE_OPERATOR_PASSWORD=operator
         - VITE_APP_SECRET=a1b2c3d4e5f67890123456789abcdef0123456789abcdef0123456789abcdef
+        - VITE_BRAND=default
         # Optionnel
         # - VITE_SPOTIFY_CLIENT_ID=2157f438f5034a325481be9b9f3f215a
     ports:

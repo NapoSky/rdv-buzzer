@@ -1,0 +1,20 @@
+{
+  "name": "Mon Établissement",
+  "title": "Blindtest-Buzzer",
+  "logo": {
+    "format": "svg"
+  },
+  "instagram": {
+    "url": "https://www.instagram.com/",
+    "handle": "@moncompte"
+  },
+  "wifi": {
+    "ssid": "MonWifi",
+    "password": "monmotdepasse",
+    "encryption": "WPA"
+  },
+  "promo": {
+    "session": "🏆 Gagne la session et remporte un lot !",
+    "monthly": "🥇 Termine 1er du mois pour un prix spécial !"
+  }
+}

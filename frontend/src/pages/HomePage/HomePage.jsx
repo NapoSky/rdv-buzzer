@@ -7,6 +7,7 @@ import { ThemeContext } from '../../contexts/ThemeContext';
 import './HomePage.css';  // Import du CSS local
 import { useNotification } from '../../contexts/NotificationContext';
 import { storage } from '../../utils/storage';
+import { brand } from '../../config/brand';
 
 const ADMIN_PASSWORD = import.meta.env.VITE_ADMIN_PASSWORD;
 const OPERATOR_PASSWORD = import.meta.env.VITE_OPERATOR_PASSWORD;
@@ -61,7 +62,7 @@ function HomePage({ setActiveRoomCode }) {
   const { info, warn, error, success } = useNotification();
   const [showCreateRoomDialog, setShowCreateRoomDialog] = useState(false);
   const [roomOptions, setRoomOptions] = useState({
-    roomType: 'Standard',
+    roomType: 'Titre/Artiste',
     pointsCorrect: 10,
     pointsWrong: 9,
     penaltyDelay: 5,
@@ -428,9 +429,9 @@ function HomePage({ setActiveRoomCode }) {
       <footer className="page-footer">
         {/* Lien Instagram ajouté */}
         <p className={`mb-0 fst-italic ${isDarkMode ? 'text-light-muted' : 'text-muted'}`}>
-          Suivez le RDV sur{' '}
+          Suivez {brand.name} sur{' '}
           <a
-            href="https://www.instagram.com/lerdvlille"
+            href={brand.instagram.url}
             target="_blank"
             rel="noopener noreferrer"
             className={`${isDarkMode ? 'link-light' : 'link-dark'}`}

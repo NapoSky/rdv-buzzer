@@ -18,6 +18,7 @@ import { ThemeContext } from '../../../contexts/ThemeContext';
 import { useNotification } from '../../../contexts/NotificationContext';
 import { useServerTimeContext } from '../../../contexts/ServerTimeContext';
 import TimeSyncWarning from '../../common/TimeSyncWarning/TimeSyncWarning';
+import { brand } from '../../../config/brand';
 import { 
   getSocket, 
   joinRoom, 
@@ -1218,13 +1219,13 @@ const handleBuzz = (e) => {
                 </div>
                 <div className="social-links">
                   <a 
-                    href="https://www.instagram.com/lerdvlille" 
+                    href={brand.instagram.url} 
                     target="_blank" 
                     rel="noopener noreferrer"
                     className={isDarkMode ? "link-light" : "link-dark"}
                     style={{ display: 'inline-flex', alignItems: 'center' }}
                   >
-                    Suivez le RDV sur Instagram
+                    Suivez {brand.name} sur Instagram
                     <img 
                       src="https://cdn.jsdelivr.net/gh/walkxcode/dashboard-icons/png/instagram.png" 
                       alt="Instagram icon" 
