@@ -5,6 +5,8 @@ import { ThemeContext } from '../../contexts/ThemeContext';
 import SpotifyDisplay from '../../components/client/SpotifyDisplay/SpotifyDisplay';
 import { EyeOpenIcon } from '@radix-ui/react-icons';
 import { QRCodeSVG } from 'qrcode.react';
+import { brand, brandAssets, getWifiQRString } from '../../config/brand';
+import wifiIcon from '../../assets/icons/wifi-icon.svg';
 import './SpectatorView.css';
 
 function SpectatorView() {
@@ -522,7 +524,7 @@ useEffect(() => {
               style={{ cursor: 'pointer' }}
               title={isRoomCodeHidden ? "Afficher le code de la salle" : "Masquer le code de la salle"}
             />
-            <h2>Salle {isRoomCodeHidden ? '-RDV-' : roomCode}</h2>
+            <h2>Salle {isRoomCodeHidden ? brand.name : roomCode}</h2>
             <div 
               className="spectator-badge" 
               onClick={toggleQRModal}
@@ -530,6 +532,9 @@ useEffect(() => {
               title="Afficher le QR Code"
             >
               Spectateur
+              <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 256 256" fill="currentColor" style={{ marginLeft: '6px', verticalAlign: 'middle' }}>
+                <path d="M104,40H56A16,16,0,0,0,40,56v48a16,16,0,0,0,16,16h48a16,16,0,0,0,16-16V56A16,16,0,0,0,104,40ZM56,104V56h48v48ZM200,40H152a16,16,0,0,0-16,16v48a16,16,0,0,0,16,16h48a16,16,0,0,0,16-16V56A16,16,0,0,0,200,40ZM152,104V56h48v48ZM104,136H56a16,16,0,0,0-16,16v48a16,16,0,0,0,16,16h48a16,16,0,0,0,16-16V152A16,16,0,0,0,104,136ZM56,200V152h48v48ZM144,144a8,8,0,0,1,8-8h16a8,8,0,0,1,0,16H152A8,8,0,0,1,144,144Zm72,0a8,8,0,0,1-8,8H192v16a8,8,0,0,1-16,0V144a8,8,0,0,1,8-8h24A8,8,0,0,1,216,144Zm0,48a8,8,0,0,1-8,8H184a8,8,0,0,1,0-16h16V168a8,8,0,0,1,16,0Zm-72,16a8,8,0,0,1,8-8h16a8,8,0,0,1,0,16H152A8,8,0,0,1,144,208Zm24-32a8,8,0,0,1-8,8h-8v24a8,8,0,0,1-16,0V176a8,8,0,0,1,8-8h16A8,8,0,0,1,168,176Z"/>
+              </svg>
             </div>
           </div>
           
@@ -686,23 +691,25 @@ useEffect(() => {
           </div>
         </div>
 
-        {/* ZONE VIOLETTE - Promo RDV */}
+        {/* ZONE VIOLETTE - Promo établissement */}
         <div className="spectator-ad-zone">
           <div className="ad-content">
             <div className="rdv-logo-container">
               <img 
-                src="/logo_rdv.png" 
-                alt="Logo RDV" 
+                src={brandAssets.logo} 
+                alt={`Logo ${brand.name}`} 
                 className="rdv-logo"
               />
             </div>
             <div className="rdv-promo-text">
-              <p className="promo-line session">
-                🏆 <strong>Gagne la session</strong> et remporte <strong>1 mètre de shooter</strong> !
-              </p>
-              <p className="promo-line monthly">
-                🥇 <strong>Termine 1er du mois</strong> et c'est une <strong>bouteille offerte</strong> !
-              </p>
+              <p 
+                className="promo-line session"
+                dangerouslySetInnerHTML={{ __html: brand.promo.session }}
+              />
+              <p 
+                className="promo-line monthly"
+                dangerouslySetInnerHTML={{ __html: brand.promo.monthly }}
+              />
             </div>
           </div>
         </div>
@@ -730,7 +737,7 @@ useEffect(() => {
                     className="qr-code-image"
                     style={{ padding: '12px', background: 'white' }}
                     imageSettings={{
-                      src: "/logo_rdv.png",
+                      src: brandAssets.logo,
                       height: 150,
                       width: 150,
                       excavate: true,
@@ -739,10 +746,19 @@ useEffect(() => {
                   <p className="qr-code-label">QR Code de la salle</p>
                 </div>
                 <div className="qr-code-item">
-                  <img 
-                    src="/qr-code-wifi.png" 
-                    alt="QR Code WiFi" 
+                  <QRCodeSVG 
+                    value={getWifiQRString()}
+                    size={512}
+                    level="H"
+                    includeMargin={false}
                     className="qr-code-image"
+                    style={{ padding: '12px', background: 'white' }}
+                    imageSettings={{
+                      src: wifiIcon,
+                      height: 120,
+                      width: 120,
+                      excavate: true,
+                    }}
                   />
                   <p className="qr-code-label">QR Code WiFi</p>
                 </div>

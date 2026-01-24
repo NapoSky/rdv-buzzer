@@ -11,6 +11,42 @@ function Changelog() {
   // Données du changelog - vous pouvez les externaliser dans un fichier JSON plus tard
   const changelogEntries = [
     {
+      version: "2.4.0",
+      date: "2026-01-24",
+      type: "minor",
+      title: "Branding multi-instance et améliorations admin",
+      changes: [
+        {
+          type: "feature",
+          text: "Admin : Bouton 'Vue Spectateur' pour ouvrir la vue spectateur dans un nouvel onglet directement depuis l'interface admin"
+        },
+        {
+          type: "feature",
+          text: "Branding : Système de branding multi-instance permettant de personnaliser l'application pour différents établissements"
+        },
+        {
+          type: "feature",
+          text: "Spectateur : QR Code WiFi généré dynamiquement à partir de la configuration du brand"
+        },
+        {
+          type: "feature",
+          text: "Spectateur : Icône QR code ajoutée au badge pour indiquer l'accès aux QR codes"
+        },
+        {
+          type: "improvement",
+          text: "Options : Le type de salle 'Titre/Artiste' est maintenant sélectionné par défaut à la création"
+        },
+        {
+          type: "improvement",
+          text: "Branding : Logo, textes promotionnels, liens Instagram et nom d'établissement configurables dynamiquement"
+        },
+        {
+          type: "improvement",
+          text: "Header : Nom de l'établissement affiché dynamiquement selon le brand configuré"
+        }
+      ]
+    },
+    {
       version: "2.3.2",
       date: "2025-11-16",
       type: "minor",

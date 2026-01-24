@@ -35,7 +35,6 @@ Ce projet constitue une application web interactive qui permet de gérer des ses
 ```plaintext
 frontend/
 ├── public/                    # Ressources statiques
-│   ├── buzz-sound.mp3         # Son joué lors d'un buzz
 │   └── index.html             # Point d'entrée HTML
 ├── src/
 │   ├── assets/                # Élèments statiques (son, image)       
@@ -77,6 +76,7 @@ frontend/
 | VITE_ADMIN_PASSWORD       | Mot de passe administrateur complet              | `secret`                  | ✅ Oui      |
 | VITE_OPERATOR_PASSWORD    | Mot de passe opérateur (droits limités)          | `operator`                | ➖ Non      |
 | VITE_SPOTIFY_CLIENT_ID    | ID client Spotify pour l'intégration             | -                         | ➖ Si activé|
+| VITE_BRAND                | Identifiant du brand à utiliser                  | `default`                 | ➖ Non      |
 
 ### 🔐 Rôles administrateurs
 
@@ -132,11 +132,67 @@ docker build -t rdv-buzzer-frontend \
   --build-arg VITE_ADMIN_PASSWORD=your_admin_password \
   --build-arg VITE_OPERATOR_PASSWORD=your_operator_password \
   --build-arg VITE_APP_SECRET=your_backend_app_secret \
+  --build-arg VITE_BRAND=default \
   .
 
 # Exécution du conteneur
 docker run -p 80:80 rdv-buzzer-frontend
 ```
+
+---
+
+## 🏷️ Système de Branding Multi-Instance
+
+Le frontend supporte un système de branding qui permet de personnaliser l'application pour différents établissements.
+
+### Structure des fichiers
+
+```plaintext
+frontend/
+├── src/brands/
+│   └── default.json          # Configuration par défaut (template)
+├── brand-assets/
+│   └── default/
+│       └── logo.svg          # Logo de l'établissement
+```
+
+### Créer un nouveau brand
+
+1. **Créer le fichier de configuration** `src/brands/monbrand.json` :
+```json
+{
+  "name": "Mon Établissement",
+  "title": "Mon-Buzzer",
+  "logo": {
+    "format": "png"
+  },
+  "instagram": {
+    "url": "https://www.instagram.com/moncompte",
+    "handle": "@moncompte"
+  },
+  "wifi": {
+    "ssid": "MonWifi",
+    "password": "monmotdepasse",
+    "encryption": "WPA"
+  },
+  "promo": {
+    "session": "🏆 Gagne la session et remporte un lot !",
+    "monthly": "🥇 Termine 1er du mois pour un prix spécial !"
+  }
+}
+```
+
+2. **Créer le dossier d'assets** `brand-assets/monbrand/` avec :
+   - `logo.png` ou `logo.svg` — Logo de l'établissement (le format doit correspondre à `logo.format` dans le JSON)
+
+3. **Builder avec le brand** :
+```bash
+docker build -t mon-buzzer \
+  --build-arg VITE_BRAND=monbrand \
+  ...
+```
+
+> ⚠️ **Note** : Les brands personnalisés (hors `default`) sont automatiquement ignorés par git. Cela permet de garder les configurations privées hors du dépôt public.
 
 ---
 

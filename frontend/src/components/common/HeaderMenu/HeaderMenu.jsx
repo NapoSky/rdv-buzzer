@@ -4,6 +4,7 @@ import { Link, useNavigate, useLocation } from 'react-router-dom';
 import * as DropdownMenu from '@radix-ui/react-dropdown-menu';
 import { AdminAuthContext } from '../../../contexts/AdminAuthContext';
 import { ThemeContext } from '../../../contexts/ThemeContext';
+import { brand } from '../../../config/brand';
 import './HeaderMenu.css';
 
 function HeaderMenu({ activeRoomCode }) {
@@ -50,7 +51,7 @@ function HeaderMenu({ activeRoomCode }) {
         <div className="brand-nav-group">
           <Link className="brand" to="/">
             <span className="brand-emoji">🎙️</span>
-            <span className="brand-text">Le RDV-SdB</span>
+            <span className="brand-text">{brand.name}</span>
           </Link>
 
           <nav className="desktop-nav">

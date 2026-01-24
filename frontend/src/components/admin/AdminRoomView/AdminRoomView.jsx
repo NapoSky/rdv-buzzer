@@ -21,7 +21,7 @@ import SpotifyDisconnectedIcon from '../../../assets/icons/spotify-disconnected.
 
 // Définir les options par défaut au cas où elles ne seraient pas passées
 const DEFAULT_ROOM_OPTIONS = {
-  roomType: 'Standard',
+  roomType: 'Titre/Artiste',
   pointsCorrect: 10,
   pointsWrong: 9,
   penaltyDelay: 5,
@@ -1009,9 +1009,25 @@ const handleIncrementScore = (playerId, adjustment) => { // Renommer 'increment'
       );
   }, [players, sortByScore, sortDescending]);
 
+  // Ouvrir la vue spectateur dans un nouvel onglet
+  const openSpectatorView = () => {
+    if (roomCode) {
+      window.open(`/spectator/${roomCode}`, '_blank');
+    }
+  };
+
   return (
     <div className={`admin-container ${isDarkMode ? 'dark-mode' : ''}`}>
       <div className="admin-header">
+        {roomCode && (
+          <button
+            className="btn btn-spectator"
+            onClick={openSpectatorView}
+            title="Ouvrir la vue spectateur dans un nouvel onglet"
+          >
+            👁️ Vue Spectateur
+          </button>
+        )}
         <h2 style={{ fontSize: '1.5rem', textAlign: 'center' }}>
           Gestion de salle Admin
         </h2>

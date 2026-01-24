@@ -38,7 +38,7 @@ async function handleCallback(req, res) {
     const spotifyApi = new SpotifyWebApi({
       clientId: spotifyConfig.clientId,
       clientSecret: spotifyConfig.clientSecret,
-      redirectUri: process.env.SPOTIFY_REDIRECT_URI || 'http://localhost:3001/api/spotify/callback'
+      redirectUri: process.env.SPOTIFY_REDIRECT_URI || 'http://127.0.0.1:3001/api/spotify/callback'
     });
     
     // Échanger le code contre des tokens

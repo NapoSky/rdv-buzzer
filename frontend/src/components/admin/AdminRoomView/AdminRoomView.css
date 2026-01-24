@@ -36,6 +36,40 @@ body.dark-mode .admin-container {
   transition: all 0.3s ease;
 }
 
+/* Bouton Vue Spectateur - minimaliste */
+.btn-spectator {
+  position: absolute;
+  top: 0.15rem;
+  left: 0.15rem;
+  background: rgba(99, 102, 241, 0.15);
+  border: 1px solid rgba(99, 102, 241, 0.3);
+  border-radius: 2px;
+  color: #6366f1;
+  cursor: pointer;
+  font-size: 0.5rem;
+  font-weight: 500;
+  padding: 0.08rem 0.15rem;
+  transition: all 0.2s ease;
+  z-index: 5;
+  white-space: nowrap;
+}
+
+.btn-spectator:hover {
+  background: rgba(99, 102, 241, 0.25);
+  border-color: rgba(99, 102, 241, 0.5);
+}
+
+body.dark-mode .btn-spectator {
+  background: rgba(129, 140, 248, 0.15);
+  border-color: rgba(129, 140, 248, 0.3);
+  color: #a5b4fc;
+}
+
+body.dark-mode .btn-spectator:hover {
+  background: rgba(129, 140, 248, 0.25);
+  border-color: rgba(129, 140, 248, 0.5);
+}
+
 /* Effet de ligne d'accent sur l'en-tête */
 .admin-header::before {
   content: '';

@@ -3,7 +3,7 @@ let rooms = {};
 
 // Options par défaut pour une salle
 const defaultRoomOptions = {
-  roomType: 'Standard', // Ajouté pour correspondre à l'usage
+  roomType: 'Titre/Artiste', // Ajouté pour correspondre à l'usage
   pointsCorrect: 10,
   pointsWrong: 9,
   penaltyDelay: 5,
