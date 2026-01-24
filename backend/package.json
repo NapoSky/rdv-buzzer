@@ -1,6 +1,7 @@
 {
     "name": "buzzer-backend",
     "version": "1.0.0",
+    "license": "CC-BY-NC-4.0",
     "main": "server.js",
     "scripts": {
         "start": "node server.js"

@@ -1,6 +1,7 @@
 {
     "name": "buzzer-frontend",
     "version": "1.0.0",
+    "license": "CC-BY-NC-4.0",
     "private": true,
     "dependencies": {
         "@radix-ui/react-alert-dialog": "^1.1.15",

@@ -1,6 +1,10 @@
 # 🎙️ RDV-Buzzer : Vue d'ensemble
 
-Ce dépôt contient deux applications principales qui forment un système complet de quiz avec buzzer en temps réel :
+[![License: CC BY-NC 4.0](https://img.shields.io/badge/License-CC%20BY--NC%204.0-lightgrey.svg)](https://creativecommons.org/licenses/by-nc/4.0/)
+
+Ce dépôt contient deux applications principales qui forment un système complet de quiz avec buzzer en temps réel :
+
+> ⚠️ **Licence** : Ce projet est sous licence [CC BY-NC 4.0](LICENSE). L'utilisation commerciale est interdite sauf pour l'auteur original.
 
 ---
 
