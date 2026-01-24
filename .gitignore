@@ -1,5 +1,6 @@
 # Project specific
-docker-compose.yml
+docker-compose*.yml
+!docker-compose.example.yml
 backend/tests
 
 # Data directory - keep structure but ignore contents
